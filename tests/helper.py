@@ -12,7 +12,7 @@ BASE = "http://127.0.0.1:8931"
 PAGE_PATH = BASE + "/" + "%E5%AE%B6%E6%97%8F%E6%97%8F%E8%B0%B1-%E6%80%9D%E7%BB%B4%E5%AF%BC%E5%9B%BE.html"
 OUT_DIR = BASE + "/tests/_out"
 LOCAL_OUT = r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\tests\_out"
-LOCAL_HTML = r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\家族族谱-思维导图.html"
+LOCAL_HTML = r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\index.html"
 FIXTURE_URL = OUT_DIR + "/fixture.html"
 FIXTURE_FILE = LOCAL_OUT + r"\fixture.html"
 

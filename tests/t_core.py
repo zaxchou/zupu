@@ -2,7 +2,7 @@
 """核心回归：加载、渲染计数、选中、统计条、搜索开合（handoff §9 基线）"""
 from helper import *
 
-HTML = r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\家族族谱-思维导图.html"
+HTML = r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\index.html"
 
 
 @testcase
