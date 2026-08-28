@@ -93,6 +93,33 @@ def t_wizard_blank_start(b):
     ctx.close()
 
 
+@testcase
+def t_wizard_nag_stops_after_real_edit(b):
+    """v15.31：点背景关掉向导=「还没选择」，下次仍提醒（刻意设计）；
+    但一旦发生真实编辑，说明用户已开始录自己的数据，向导不再复扰"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto_wizard(page)
+    page.locator("#__wizModal").click(position={"x": 12, "y": 12})   # 点背景关闭
+    page.wait_for_timeout(120)
+    check(not page.locator("#__wizModal").is_visible(), "点背景可关闭向导")
+    page.reload(); page.wait_for_load_state("domcontentloaded")
+    check(page.locator("#__wizModal").is_visible(), "未选择且未编辑：下次仍提醒（刻意设计）")
+    # 这次直接开始真实编辑（添加成员）→ demo 标记应被摘除
+    page.locator("#__wizModal").click(position={"x": 12, "y": 12})
+    page.wait_for_timeout(120)
+    dlg = DialogRecorder(page)
+    dlg.queue("prompt", "测试子代")   # prompt 随点击同步弹出，须先入队
+    page.locator('.node .quick-add').first.click()
+    page.locator("#__ctxMenu .mi", has_text="第一代").click()
+    page.wait_for_timeout(250)
+    check(page.evaluate("window.__ZP.data.demo") is None, "真实编辑后 demo 标记摘除",
+          str(page.evaluate("window.__ZP.data.demo")))
+    page.reload(); page.wait_for_load_state("domcontentloaded")
+    check(not page.locator("#__wizModal").is_visible(), "编辑过后刷新不再弹向导")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
 def _run():
     ok = run_module(_sys.modules[__name__], "t_wizard 首次运行向导")
     _sys.exit(0 if ok else 1)

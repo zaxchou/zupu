@@ -6,8 +6,10 @@ __pycache__/
 # zip 分发时代的说明（git 仓库用 README.md）
 README-解压说明.txt
 
-# 过时的旧快照（数据以 家族族谱-数据.json 为准）
-家族族谱-思维导图.md
-
 # 历史调试/补丁脚本
 tests/_p*.py
+
+# 系统杂项与本机测试时下载的真实备份（绝不入库）
+Thumbs.db
+.DS_Store
+*-备份-*.json

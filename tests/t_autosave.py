@@ -45,6 +45,22 @@ def t_autosave_reload_and_light(b):
 
 
 @testcase
+def t_autosave_save_fail_visible(b):
+    """v15.31：存储写入失败（无痕模式禁存/配额满）必须示警，不得假报「已保存」"""
+    ctx, page, errs, cons = fresh_page(b)
+    page.add_init_script("Storage.prototype.setItem = function(){ throw new Error('QuotaExceeded'); }")
+    goto(page)
+    state = page.locator("#saveState")
+    check("未能保存" in state.inner_text(), "状态灯示警「未能保存」", state.inner_text())
+    check("save-fail" in (state.get_attribute("class") or ""), "警示样式生效",
+          str(state.get_attribute("class")))
+    check("备份" in (state.get_attribute("title") or ""), "tooltip 指引立即备份",
+          str(state.get_attribute("title")))
+    check(not errs, "无 JS 错误（失败被捕获但用户可见）", str(errs))
+    ctx.close()
+
+
+@testcase
 def t_autosave_cross_page_same_browser(b):
     """同一浏览器 = 同一份数据：页面 A 的编辑，页面 B 打开即见（Gmail 式账号感）"""
     ctx, page, errs, cons = fresh_page(b)

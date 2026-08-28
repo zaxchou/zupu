@@ -107,8 +107,9 @@ def t_zibei_conflict_hint(b):
 
 
 @testcase
-def t_zibei_rescued_draft_keeps_table(b):
-    """v15.1 核心回归：旧草稿（无 zibei）成员更多而胜出播种时，字辈表自动补齐、角标不丢"""
+def t_zibei_rescued_draft_no_injection(b):
+    """v15.31 新契约：旧草稿（无 zibei）成员更多而胜出播种时，成员被恢复，
+    但字辈表不再从内嵌/其他草稿「补齐」——内嵌已是通用演示数据，注入即污染"""
     ctx, page, errs, cons = fresh_page(b)
     data = {
         "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
@@ -124,11 +125,32 @@ def t_zibei_rescued_draft_keeps_table(b):
     script = "localStorage.setItem('zupu_tree_data_v3_old', " + _json.dumps(_json.dumps(data, ensure_ascii=False)) + ");"
     page.add_init_script(script)
     goto_zibei(page)
-    check(page.evaluate('!!window.__ZP.findNode("old1")'), "旧草稿胜出播种")
-    check(page.evaluate("window.__ZP.data.zibei.length") == 40, "字辈表自动补齐 40 代")
-    chip = page.locator('.node[data-id="z1"] .gen').inner_text().replace("\n", "")
-    check("11代·勤" in chip, "角标恢复显示", chip)
-    check("字辈第" in page.locator("#statsChip").inner_text(), "统计条字辈范围恢复")
+    check(page.evaluate('!!window.__ZP.findNode("old1")'), "旧草稿成员胜出播种")
+    zb = page.evaluate("window.__ZP.data.zibei")
+    check(not zb, "字辈表不被演示数据注入（保持空）", str(zb))
+    check(page.locator('.node[data-id="z1"] .gen').count() == 0, "无字辈表则无世代角标")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
+def t_zibei_cleared_stays_cleared(b):
+    """v15.31 回归：用户在谱序里主动清空字辈表并保存后，刷新不得被演示字辈「复活」"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto_zibei(page)
+    check(page.evaluate("window.__ZP.data.zibei.length") == 40, "初始有 40 代字辈表")
+    # 打开谱序（点左上角谱名品牌），清空字辈输入框，保存
+    page.evaluate("openClan()")
+    page.wait_for_timeout(150)
+    page.locator("#__clZibei").fill("")
+    page.locator("#__clSave").click()
+    page.wait_for_timeout(250)
+    zb_after = page.evaluate("window.__ZP.data.zibei")
+    check(not zb_after, "保存清空后数据中已无字辈表", str(zb_after))
+    # 刷新：浏览器数据优先且不再被补齐 → 字辈表保持空
+    page.reload(); page.wait_for_load_state("domcontentloaded")
+    zb_reload = page.evaluate("window.__ZP.data.zibei")
+    check(not zb_reload, "刷新后字辈表保持清空（不被演示数据复活）", str(zb_reload))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 

@@ -3,7 +3,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>家族族谱 · 传代树（可编辑）</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316324f'/%3E%3Ctext x='32' y='32' font-family=%22Songti SC,SimSun,serif%22 font-size='42' font-weight='700' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'%3E%E5%91%A8%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316324f'/%3E%3Ctext x='32' y='32' font-family=%22Songti SC,SimSun,serif%22 font-size='42' font-weight='700' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'%3E%E6%97%8F%3C/text%3E%3C/svg%3E">
 
 <style>
 /* =========================================================
@@ -83,6 +83,8 @@ body{
   background:#ffb35c;box-shadow:0 0 7px rgba(255,179,92,.65);
 }
 #saveState.is-saved .dot{background:#58c08a;box-shadow:0 0 7px rgba(88,192,138,.5)}
+#saveState.save-fail{color:var(--danger);font-weight:700}
+#saveState.save-fail .dot{background:var(--danger);box-shadow:0 0 7px rgba(214,69,69,.6)}
 /* 下拉菜单与节点气泡菜单共用面板样式（#__ctxMenu） */
 .tb-trigger.menu-open{background:rgba(158,210,238,.14);color:#dceefb}
 /* ---------- 画布视口：overflow:auto 让滚轮可平移，滚动条隐藏 ---------- */
@@ -1110,54 +1112,16 @@ function nodeCount(d){
   treeData = best ? migrate(JSON.parse(JSON.stringify(best)))
                   : JSON.parse(JSON.stringify(INIT_TEMPLATE));
   _seededFrom = best ? bestSrc : 'empty';
-  /* 字辈表是应用级配置：胜出的数据若没有（如旧草稿早于字辈功能），
-     从其他候选（文件内嵌 / 任意旧草稿）自动补齐，保证角标不丢 */
-  if (!Array.isArray(treeData.zibei) || !treeData.zibei.length){
-    const zbFrom = raw => {
-      try {
-        const d = migrate(JSON.parse(raw));
-        if (Array.isArray(d.zibei) && d.zibei.length) return d.zibei;
-      } catch(e){}
-      return null;
-    };
-    let zb = null;
-    const el = document.getElementById('__treeData');
-    if (el && el.textContent.trim()) zb = zbFrom(el.textContent.trim());
-    if (!zb){
-      try {
-        Object.keys(localStorage).forEach(k => {
-          if (!zb && /^zupu_tree_data_v/.test(k)) zb = zbFrom(localStorage.getItem(k));
-        });
-      } catch(e){}
-    }
-    if (zb) treeData.zibei = zb;
-  }
-  /* 谱序（堂号/源流）与字辈同理：浏览器胜出数据缺失时从文件内嵌/旧草稿补齐 */
-  if (!treeData.clan){
-    const clanFrom = raw => {
-      try {
-        const d = migrate(JSON.parse(raw));
-        if (d.clan && typeof d.clan === 'object') return d.clan;
-      } catch(e){}
-      return null;
-    };
-    let cl = null;
-    const el = document.getElementById('__treeData');
-    if (el && el.textContent.trim()) cl = clanFrom(el.textContent.trim());
-    if (!cl){
-      try {
-        Object.keys(localStorage).forEach(k => {
-          if (!cl && /^zupu_tree_data_v/.test(k)) cl = clanFrom(localStorage.getItem(k));
-        });
-      } catch(e){}
-    }
-    if (cl) treeData.clan = JSON.parse(JSON.stringify(cl));
-  }
+  /* 不再跨候选「补齐」字辈表/谱序（v15.31）：内嵌种子已通用化为演示数据，
+     补齐等于把演示内容注入用户主动清空过的真实族谱——用户删掉的就是删掉了。
+     （该逻辑诞生时内嵌是同一份真实字辈，前提已随开源化消失） */
 })();
 
+let _lastSaveOk = true;   // 最近一次落盘是否成功：存储被禁用/配额满时必须让用户看见（v15.31）
 function saveData(){
   /* 每次渲染（即每次编辑）无条件下自动保存到本浏览器 —— 保存是无感的 */
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitize(treeData))); } catch(e){}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitize(treeData))); _lastSaveOk = true; }
+  catch(e){ _lastSaveOk = false; }
 }
 
 /* ---------- ③ 历史栈（撤销 / 重做）----------
@@ -1170,6 +1134,8 @@ function historySnapshot(){ return JSON.stringify(sanitize(treeData)); }
 function pushHistory(opKey){
   const t = Date.now();
   if (opKey && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
+  /* 一旦发生真实改动就摘掉 demo 标记：向导只打扰「还没动手」的用户（v15.31） */
+  if (treeData && treeData.demo) delete treeData.demo;
   _undoStack.push(historySnapshot());
   if (_undoStack.length > HIST_MAX) _undoStack.shift();
   _redoStack.length = 0;
@@ -1458,8 +1424,8 @@ function render(){
   applyZoom();
   updateStats(GENS);
   updateClanTags();   /* 撤销/重做/导入也会改变谱序，顶栏随渲染同步 */
-  updateSaveState();
-  saveData();   /* 每次渲染（即每次编辑）自动保存到本浏览器 —— 无感 */
+  saveData();         /* 每次渲染（即每次编辑）自动保存到本浏览器 —— 无感 */
+  updateSaveState();  /* 必须在 saveData 之后：指示灯要反映本次落盘的真实结果（v15.31） */
 }
 
 /* ---------- 节点交互：事件委托（几百上千人时卡片零监听器，构建快、内存省） ---------- */
@@ -1527,10 +1493,20 @@ function updateStats(GENS){
     '<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(totV) : totV) + ' ' + genUnit() + extra;
 }
 
-/* 保存状态：自动保存无感进行，这里只给一个安心的绿灯 */
+/* 保存状态：自动保存无感进行，这里只给一个安心的绿灯；
+   但落盘失败（无痕模式禁存、配额满）必须红字示警，不能假报已保存（v15.31） */
 function updateSaveState(){
   const el = document.getElementById('saveState');
   if (!el) return;
+  if (!_lastSaveOk){
+    el.classList.remove('is-saved');
+    el.classList.add('save-fail');
+    el.innerHTML = '<span class="dot"></span>未能保存';
+    el.title = '此浏览器环境不允许写入本地存储（如无痕模式/配额已满）——'
+             + '本次修改不会被记住，请立即用「文件 ▾ → 备份到文件」导出 json！';
+    return;
+  }
+  el.classList.remove('save-fail');
   el.classList.add('is-saved');
   el.innerHTML = '<span class="dot"></span>已保存';
   el.title = '所有修改都已自动保存在此浏览器 · 备份/换电脑见「文件 ▾」菜单';

@@ -6,7 +6,7 @@
 
 **单文件 · 零依赖 · 本地优先的开源族谱应用**
 
-[![Version](https://img.shields.io/badge/version-v15.29-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.31-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-47%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
