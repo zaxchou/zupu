@@ -28,7 +28,9 @@
 - 远端：`https://github.com/zaxchou/zupu.git`（分支 main，已绑定 upstream）
 - 每轮改动完成、全套测试绿之后：`git add -A && git commit && git push`
 - `.gitignore` 排除：tests/_out、__pycache__、README-解压说明.txt、过时快照 家族族谱-思维导图.md、历史调试脚本 tests/_p*.py
-- 仓库含真实家族数据（应用内嵌种子 + data.json）——若 repo 是 public 请提醒用户改 private
+- GitHub Pages demo 站已启用：https://zaxchou.github.io/zupu/ （main 分支根目录，push 自动部署；访客数据存各自浏览器）
+- 内嵌种子已通用化（赵钱孙李 demo，v15.30）；周家数据在 samples/ 与用户本机浏览器
+- 仓库 public：samples/ 的周氏示例是用户确认可公开的样例
 
 ## 3. 快速上手
 
