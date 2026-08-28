@@ -23,6 +23,13 @@
 | `tests/` | **Playwright 自动化回归套件**（v13 新增） | `runner.py` 一键跑全部 17 个用例；`shots.py` 出视觉截图 |
 | `handoff.md` | 本文档 | |
 
+## 2.5 Git 仓库（v15.29 起）
+
+- 远端：`https://github.com/zaxchou/zupu.git`（分支 main，已绑定 upstream）
+- 每轮改动完成、全套测试绿之后：`git add -A && git commit && git push`
+- `.gitignore` 排除：tests/_out、__pycache__、README-解压说明.txt、过时快照 家族族谱-思维导图.md、历史调试脚本 tests/_p*.py
+- 仓库含真实家族数据（应用内嵌种子 + 家族族谱-数据.json）——若 repo 是 public 请提醒用户改 private
+
 ## 3. 快速上手
 
 - **运行**：直接用浏览器打开 `家族族谱-思维导图.html`（file:// 协议即可，无需任何服务器/构建）
