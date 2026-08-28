@@ -224,6 +224,15 @@ body{
 :is(#stage,.ps).v .node-label .heir.out{color:#b08a4a}
 :is(#stage,.ps).v .node-label .zhi{background:transparent;border-color:rgba(60,74,87,.55);color:#3c4a57}
 :is(#stage,.ps).v .node-label .xh{color:#a7adb5}
+
+/* 欢迎向导（首次运行三选一） */
+.wiz-actions{display:flex;gap:10px;margin:4px 0 12px}
+.wiz-actions button{
+  flex:1;padding:14px 8px;border-radius:10px;border:1px solid #c3ccd8;background:#fff;
+  cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--text-light);
+}
+.wiz-actions button:hover{border-color:var(--accent);background:#f4f9fd}
+.wiz-actions button b{display:block;font-size:14px;margin-bottom:4px;color:var(--root-bg)}
 .node-label .meta{
   display:block;font-size:10px;font-weight:400;
   color:var(--text-light);margin-top:2px;letter-spacing:.3px;
@@ -456,108 +465,99 @@ body{
   "name": "家族族谱",
   "spouses": [],
   "expanded": true,
+  "demo": true,
+  "clan": {
+    "ming": "家族族谱（示例）",
+    "tang": "",
+    "chain": "",
+    "yuanzu": "",
+    "shizu": "",
+    "qianzu": "",
+    "origin": "这是一份示例数据。双击名字可改名，点「＋」添加成员；「视图 ▾ → 谱序」可改谱名、堂号、字辈表与源流；「文件 ▾ → 恢复备份」可导入你自己的族谱 json。"
+  },
+  "zibei": [
+    "德",
+    "承",
+    "传",
+    "世",
+    "泽",
+    "诗",
+    "礼",
+    "继",
+    "家",
+    "声"
+  ],
   "children": [
     {
-      "id": "c_mtaj2nrh1",
-      "name": "周勤善",
-      "spouses": [],
-      "birth": "",
+      "id": "d1",
+      "name": "赵德祖",
+      "spouses": [
+        "钱婉贞"
+      ],
+      "birth": "1948",
       "death": "",
       "note": "",
       "expanded": true,
       "children": [
         {
-          "id": "b2",
-          "name": "周少群",
+          "id": "d2",
+          "name": "赵承业",
           "spouses": [
-            "李平"
+            "孙慧英"
           ],
-          "birth": "1951",
+          "birth": "1972",
           "death": "",
           "note": "",
           "expanded": true,
           "children": [
             {
-              "id": "b2a",
-              "name": "周豪",
-              "spouses": [
-                "丁嘉"
-              ],
-              "birth": "",
+              "id": "d3",
+              "name": "赵传家",
+              "spouses": [],
+              "birth": "1998",
               "death": "",
               "note": "",
               "expanded": true,
               "children": [
                 {
-                  "id": "b2a1",
-                  "name": "周厚翰",
+                  "id": "d4",
+                  "name": "赵世泽",
                   "spouses": [],
-                  "birth": "2010",
+                  "birth": "2024",
                   "death": "",
                   "note": "",
                   "expanded": true,
                   "children": []
                 }
               ]
+            },
+            {
+              "id": "d5",
+              "name": "赵传芳",
+              "spouses": [],
+              "gender": "f",
+              "birth": "2002",
+              "death": "",
+              "note": "",
+              "expanded": true,
+              "children": []
             }
           ]
+        },
+        {
+          "id": "d6",
+          "name": "赵承志",
+          "spouses": [],
+          "birth": "1975",
+          "death": "",
+          "note": "",
+          "zi": "守拙",
+          "heir": "in",
+          "expanded": true,
+          "children": []
         }
       ]
     }
-  ],
-  "birth": "",
-  "death": "",
-  "note": "",
-  "clan": {
-    "ming": "潮阳泗水周氏族谱",
-    "tang": "申锡堂",
-    "chain": "濂溪（周敦颐，字茂叔，号濂溪）—焘—縯—良卿（字师明）—宣道（一世，承节公）—景一（二世，朝奉公）—梅叟（三世，潮阳泗水开基祖）",
-    "yuanzu": "先祖：湖南道州 归仁公；北宋 周敦颐，字茂叔，号濂溪",
-    "shizu": "一世祖：承节公讳宣道，良卿公之长子，以祖荫承节郎，妣黄氏，墓由孙男梅叟迁修葬莲花心山\n二世祖：朝奉公讳景一，宣道公之长子，以祖荫十三爵朝奉郎，妣郑氏，葬船舵岭\n三世：梅叟公昆仲四人，宋嘉熙二年（1238）登进士，淳祐三年（1243）授知潮州，宝祐四年（1256）任广东转运判官提刑，景定五年（1264）偕三个胞弟入潮阳卜居泗水",
-    "qianzu": "始迁祖：（南宋）宣，字承节；（南宋）景，字朝奉",
-    "origin": "濂溪第四代孙良卿，字师明（卜熙），以祖荫承节郎，居原籍湖南道县。良卿之子宣道（宣通）号承节，以祖荫承节郎。宣道有二子：景一、景珩。景一的长子梅叟宋嘉熙登进士，淳祐三年授知潮州，后任广东转运判官提刑，偕三个胞弟卜居潮阳泗水。奉祖宣道（承节）为一世，奉父景一（朝奉）为二世，梅叟和三个胞弟为三世，创基潮阳泗水周氏宗支。景珩于宋朝年间由江西江州迁广东南海石塘落藉，奉祀其祖良卿、其父宣道，创基广东南海石塘周氏宗支。"
-  },
-  "zibei": [
-    "多",
-    "士",
-    "敬",
-    "宏",
-    "毓",
-    "英",
-    "资",
-    "衍",
-    "芳",
-    "绪",
-    "勤",
-    "修",
-    "昭",
-    "厚",
-    "德",
-    "翊",
-    "赞",
-    "耀",
-    "明",
-    "良",
-    "攸",
-    "子",
-    "崇",
-    "伯",
-    "钦",
-    "淑",
-    "宪",
-    "绍",
-    "懿",
-    "徽",
-    "植",
-    "本",
-    "宗",
-    "永",
-    "健",
-    "嗣",
-    "典",
-    "运",
-    "开",
-    "祥"
   ]
 }
 
@@ -672,7 +672,7 @@ body{
       传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
     </p>
     <label class="checkline"><input type="checkbox" id="__cfgSpouse"> 配偶按谱书式显示（丁嘉 → 丁氏嘉；数据仍存原名，搜索不受影响）</label>
-    <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「周」（关闭 = 按谱书习惯只报名：周勤善 → 勤善；仅显示层）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「<span id="__cfgSurName">—</span>」（关闭 = 按谱书习惯只报名；仅显示层，姓氏随数据自动识别）</label>
     <label class="checkline"><input type="checkbox" id="__cfgCn"> 世数用汉字（廿三世·勤；关闭显示 23世·勤）</label>
     <div class="modal-btns">
       <button class="primary" id="__setSave">保存</button>
@@ -686,9 +686,10 @@ body{
     <h3>谱序 · 宗族源流</h3>
     <div class="row">
       <label>谱名<input id="__clMing" placeholder="如 潮阳泗水周氏族谱"></label>
-      <label>堂号<input id="__clTang" placeholder="如 申锡堂"></label>
+      <label>堂号<input id="__clTang" placeholder="可选，如 四知堂 / 陇西堂"></label>
     </div>
-    <label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="濂溪（周敦颐）—焘—縯—良卿—宣道—景一—梅叟"></label>
+    <label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="始祖 — 二世 — 三世……"></label>
+    <label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：德 承 传 世 泽 诗 礼 继 家 声"></textarea></label>
     <label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>
     <label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>
     <label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>
@@ -696,6 +697,27 @@ body{
     <div class="modal-btns">
       <button class="primary" id="__clSave">保存</button>
       <button id="__clCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="__wizModal">
+  <div class="modal">
+    <h3>欢迎使用家族族谱</h3>
+    <p class="help-note" style="margin-bottom:12px">
+      这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。
+      当前载入的是示例数据（赵钱孙李演示谱），三选一：
+    </p>
+    <div class="wiz-actions">
+      <button type="button" data-wiz="demo"><b>先看看示例</b>赵钱孙李演示谱，可随意折腾</button>
+      <button type="button" data-wiz="import"><b>导入备份</b>恢复你自己的 json 数据</button>
+    </div>
+    <div class="row">
+      <label>谱名（从空白开始时使用）<input id="__wizMing" placeholder="如 赵氏族谱 / 李氏家谱"></label>
+      <label>堂号（可选）<input id="__wizTang" placeholder="如 四知堂"></label>
+    </div>
+    <div class="modal-btns">
+      <button class="primary" id="__wizGo">从空白开始</button>
     </div>
   </div>
 </div>
@@ -798,7 +820,7 @@ function heirTitle(n){
 /* ---------- 显示设置（本浏览器配置，与族谱数据分开存） ----------
  * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
- * showSurname：姓名是否带姓氏「周」（关 = 谱书习惯只报名：周勤善 → 勤善）
+ * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数） */
 const CFG_KEY = 'zupu_cfg_v1';
 let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
@@ -829,11 +851,21 @@ function numToCn(n){
   return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');
 }
 function genLabel(g){ const v = g + genOffset(); return (cfg.cnNum ? numToCn(v) : v) + genUnit(); }
-const FAMILY_SURN = '周';   // 本谱姓氏；关闭「显示姓氏」时仅作显示层剥除
+let FAM_SUR = '';   // 本谱姓氏：每轮渲染从成员名字首字自动统计（众数 ≥2 才认定），任意家族通用
+function computeFamSur(){
+  const cnt = {};
+  (function w(n){
+    if (n.id !== 'root' && n.id !== 'note' && n.name) cnt[n.name[0]] = (cnt[n.name[0]] || 0) + 1;
+    if (n.children) n.children.forEach(w);
+  })(treeData);
+  let best = '', bc = 1;
+  Object.keys(cnt).forEach(k => { if (cnt[k] > bc){ bc = cnt[k]; best = k; } });
+  FAM_SUR = best;
+}
 function dispName(name){
   const s = String(name || '');
-  if (cfg.showSurname || s === FAMILY_SURN || !s.startsWith(FAMILY_SURN)) return s;
-  return s.slice(FAMILY_SURN.length);
+  if (cfg.showSurname || !FAM_SUR || s === FAM_SUR || !s.startsWith(FAM_SUR)) return s;
+  return s.slice(FAM_SUR.length);
 }
 /* 谱书式配偶名：姓 + 氏 + 名（复姓取两字；已含「氏」的原样保留） */
 const CS_SURN = '欧阳司马诸葛上官皇甫尉迟慕容令狐宇文轩辕东方端木长孙公孙淳于单于太叔申屠公冶宗政濮阳仲孙钟离鲜于闾丘子车亓官巫马公西漆雕乐正宰父谷梁拓跋夹谷南宫西门东郭呼延第五';
@@ -1047,26 +1079,34 @@ function nodeCount(d){
 /* 载入：本浏览器的数据永远是真源；浏览器里没有时（首次使用/换电脑），
    在「文件内嵌数据 / 旧版草稿」里挑成员最多的一份做初始 —— 自动抢救 */
 (function loadData(){
+  /* 浏览器数据一旦存在就永远优先（哪怕是刚从空白开始的数据）；
+     内嵌文件 / 旧草稿只在浏览器没有数据（首次使用）时按成员数抢救播种 */
   let best = null, bestCount = -1, bestSrc = '';
   const consider = (d, src) => {
     if (!d) return;
     const c = nodeCount(d);
     if (c > bestCount){ best = d; bestCount = c; bestSrc = src; }
   };
+  let browserHas = false;
   try {
     const v4 = localStorage.getItem(STORAGE_KEY);
-    if (v4) consider(migrate(JSON.parse(v4)), 'browser');
+    if (v4){
+      const d = migrate(JSON.parse(v4));
+      best = d; bestSrc = 'browser'; browserHas = true;   // 不再按成员数比较（v15.30：空白谱刷新被示例顶掉的 bug）
+    }
   } catch(e){}
-  const el = document.getElementById('__treeData');
-  if (el && el.textContent.trim()){
-    try { consider(migrate(JSON.parse(el.textContent.trim())), 'file'); } catch(e){}
+  if (!browserHas){
+    const el = document.getElementById('__treeData');
+    if (el && el.textContent.trim()){
+      try { consider(migrate(JSON.parse(el.textContent.trim())), 'file'); } catch(e){}
+    }
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k === STORAGE_KEY || !/^zupu_tree_data_v/.test(k)) return;
+        try { consider(migrate(JSON.parse(localStorage.getItem(k))), 'legacy-draft'); } catch(e){}
+      });
+    } catch(e){}
   }
-  try {
-    Object.keys(localStorage).forEach(k => {
-      if (k === STORAGE_KEY || !/^zupu_tree_data_v/.test(k)) return;
-      try { consider(migrate(JSON.parse(localStorage.getItem(k))), 'legacy-draft'); } catch(e){}
-    });
-  } catch(e){}
   treeData = best ? migrate(JSON.parse(JSON.stringify(best)))
                   : JSON.parse(JSON.stringify(INIT_TEMPLATE));
   _seededFrom = best ? bestSrc : 'empty';
@@ -1187,6 +1227,7 @@ function render(){
   /* 第一遍：建 DOM，实测 label 宽高（offsetWidth 不受缩放影响） */
   const GENS = computeGenerations();
   LAST_GENS = GENS;
+  computeFamSur();
   const domMap = new Map();
   function createDom(n, depth, orderIdx, orderTotal){
     const wrap = document.createElement('div');
@@ -1780,6 +1821,7 @@ document.getElementById('__helpModal').addEventListener('mousedown', e => {
 /* ---------- 谱书显示设置弹窗（世代基准 / 配偶谱式） ---------- */
 function smIsOpen(){ return document.getElementById('__setModal').classList.contains('open'); }
 function openSettings(){
+  document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自动识别）';
   document.getElementById('__cfgBase').value = cfg.genBase;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
@@ -1834,6 +1876,7 @@ function openClan(){
   g('__clMing').value   = c.ming   || '';
   g('__clTang').value   = c.tang   || '';
   g('__clChain').value  = c.chain  || '';
+  g('__clZibei').value  = (treeData.zibei || []).join(' ');
   g('__clYuan').value   = c.yuanzu || '';
   g('__clShi').value    = c.shizu  || '';
   g('__clQian').value   = c.qianzu || '';
@@ -1848,9 +1891,13 @@ function saveClan(){
     ming: g('__clMing'), tang: g('__clTang'), chain: g('__clChain'),
     yuanzu: g('__clYuan'), shizu: g('__clShi'), qianzu: g('__clQian'), origin: g('__clOrigin')
   };
-  if (deepEq(clan, treeData.clan || {})){ closeClan(); return; }
+  const zbRaw = document.getElementById('__clZibei').value.trim();
+  const zibei = zbRaw ? zbRaw.split(/[\s,，、·.]+/).map(x => x.trim()).filter(Boolean) : [];
+  const zibeiChanged = JSON.stringify(zibei) !== JSON.stringify(treeData.zibei || []);
+  if (deepEq(clan, treeData.clan || {}) && !zibeiChanged){ closeClan(); return; }
   pushHistory('clan');
   treeData.clan = clan;
+  if (zibei.length) treeData.zibei = zibei; else delete treeData.zibei;
   closeClan();
   updateClanTags();
   render();
@@ -1868,6 +1915,37 @@ document.getElementById('__clanModal').addEventListener('keydown', e => {
   if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeClan(); }
 });
 document.getElementById('__brand').addEventListener('click', openClan);
+
+/* ---------- 首次运行向导（内嵌种子带 demo 标记时弹出，三选一） ---------- */
+function wmIsOpen(){ return document.getElementById('__wizModal').classList.contains('open'); }
+function openWizard(){ document.getElementById('__wizModal').classList.add('open'); }
+function closeWizard(){ document.getElementById('__wizModal').classList.remove('open'); }
+function wizardDemo(){
+  treeData.demo = false;
+  closeWizard(); render();
+  toast('示例数据：双击名字改名、点「＋」添加成员，所有操作都可撤销');
+}
+function wizardBlank(){
+  const ming = document.getElementById('__wizMing').value.trim() || '我的家族';
+  const tang = document.getElementById('__wizTang').value.trim();
+  pushHistory('wizard');
+  treeData = migrate({ id: 'root', name: ming, spouses: [], expanded: true, children: [],
+                       clan: { ming, tang, chain: '', yuanzu: '', shizu: '', qianzu: '', origin: '' } });
+  closeWizard(); render(); fitToScreen();
+  toast('空白族谱「' + ming + '」已创建：点第一个「＋」添加第一代成员');
+}
+function wizardImport(){ closeWizard(); document.getElementById('__importFile').click(); }
+document.querySelectorAll('#__wizModal [data-wiz]').forEach(b => {
+  b.addEventListener('click', () => { b.dataset.wiz === 'demo' ? wizardDemo() : wizardImport(); });
+});
+document.getElementById('__wizGo').addEventListener('click', wizardBlank);
+document.getElementById('__wizModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__wizModal') closeWizard();   // 未选择则下次仍会提醒
+});
+document.getElementById('__wizModal').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); wizardBlank(); }
+  if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeWizard(); }
+});
 document.getElementById('__setSave').addEventListener('click', applySettings);
 document.getElementById('__setCancel').addEventListener('click', closeSettings);
 document.getElementById('__setModal').addEventListener('mousedown', e => {
@@ -2412,7 +2490,7 @@ function exportMarkdown(){
     s += '  '.repeat(d) + '- ' + line + '\n';
     if (n.children) n.children.forEach(c => md(c, d + 1));
   })(treeData, 0);
-  download('家族族谱.md', s, 'text/markdown;charset=utf-8');
+  download((clanOf().ming || '家族族谱') + '.md', s, 'text/markdown;charset=utf-8');
 }
 
 /* ---------- 世系录（欧式：五世一表，每人一行行传） ---------- */
@@ -2572,7 +2650,7 @@ function resetData(){
    数据真源在浏览器，备份用于换电脑 / 防清缓存 */
 function backupToFile(){
   const d = new Date(), pad = n => String(n).padStart(2, '0');
-  const fname = '家族族谱-备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+  const fname = (clanOf().ming || '家族族谱') + '-备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
               + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
   download(fname, JSON.stringify(sanitize(treeData), null, 2), 'application/json');
   toast('备份已下载：' + fname);
@@ -2881,7 +2959,7 @@ function exportTreeCanvas(){
 }
 function stampName(ext){
   const d = new Date(), pad = n => String(n).padStart(2, '0');
-  return '家族族谱-图-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+  return (clanOf().ming || '家族族谱') + '-图-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
        + '-' + pad(d.getHours()) + pad(d.getMinutes()) + ext;
 }
 function exportPNG(){
@@ -3041,13 +3119,14 @@ document.addEventListener('keydown', e => {
     if (hmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeHelp(); return; }
     if (searchOpenState()){ e.preventDefault(); e.stopPropagation(); closeSearch(); return; }
     if (cmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeClan(); return; }
+    if (wmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeWizard(); return; }
     if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
     return;
   }
   /* 其余按键：输入中 / 弹窗开着 一律不触发全局快捷键（v12 泄漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || e.defaultPrevented) return;
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;
   if (mod && e.key.toLowerCase() === 'f'){ e.preventDefault(); openSearch(); return; }
@@ -3105,7 +3184,7 @@ function toast(msg){
 
 /* 测试/调试句柄（内部工具，普通使用无需理会） */
 window.__ZP = {
-  ver: '15.29',
+  ver: '15.30',
   get cfg(){ return cfg; },
   get data(){ return treeData; },
   set data(v){ treeData = migrate(JSON.parse(JSON.stringify(v))); pushHistory('zpSet'); render(); },
@@ -3121,6 +3200,7 @@ render();
 fitToScreen();
 refreshUndoButtons();
 updateClanTags();
+if (treeData.demo) openWizard();   /* 首次使用：示例数据 + 三选一向导 */
 if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');
 else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');
 </script>
