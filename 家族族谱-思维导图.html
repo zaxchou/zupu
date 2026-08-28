@@ -1,0 +1,3132 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家族族谱 · 传代树（可编辑）</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316324f'/%3E%3Ctext x='32' y='32' font-family=%22Songti SC,SimSun,serif%22 font-size='42' font-weight='700' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'%3E%E5%91%A8%3C/text%3E%3C/svg%3E">
+
+<style>
+/* =========================================================
+ * 设计令牌：改配色只动这里
+ * ========================================================= */
+:root{
+  --canvas-bg:#f6f8fb;
+  --grid-dot:rgba(21,50,86,.06);
+  --line:#a9b6c6;
+  --node-bg:#ffffff;
+  --node-border:#ccd6e0;
+  --accent:#3fa7dd;
+  --accent-strong:#2196d3;
+  --save:#c77e28;
+  --text:#1c2333;
+  --text-light:#69758a;
+  --danger:#d64545;
+  --rank-bg:#ef8f3f;
+  --birth-bg:#3b6ea5;
+  --root-bg:#16324f;
+  --root-fg:#ffffff;
+  --g1:#35618f; --g2:#46875c; --g3:#a3742f; --g4:#7d5382; --g5:#4f7086;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  padding:14px 18px 10px;
+  background:linear-gradient(160deg,#10192b 0%,#1a2942 60%,#182338 100%);
+  color:#e2e8f0;
+  min-height:100vh;
+  overflow:hidden;
+}
+/* ---------- 顶栏：品牌 + 高频图标 + 下拉菜单，单行不放平铺按钮堆 ---------- */
+.topbar{
+  display:flex;align-items:center;gap:6px;
+  height:46px;padding:0 10px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:11px;
+  margin-bottom:10px;
+}
+.brand{display:flex;align-items:center;gap:8px;margin-right:8px;user-select:none;cursor:pointer}
+.brand:hover .name{color:#fff}
+.brand svg{display:block}
+.brand .name{color:#eaf2f9;font-size:15px;font-weight:600;letter-spacing:.5px;white-space:nowrap}
+.brand .tag{color:#7f93aa;font-size:10px;border:1px solid rgba(127,147,170,.35);border-radius:4px;padding:1px 5px}
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  height:30px;padding:0 9px;
+  background:transparent;border:1px solid transparent;border-radius:8px;
+  color:#a8bdd2;font-size:12.5px;font-family:inherit;
+  cursor:pointer;white-space:nowrap;
+  transition:background .13s,color .13s,border-color .13s;
+}
+.btn:hover{background:rgba(158,210,238,.12);color:#dceefb}
+.btn svg{display:block}
+.btn.icon{width:30px;padding:0;justify-content:center}
+.btn.primary{
+  background:linear-gradient(135deg,#e8a04f,#d98a35);
+  border-color:rgba(255,190,120,.45);color:#fff;font-weight:600;
+  box-shadow:0 2px 10px rgba(217,138,53,.35);
+}
+.btn.primary:hover{background:linear-gradient(135deg,#f0ad5e,#e09340);color:#fff}
+.btn.danger{color:#ff9d9d}
+.btn .chev{opacity:.6}
+.btn:disabled{opacity:.32;cursor:default}
+.btn:disabled:hover{background:transparent;color:#a8bdd2}
+.topbar .sep{width:1px;height:20px;background:rgba(255,255,255,.12);margin:0 3px;flex:none}
+#zoomLabel{font-size:11.5px;color:#8fa0b5;min-width:40px;text-align:center;font-variant-numeric:tabular-nums}
+#statsChip{font-size:12px;color:#8fa0b5;margin-left:auto;padding:0 10px 0 4px;white-space:nowrap}
+#statsChip b{color:#cfe3f2;font-weight:600}
+/* 固化状态灯：绿=画布数据与文件一致；橙=有编辑只在浏览器草稿里（点按即保存） */
+#saveState{font-size:12px;color:#9fb2c6}
+#saveState .dot{
+  width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;
+  background:#ffb35c;box-shadow:0 0 7px rgba(255,179,92,.65);
+}
+#saveState.is-saved .dot{background:#58c08a;box-shadow:0 0 7px rgba(88,192,138,.5)}
+/* 下拉菜单与节点气泡菜单共用面板样式（#__ctxMenu） */
+.tb-trigger.menu-open{background:rgba(158,210,238,.14);color:#dceefb}
+/* ---------- 画布视口：overflow:auto 让滚轮可平移，滚动条隐藏 ---------- */
+.canvas-wrap{position:relative;height:calc(100vh - 130px)}
+.viewport{
+  position:relative;
+  width:100%;height:100%;
+  background:var(--canvas-bg);
+  background-image:radial-gradient(var(--grid-dot) 1px,transparent 1px);
+  background-size:20px 20px;
+  border-radius:12px;
+  overflow:auto;
+  scrollbar-width:none;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+  cursor:grab;
+}
+.viewport::-webkit-scrollbar{display:none}
+.viewport.panning{cursor:grabbing}
+#stage{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+#lines{position:absolute;top:0;left:0;pointer-events:none}
+#lines path{fill:none;stroke:var(--line);stroke-width:1.5}
+#stage.v #lines path,.ps #lines path{stroke:#d5dde6}
+#nodes{position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible}
+/* ---------- 节点卡片 ---------- */
+.node{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,0)}
+.node-label{
+  padding:6px 13px;
+  background:var(--node-bg);
+  border:1.5px solid var(--node-border);
+  border-radius:9px;
+  font-size:13px;color:var(--text);
+  white-space:nowrap;cursor:pointer;
+  transition:box-shadow .15s,border-color .15s,transform .15s;
+  outline:none;user-select:none;
+  font-weight:600;
+  box-shadow:0 1px 2px rgba(28,45,70,.05),0 2px 8px rgba(28,45,70,.07);
+}
+.node-label:hover{border-color:var(--accent);box-shadow:0 3px 14px rgba(63,167,221,.28);transform:translateY(-1px)}
+.node.selected .node-label{border-color:var(--accent-strong);box-shadow:0 0 0 3px rgba(33,150,211,.25)}
+.node.g0>.node-label{
+  background:linear-gradient(160deg,#1d4266,#122741);
+  border-color:#28486b;color:var(--root-fg);
+  font-size:15px;padding:8px 19px;border-radius:11px;
+  box-shadow:0 3px 12px rgba(10,25,45,.45);
+}
+.node.g1>.node-label{border-color:var(--g1);color:var(--g1)}
+.node.g2>.node-label{border-color:var(--g2);color:var(--g2)}
+.node.g3>.node-label{border-color:var(--g3);color:var(--g3)}
+.node.g4>.node-label{border-color:var(--g4);color:var(--g4)}
+.node.g5>.node-label{border-color:var(--g5);color:var(--g5)}
+.node.meta-note>.node-label{border-style:dashed;color:var(--text-light);font-weight:500;background:#fbfcfd}
+.node-label .sp{
+  font-weight:400;opacity:.85;white-space:nowrap;
+  background:#f1f5f9;border-radius:5px;padding:1px 5px 1px 4px;margin-left:4px;
+}
+.node-label .sp .role{
+  font-style:normal;font-size:9px;color:#8fa0b5;
+  background:#e3ebf2;border-radius:3px;padding:0 3px;margin-right:4px;vertical-align:1px;
+}
+/* 字辈代数角标（卡片最左侧）：蓝=按字辈字权威定代；灰=按世系推算 */
+.node-label .gen{
+  display:inline-block;margin-right:7px;padding:0 6px;
+  background:#eef2f7;border:1px solid #dbe3ec;border-radius:5px;
+  font-size:10px;font-weight:600;color:#66768c;line-height:16px;vertical-align:1px;
+  cursor:help;
+}
+.node-label .gen.match{background:#e8f1fa;border-color:#b9d6ee;color:#2f6390}
+/* 性别徽标：按谱书惯例只标「女」（男不标） */
+.node-label .gx{
+  display:inline-block;margin-left:4px;padding:0 5px;
+  background:#fbe9f0;border:1px solid #eebcd0;border-radius:5px;
+  font-size:10px;font-weight:600;color:#b04a72;line-height:16px;vertical-align:1px;
+}
+/* 过继徽标：嗣子=实底琥珀、嗣出=描边琥珀 */
+.node-label .heir{
+  display:inline-block;margin-left:4px;padding:0 5px;
+  background:#fdf3e3;border:1px solid #e8c88a;border-radius:5px;
+  font-size:10px;font-weight:700;color:#a2661b;line-height:16px;vertical-align:1px;cursor:help;
+}
+.node-label .heir.out{background:#fff;border-style:dashed;color:#b8842e}
+.node-label .heir.jian{background:#eaf4fb;border:3px double #7fb3d5;color:#2f6390}
+/* 止：谱书凡例无传者以黑圈标止 */
+.node-label .zhi{
+  display:inline-block;margin-left:4px;padding:0 4px;
+  background:#fff;border:1.5px solid #52616f;border-radius:50%;
+  font-size:10px;font-weight:700;color:#3c4a57;line-height:13px;vertical-align:1px;cursor:help;
+}
+/* 字 / 号：姓名后的浅灰小字 */
+.node-label .xh{
+  font-size:10px;font-weight:400;color:var(--text-light);margin-left:4px;letter-spacing:.5px;
+}
+/* ---------- 谱书竖排（古法）：世代成行、名字竖书（右→左读）、行左标世数 ---------- */
+:is(#stage,.ps).v .node-label{
+  writing-mode:vertical-rl;text-orientation:upright;
+  padding:13px 8px 9px;min-height:52px;position:relative;
+  width:max-content;   /* 精确包住所有列（名/女/嗣/字号/配偶），否则配偶小牌溢出左缘、名字列视觉偏右 */
+  max-width:none;
+}
+:is(#stage,.ps).v .node.g0>.node-label{padding:12px 10px}
+:is(#stage,.ps).v .node-label .gen{display:none}          /* 行左统一标世数，卡片不带角标 */
+:is(#stage,.ps).v .node-label .meta{display:none}         /* 生卒备注进 tooltip，卡面从简 */
+:is(#stage,.ps).v .rank{display:none}                     /* 排行/年份角标：古法版面不画 */
+:is(#stage,.ps).v .node-label .fold{
+  writing-mode:horizontal-tb;position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);
+}
+:is(#stage,.ps).v .node-label .gx,:is(#stage,.ps).v .node-label .heir{margin-left:0;margin-top:6px}
+:is(#stage,.ps).v .node-label .xh{margin-left:0;margin-top:6px;color:#9aa9bb;font-size:11px}
+:is(#stage,.ps).v .node-label .sp{margin-left:0;margin-top:2px;opacity:.9}
+:is(#stage,.ps).v .node-label .sp .role{margin-right:0;margin-bottom:3px}
+:is(#stage,.ps).v .node-label .fold{top:-16px;bottom:auto;margin-left:0}   /* 折叠钮挂卡片上缘，避让下方「＋」 */
+:is(#stage,.ps).v #__dropMarker{height:130px}                /* 竖排卡片较高，插行线加长 */
+.vrow{
+  position:absolute;left:8px;transform:translateY(-50%);
+  writing-mode:vertical-rl;text-orientation:upright;
+  font-size:13.5px;font-weight:600;
+  color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
+}
+/* 谱书竖排·纸面化（v15.24）：框退后、墨字当主角——hover/选中才现淡框 */
+:is(#stage,.ps).v .node-label{
+  background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
+  color:#29231c;font-size:17px;border-radius:6px;
+}
+:is(#stage,.ps).v .node.g1>.node-label,:is(#stage,.ps).v .node.g2>.node-label,
+:is(#stage,.ps).v .node.g3>.node-label,:is(#stage,.ps).v .node.g4>.node-label,
+:is(#stage,.ps).v .node.g5>.node-label{color:#29231c;border-color:transparent;background:transparent}
+:is(#stage,.ps).v .node.g0>.node-label{   /* 始祖：纸色底 + 细墨线框 */
+  background:#fffdf8;border:1px solid rgba(93,80,60,.4);color:#16324f;
+  font-size:18px;padding:13px 11px;border-radius:3px;box-shadow:none;
+}
+:is(#stage,.ps).v .node.meta-note>.node-label{color:#8a94a0;border-color:transparent;background:transparent}
+:is(#stage,.ps).v .node-label:hover{background:rgba(63,167,221,.07);border-color:rgba(63,167,221,.55);box-shadow:none;transform:none}
+:is(#stage,.ps).v .node.selected>.node-label{border-color:var(--accent-strong);background:#f2f8fd;box-shadow:0 0 0 2px rgba(33,150,211,.15)}
+:is(#stage,.ps).v .node.hit>.node-label{border-color:rgba(239,143,63,.55);background:rgba(239,143,63,.06);box-shadow:none}
+:is(#stage,.ps).v .node.hit-active>.node-label{border-color:rgba(199,126,40,.8);background:#fdf6ea;box-shadow:0 0 0 2px rgba(199,126,40,.25)}
+:is(#stage,.ps).v .node-label .sp{background:transparent;padding:0;color:#9aa0a8}
+:is(#stage,.ps).v .node-label .sp .role{background:transparent;padding:0;color:#b6bcc4}
+:is(#stage,.ps).v .node-label .gx{background:transparent;border-color:rgba(176,74,114,.4);color:#b04a72}
+:is(#stage,.ps).v .node-label .heir{background:transparent;border-color:rgba(140,110,60,.5);color:#8a6a2a}
+:is(#stage,.ps).v .node-label .heir.out{color:#b08a4a}
+:is(#stage,.ps).v .node-label .zhi{background:transparent;border-color:rgba(60,74,87,.55);color:#3c4a57}
+:is(#stage,.ps).v .node-label .xh{color:#a7adb5}
+.node-label .meta{
+  display:block;font-size:10px;font-weight:400;
+  color:var(--text-light);margin-top:2px;letter-spacing:.3px;
+  max-width:260px;overflow:hidden;text-overflow:ellipsis;
+}
+.node.g0>.node-label .meta{color:rgba(255,255,255,.75)}
+/* 折叠支角标：「▸ N」点击直接展开 */
+.node-label .fold{
+  display:inline-block;margin-left:10px;padding:0 6px;min-width:14px;text-align:center;
+  background:#eef2f7;border:1px solid #d5dde6;border-radius:9px;
+  color:var(--text-light);font-size:10px;font-weight:600;line-height:15px;
+  cursor:pointer;vertical-align:1px;
+}
+.node-label .fold:hover{background:#e2ebf4;border-color:var(--accent);color:var(--accent-strong)}
+.node-label .fold:hover{background:#e2ebf4;border-color:var(--accent);color:var(--accent-strong)}
+/* 排行角标：蓝=出生年自动排；橙=手动排行称谓 */
+.node .rank{
+  position:absolute;top:-8px;left:-9px;z-index:2;
+  min-width:16px;height:16px;line-height:16px;
+  padding:0 3px;text-align:center;
+  background:var(--rank-bg);color:#fff;
+  font-size:10px;font-weight:700;
+  border-radius:9px 9px 9px 2px;
+  pointer-events:none;
+  box-shadow:0 1px 4px rgba(239,143,63,.35);
+}
+.node .rank.by{background:var(--birth-bg);box-shadow:0 1px 4px rgba(59,110,165,.35);font-weight:600;letter-spacing:.4px}
+/* 常驻小「＋」入口（悬停按钮追不上鼠标是历史教训：必须常驻） */
+.node .quick-add{
+  position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  margin-top:3px;
+  width:24px;height:20px;line-height:17px;text-align:center;
+  background:var(--accent);color:#fff;border:none;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  padding:0;
+  opacity:.5;transition:opacity .15s,background .15s;
+  z-index:5;
+  box-shadow:0 1px 4px rgba(63,167,221,.35);
+}
+.quick-add::after{content:'';position:absolute;inset:-6px;border-radius:12px}
+.node:hover .quick-add,.node.selected .quick-add,.node.menu-open .quick-add{opacity:1}
+.node .quick-add:hover{background:var(--accent-strong)}
+/* 搜索命中高亮 */
+.node.hit>.node-label{border-color:var(--rank-bg);box-shadow:0 0 0 3px rgba(239,143,63,.28)}
+.node.hit-active>.node-label{border-color:var(--save);box-shadow:0 0 0 4px rgba(199,126,40,.42);background:#fffaf3}
+/* 气泡菜单（全局单例；先 display 后测量再定位，display:none 下 offsetWidth 恒为 0） */
+#__ctxMenu{
+  position:fixed;z-index:200;display:none;
+  background:#fff;border:1px solid #d5dce6;border-radius:10px;
+  box-shadow:0 10px 34px rgba(0,0,0,.28);
+  padding:5px;min-width:132px;
+}
+#__ctxMenu .mi{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:7px;
+  font-size:13px;color:var(--text);cursor:pointer;
+  white-space:nowrap;user-select:none;
+}
+#__ctxMenu .mi:hover{background:#eef4fb}
+#__ctxMenu .mi.danger{color:var(--danger)}
+#__ctxMenu .mi.danger:hover{background:#fdeeee}
+#__ctxMenu .mi .k{font-size:10px;color:#9aa4b2;margin-left:auto;padding-left:14px}
+#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;gap:7px}
+#__ctxMenu .mi .mi-ic{flex:none;opacity:.7;display:block}
+/* 拖拽中（被拖子树不拦截悬停命中） */
+.node.dragging{z-index:6;pointer-events:none}
+.node.dragging .node-label{opacity:.72;border-color:var(--rank-bg);box-shadow:0 4px 16px rgba(239,143,63,.4)}
+/* 拖动过继的落点反馈：琥珀=可挂到 TA 名下；红=不能（会成环） */
+.node.drop-target>.node-label{
+  border-color:var(--save)!important;background:#fff8ec!important;
+  box-shadow:0 0 0 4px rgba(199,126,40,.35)!important;
+}
+.node.drop-bad>.node-label{
+  border-color:#d66!important;background:#fdeeee!important;
+  box-shadow:0 0 0 3px rgba(214,102,102,.28)!important;
+}
+#__dropMarker{
+  position:absolute;width:0;height:88px;
+  border-left:2px dashed var(--rank-bg);
+  display:none;pointer-events:none;
+}
+/* 搜索面板（悬浮于画布容器上，不随内容滚动） */
+#searchBox{
+  position:absolute;top:12px;right:12px;z-index:60;
+  display:none;align-items:center;gap:6px;
+  background:#fff;border:1px solid #d5dce6;border-radius:9px;
+  box-shadow:0 6px 22px rgba(0,0,0,.22);
+  padding:6px 8px;
+}
+#searchBox.open{display:flex}
+#searchBox input{
+  width:180px;border:1px solid #c9d3de;border-radius:6px;
+  padding:4px 8px;font-size:12px;font-family:inherit;outline:none;color:var(--text);
+}
+#searchBox input:focus{border-color:var(--accent)}
+#searchBox .cnt{font-size:11px;color:var(--text-light);min-width:44px;text-align:center}
+#sbList{
+  position:absolute;top:calc(100% + 6px);right:0;width:260px;max-height:300px;overflow:auto;
+  background:#fff;border:1px solid #d5dce6;border-radius:9px;
+  box-shadow:0 8px 26px rgba(0,0,0,.24);z-index:70;display:none;padding:4px;
+}
+#sbList.open{display:block}
+.sb-item{padding:6px 9px;font-size:12px;cursor:pointer;display:flex;gap:8px;align-items:center;border-radius:6px}
+.sb-item:hover,.sb-item.sel{background:#eef4fb}
+.sb-item .g{color:#2f6390;font-size:10px;background:#e8f1fa;border:1px solid #b9d6ee;border-radius:4px;padding:0 4px;flex:none}
+.sb-item .nm{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-item .nm .gx{font-style:normal;font-size:9px;font-weight:600;color:#b04a72;background:#fbe9f0;border:1px solid #eebcd0;border-radius:4px;padding:0 3px;margin-left:4px}
+.sb-item .sub{color:#8fa0b5;font-size:10px;margin-left:auto;flex:none}
+#searchBox button{
+  border:none;background:#eef2f7;color:var(--text-light);
+  border-radius:5px;padding:3px 8px;font-size:12px;cursor:pointer;font-family:inherit;
+}
+#searchBox button:hover{background:#e0e8f0;color:var(--text)}
+/* 图例 / 提示条 */
+.legend{
+  display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+  font-size:10.5px;color:#7f93aa;margin-top:7px;
+  min-height:20px;
+}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:13px;height:8px;border-radius:2px;display:inline-block}
+.tips{
+  font-size:10.5px;color:#8fa0b5;margin-top:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tips b{color:#5cc3f2;font-weight:600}
+/* 档案弹窗（class 控制显隐；hidden 属性会被自定义 display 覆盖——历史教训） */
+.modal-mask{
+  position:fixed;inset:0;background:rgba(10,14,25,.6);
+  display:none;align-items:center;justify-content:center;z-index:100;
+  backdrop-filter:blur(3px);
+}
+.modal-mask.open{display:flex}
+.modal{
+  width:400px;max-width:92vw;
+  background:#f6f8fb;border-radius:12px;padding:20px 22px;
+  box-shadow:0 18px 60px rgba(0,0,0,.4);
+  color:var(--text);
+}
+.modal h3{margin:0 0 14px;font-size:15px;color:var(--root-bg)}
+.modal label{display:block;font-size:12px;color:var(--text-light);margin-bottom:10px}
+.modal input,.modal textarea,.modal select{
+  display:block;width:100%;margin-top:4px;
+  padding:7px 10px;border:1px solid #c3ccd8;border-radius:6px;
+  font-size:13px;font-family:inherit;color:var(--text);background:#fff;
+}
+.modal input:focus,.modal textarea:focus,.modal select:focus{outline:none;border-color:var(--accent)}
+.modal .row{display:flex;gap:10px}
+.modal .row label{flex:1}
+/* 设置弹窗里的行内勾选框：不占满行 */
+.modal label.checkline{display:flex;align-items:center;gap:8px;cursor:pointer}
+.modal label.checkline input{width:auto;margin:0}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.modal-btns button{
+  padding:7px 18px;border-radius:6px;border:1px solid #c3ccd8;
+  background:#fff;color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
+}
+.modal-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
+.modal-btns button:hover{filter:brightness(1.12)}
+/* 帮助弹窗（快捷键 + 数据说明） */
+#__helpModal .modal{width:560px;max-height:84vh;overflow:auto}
+#__helpModal h4{margin:16px 0 8px;font-size:13px;color:var(--root-bg);border-bottom:1px solid #dde4ec;padding-bottom:5px}
+#__helpModal h4:first-of-type{margin-top:2px}
+.hk-table{width:100%;border-collapse:collapse;font-size:12px}
+.hk-table td{padding:4px 6px;border-bottom:1px dashed #e6ebf1;color:var(--text)}
+.hk-table td:first-child{width:150px;color:#4a5568}
+.hk-table kbd{
+  display:inline-block;padding:1px 6px;border:1px solid #c3ccd8;border-bottom-width:2px;
+  border-radius:5px;background:#fff;font-size:11px;font-family:Consolas,monospace;color:#334;
+  margin-right:3px;
+}
+.help-note{font-size:12px;color:var(--text-light);line-height:1.7;margin:4px 0 0}
+.help-note b{color:var(--save)}
+/* 字辈表网格：蓝框=当前族谱里有人用这个字辈 */
+.zbgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin-top:6px}
+.zb{
+  text-align:center;padding:4px 0;border:1px solid #dde4ec;border-radius:6px;
+  font-size:12px;color:#445;background:#fff;
+}
+.zb small{display:block;font-size:9px;color:#9aa6b5;line-height:1.2}
+.zb.on{border-color:#7db3dd;background:#e8f1fa;color:#2f6390;font-weight:600}
+.zb.on small{color:#5a8ab5}
+/* toast 常驻静态元素（运行期动态 append 会污染保存的文件快照） */
+#__toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:rgba(12,20,34,.92);color:#fff;
+  padding:10px 18px;border-radius:8px;font-size:13px;
+  z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;
+  max-width:80vw;
+}
+/* =========================================================
+ * 打印：不用画布绝对坐标（跨页会切半张卡片），改为生成文档式大纲
+ * ========================================================= */
+#printArea{display:none}
+@media print{
+  body{background:#fff;color:#111;padding:0;overflow:visible}
+  .topbar,.legend,.tips,.modal-mask,#__ctxMenu,#searchBox,.viewport,.canvas-wrap,#__toast{display:none!important}
+  #printArea{display:block;padding:0;font-family:"Songti SC","SimSun",serif}
+  #printArea h2{font-size:20px;margin:0 0 6px}
+  #printArea .pxu{font-size:11.5px;color:#333;background:#f5f7fa;border:1px solid #dde4ec;border-radius:6px;padding:8px 12px;margin:8px 0 14px;line-height:1.8}
+  #printArea .pxu b{color:#16324f}
+  #printArea .pgen{display:inline-block;border:1px solid #b9c3cf;border-radius:4px;padding:0 4px;font-size:10.5px;color:#2f6390;margin-right:5px;background:#f2f6fa}
+  #printArea .pzi{color:#555;font-size:11px}
+  #printArea li b{font-size:13.5px}
+  #printArea .pstage-wrap{margin:0 auto}
+  #printArea .ps{position:relative}
+}
+#printArea h2{font-size:18px;color:#16324f;margin:0 0 10px;font-family:"Songti SC","SimSun",serif}
+#printArea ul.ptree{list-style:none;margin:0;padding-left:0}
+#printArea ul.ptree ul{list-style:none;margin:0;padding-left:22px;border-left:1.5px solid #c8d2dc;margin-left:6px}
+#printArea ul.ptree>li{padding-left:4px}
+#printArea li{margin:3px 0;line-height:1.55;page-break-inside:avoid;font-size:12px}
+#printArea li b{font-family:"Songti SC","SimSun",serif;font-size:13px}
+#printArea .psp{color:#666}
+#printArea .pmeta{color:#888;font-size:11px;margin-left:4px}
+@page{size:A4 portrait;margin:12mm}
+</style>
+</head>
+<body>
+
+<!-- =========================================================
+  数据真源（Single Source of Truth）：本文件内嵌的 JSON。
+  · 打开这个 HTML = 读取这份数据 —— 任何浏览器、任何电脑都一样
+  · 数据会在编辑时自动保存到本浏览器（无感），无需手动操作
+  · 「文件 ▾」里的备份 / 恢复用于换电脑或防清缓存
+========================================================= -->
+<script id="__treeData" type="application/json">
+{
+  "id": "root",
+  "name": "家族族谱",
+  "spouses": [],
+  "expanded": true,
+  "children": [
+    {
+      "id": "c_mtaj2nrh1",
+      "name": "周勤善",
+      "spouses": [],
+      "birth": "",
+      "death": "",
+      "note": "",
+      "expanded": true,
+      "children": [
+        {
+          "id": "b2",
+          "name": "周少群",
+          "spouses": [
+            "李平"
+          ],
+          "birth": "1951",
+          "death": "",
+          "note": "",
+          "expanded": true,
+          "children": [
+            {
+              "id": "b2a",
+              "name": "周豪",
+              "spouses": [
+                "丁嘉"
+              ],
+              "birth": "",
+              "death": "",
+              "note": "",
+              "expanded": true,
+              "children": [
+                {
+                  "id": "b2a1",
+                  "name": "周厚翰",
+                  "spouses": [],
+                  "birth": "2010",
+                  "death": "",
+                  "note": "",
+                  "expanded": true,
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "birth": "",
+  "death": "",
+  "note": "",
+  "clan": {
+    "ming": "潮阳泗水周氏族谱",
+    "tang": "申锡堂",
+    "chain": "濂溪（周敦颐，字茂叔，号濂溪）—焘—縯—良卿（字师明）—宣道（一世，承节公）—景一（二世，朝奉公）—梅叟（三世，潮阳泗水开基祖）",
+    "yuanzu": "先祖：湖南道州 归仁公；北宋 周敦颐，字茂叔，号濂溪",
+    "shizu": "一世祖：承节公讳宣道，良卿公之长子，以祖荫承节郎，妣黄氏，墓由孙男梅叟迁修葬莲花心山\n二世祖：朝奉公讳景一，宣道公之长子，以祖荫十三爵朝奉郎，妣郑氏，葬船舵岭\n三世：梅叟公昆仲四人，宋嘉熙二年（1238）登进士，淳祐三年（1243）授知潮州，宝祐四年（1256）任广东转运判官提刑，景定五年（1264）偕三个胞弟入潮阳卜居泗水",
+    "qianzu": "始迁祖：（南宋）宣，字承节；（南宋）景，字朝奉",
+    "origin": "濂溪第四代孙良卿，字师明（卜熙），以祖荫承节郎，居原籍湖南道县。良卿之子宣道（宣通）号承节，以祖荫承节郎。宣道有二子：景一、景珩。景一的长子梅叟宋嘉熙登进士，淳祐三年授知潮州，后任广东转运判官提刑，偕三个胞弟卜居潮阳泗水。奉祖宣道（承节）为一世，奉父景一（朝奉）为二世，梅叟和三个胞弟为三世，创基潮阳泗水周氏宗支。景珩于宋朝年间由江西江州迁广东南海石塘落藉，奉祀其祖良卿、其父宣道，创基广东南海石塘周氏宗支。"
+  },
+  "zibei": [
+    "多",
+    "士",
+    "敬",
+    "宏",
+    "毓",
+    "英",
+    "资",
+    "衍",
+    "芳",
+    "绪",
+    "勤",
+    "修",
+    "昭",
+    "厚",
+    "德",
+    "翊",
+    "赞",
+    "耀",
+    "明",
+    "良",
+    "攸",
+    "子",
+    "崇",
+    "伯",
+    "钦",
+    "淑",
+    "宪",
+    "绍",
+    "懿",
+    "徽",
+    "植",
+    "本",
+    "宗",
+    "永",
+    "健",
+    "嗣",
+    "典",
+    "运",
+    "开",
+    "祥"
+  ]
+}
+
+</script>
+
+<header class="topbar">
+  <div class="brand" id="__brand" title="谱序 · 宗族源流（堂号/始祖/源流世系）">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="2" width="6" height="5" rx="1.4" fill="#5cc3f2"></rect>
+      <rect x="2.5" y="10" width="6" height="5" rx="1.4" fill="#5cc3f2" opacity=".75"></rect>
+      <rect x="15.5" y="10" width="6" height="5" rx="1.4" fill="#5cc3f2" opacity=".75"></rect>
+      <rect x="8.2" y="18" width="7.6" height="4.6" rx="1.4" fill="#e8a04f"></rect>
+      <path d="M12 7v3M5.5 15v1.6c0 .9.7 1.4 1.6 1.4H12v-2M18.5 15v1.6c0 .9-.7 1.4-1.6 1.4H12" stroke="#7f93aa" stroke-width="1.3"></path>
+    </svg>
+    <span class="name" id="__puName">家族族谱</span>
+    <span class="tag" id="__tangTag" style="display:none"></span>
+    <span class="tag">传代树</span>
+  </div>
+  <button class="btn icon" id="__undoBtn" onclick="undo()" title="撤销（Ctrl+Z）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
+  <button class="btn icon" id="__redoBtn" onclick="redo()" title="重做（Ctrl+Y）" disabled=""><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"></path></svg></button>
+  <button class="btn icon" onclick="openSearch()" title="搜索（Ctrl+F）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
+  <span class="sep"></span>
+  <button class="btn" id="btnView" title="视图">视图<svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 9 7 7 7-7"></path></svg></button>
+  <button class="btn" id="btnFile" title="文件">文件<svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 9 7 7 7-7"></path></svg></button>
+  <span class="sep"></span>
+  <button class="btn icon" onclick="zoomBy(-0.15)" title="缩小"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16"></path></svg></button>
+  <span id="zoomLabel">90%</span>
+  <button class="btn icon" onclick="zoomBy(0.15)" title="放大"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg></button>
+  <button class="btn icon" onclick="fitToScreen()" title="适应屏幕"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"></path></svg></button>
+  <button class="btn icon" onclick="resetZoom()" title="恢复 1:1"><span style="font-size:11.5px;font-weight:600">1:1</span></button>
+  <span id="statsChip"><b>4</b> 位成员 · 配偶 <b>2</b> · 4 代</span>
+  <button class="btn is-saved" id="saveState" title="已绑定「家族族谱-思维导图.html」，编辑约 1 秒自动保存；Ctrl+S 立即保存"><span class="dot"></span>已保存</button>
+  <button class="btn icon" onclick="openHelp()" title="帮助 / 快捷键"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.6"></path><path d="M12 17h.01"></path></svg></button>
+  <input type="file" id="__importFile" accept=".json,.html,.htm,application/json,text/html" style="display:none">
+</header>
+
+<div class="modal-mask" id="__detailModal">
+  <div class="modal">
+    <h3 id="__dmTitle">人员档案</h3>
+    <label>姓名<input id="__dmName"></label>
+    <div class="row">
+      <label>出生<input id="__dmBirth" placeholder="1951 或 1951-03-15（约1900 / 1920? 也行；卡片只显示年份）"></label>
+      <label>卒年<input id="__dmDeath" placeholder="1985 或 1985-07-02（在世留空）"></label>
+    </div>
+    <div class="row">
+      <label>性别<select id="__dmGender"><option value="">男</option><option value="f">女</option></select></label>
+      <label>过继<select id="__dmHeir"><option value="">无</option><option value="in">嗣子（入继此支）</option><option value="out">嗣出（出继他支）</option><option value="jian">兼祧（一子继两房）</option></select></label>
+    </div>
+    <div class="row">
+      <label>字<input id="__dmZi" placeholder="谱书常记，如 昭子"></label>
+      <label>号<input id="__dmHao" placeholder="可选"></label>
+    </div>
+    <label class="checkline"><input type="checkbox" id="__dmZhi"> 止（无传 —— 谱书凡例：无传者以黑圈标止）</label>
+    <div id="__dmSp"></div>
+    <label>备注<textarea id="__dmNote" rows="3" placeholder="官职 / 迁徙 / 过继 / 生平注记……"></textarea></label>
+    <div class="modal-btns">
+      <button class="primary" id="__dmSave">保存</button>
+      <button id="__dmCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div id="__ctxMenu" style="display: none;"></div>
+<div id="__toast" role="status" style="opacity: 0;">已绑定「家族族谱-思维导图.html」，以后保存自动覆盖它</div>
+
+<div class="modal-mask" id="__helpModal">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <h4>数据是怎么保存的</h4>
+    <p class="help-note">
+      <b>保存是无感的</b>：所有修改即时自动保存在本浏览器（和 Gmail 草稿一样），没有保存按钮、没有弹窗、不需要任何操作。顶栏绿灯「已保存」常亮即安心。
+    </p>
+    <p class="help-note">
+      数据存在<b>这台电脑的这个浏览器</b>里。两件事需要记得：<b>换电脑/换浏览器</b>时先「文件 ▾ → 备份到文件」下载 json，到新机器「恢复备份」；<b>清理浏览器数据</b>前也先备份。旧版 html 里若有数据，「恢复备份」可直接读出。
+    </p>
+    <h4>编辑</h4>
+    <table class="hk-table">
+      <tbody><tr><td><kbd>＋</kbd> 节点下方常驻按钮 / 右键节点</td><td>打开该成员的操作菜单</td></tr>
+      <tr><td><kbd>双击</kbd> 姓名</td><td>行内改名</td></tr>
+      <tr><td><kbd>双击</kbd> 姓名下方小字行</td><td>编辑生卒年与备注（档案）</td></tr>
+      <tr><td><kbd>双击</kbd> 配偶名</td><td>改名；清空并确定 = 移除</td></tr>
+      <tr><td><kbd>Tab</kbd> / <kbd>Enter</kbd></td><td>为选中者加子女 / 加同辈</td></tr>
+      <tr><td><kbd>Ctrl+Shift+S</kbd></td><td>加配偶（可多次，支持元配/继室）</td></tr>
+      <tr><td><kbd>Ctrl+I</kbd> / <kbd>F2</kbd></td><td>档案 / 改名</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>删除（含后代，可撤销）</td></tr>
+      <tr><td>按住节点左右拖</td><td>调长幼次序（最左为长）</td></tr>
+      <tr><td>按住拖到某卡片上停一下</td><td>过继：TA（连同后代整支）成为此人子女，Ctrl+Z 可撤销</td></tr>
+    </tbody></table>
+    <h4>视图与数据</h4>
+    <table class="hk-table">
+      <tbody><tr><td><kbd>Ctrl+滚轮</kbd></td><td>以光标为中心缩放</td></tr>
+      <tr><td>滚轮 / 触控板 / 拖空白</td><td>平移画布</td></tr>
+      <tr><td><kbd>Ctrl+F</kbd></td><td>搜索（姓名/配偶/年份/备注），Enter 循环跳转</td></tr>
+      <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>撤销 / 重做</td></tr>
+      <tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>
+      <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
+      <tr><td>视图 ▾ 谱书竖排（古法）</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
+      <tr><td>视图 ▾ 谱书显示设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
+    </tbody></table>
+    <h4 id="__zbTitle">字辈表（蓝框 = 族谱中已出现）</h4>
+    <div id="__zbGrid" class="zbgrid"></div>
+    <div class="modal-btns"><button class="primary" id="__helpClose">知道了</button></div>
+  </div>
+</div>
+
+<div class="modal-mask" id="__setModal">
+  <div class="modal">
+    <h3>谱书显示设置</h3>
+    <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
+    <p class="help-note" style="margin:-4px 0 12px">
+      传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
+    </p>
+    <label class="checkline"><input type="checkbox" id="__cfgSpouse"> 配偶按谱书式显示（丁嘉 → 丁氏嘉；数据仍存原名，搜索不受影响）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「周」（关闭 = 按谱书习惯只报名：周勤善 → 勤善；仅显示层）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgCn"> 世数用汉字（廿三世·勤；关闭显示 23世·勤）</label>
+    <div class="modal-btns">
+      <button class="primary" id="__setSave">保存</button>
+      <button id="__setCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="__clanModal">
+  <div class="modal">
+    <h3>谱序 · 宗族源流</h3>
+    <div class="row">
+      <label>谱名<input id="__clMing" placeholder="如 潮阳泗水周氏族谱"></label>
+      <label>堂号<input id="__clTang" placeholder="如 申锡堂"></label>
+    </div>
+    <label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="濂溪（周敦颐）—焘—縯—良卿—宣道—景一—梅叟"></label>
+    <label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>
+    <label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>
+    <label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>
+    <label>家族来源<textarea id="__clOrigin" rows="5" placeholder="宗支源流叙述……"></textarea></label>
+    <div class="modal-btns">
+      <button class="primary" id="__clSave">保存</button>
+      <button id="__clCancel">取消</button>
+    </div>
+  </div>
+</div>
+
+<div class="canvas-wrap">
+  <div class="viewport" id="viewport">
+    <div id="stage" style="width: 234px; height: 540px; transform: scale(0.9);">
+      <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
+      <div id="nodes"><div id="__dropMarker"></div></div>
+    </div>
+  </div>
+  <div id="searchBox">
+    <input id="sbInput" placeholder="搜姓名/配偶/备注…">
+    <span class="cnt" id="sbCount"></span>
+    <button id="sbPrev" title="上一个（Shift+Enter）">▲</button>
+    <button id="sbNext" title="下一个（Enter）">▼</button>
+    <button id="sbClose" title="关闭（Esc）">✕</button>
+  </div>
+  <div id="sbList"></div>
+</div>
+
+<div class="tips" title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 按住拖=调次序，拖到卡片上停一下=过继 · Ctrl+滚轮=缩放 · 滚轮/拖空白=平移 · 编辑自动保存 · 详细说明见「?」帮助">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖</b>=调次序或过继 · <b>Ctrl+滚轮</b>=缩放 · 滚轮/拖空白=平移 · 自动保存 · 更多见「?」帮助</div>
+</div>
+
+<div class="legend">
+  <span><i style="background:var(--root-bg)"></i>总根</span>
+  <span><i style="background:var(--g1)"></i>第一代</span>
+  <span><i style="background:var(--g2)"></i>第二代</span>
+  <span><i style="background:var(--g3)"></i>第三代</span>
+  <span><i style="background:var(--g4)"></i>第四代</span>
+  <span><i style="background:var(--g5)"></i>第五代及以后</span>
+  <span><i style="border:1px dashed var(--text-light);background:transparent"></i>待核对备注</span>
+  <span><b style="color:var(--birth-bg)">蓝色角标</b>=出生年（自动排）</span>
+  <span><b style="color:var(--rank-bg)">橙色角标</b>=排行称谓（最左为长）</span>
+  <span><b style="color:var(--accent)">▸ N</b>=已折叠 N 位后代（点它展开）</span>
+  <span><b style="color:#b04a72">女</b>=女性成员（男不标，谱书惯例）</span>
+</div>
+
+<script>
+/* =========================================================
+ * 家族族谱 v13 架构分区：
+ *   ①工具 ②数据层(migrate/sanitize/加载优先级) ③历史栈(撤销/重做)
+ *   ④渲染三遍法 ⑤选择与行内编辑 ⑥档案弹窗 ⑦气泡菜单(+右键)
+ *   ⑧编辑动作 ⑨拖拽排序 ⑩缩放平移 ⑪搜索 ⑫导入导出打印 ⑬键盘总控
+ * ========================================================= */
+
+/* ---------- ① 工具 ---------- */
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+let _seq = 1;
+function genId(p){ return p + '_' + Date.now().toString(36) + (_seq++); }
+function findNode(id, n = treeData){
+  if (!n) return null;
+  if (n.id === id) return n;
+  if (n.children) for (const c of n.children){ const r = findNode(id, c); if (r) return r; }
+  return null;
+}
+function findParent(id, n = treeData, parent = null){
+  if (!n) return null;
+  if (n.id === id) return parent;
+  if (n.children) for (const c of n.children){ const r = findParent(id, c, n); if (r) return r; }
+  return null;
+}
+/* 配偶称谓：第 1 位=原配、第 2 位=续弦、其后三房/四房…… */
+function spouseRole(i){
+  return ['原配', '续弦', '三房', '四房', '五房', '六房', '七房', '八房'][i] || '第' + (i + 1) + '房';
+}
+/* 配偶称谓细化：可按人指定 配/继配/娶/聘/侧室（存 n.spRoles[i]，覆盖次序默认称谓）
+ * 传统语义：配=初婚；继配=前妻亡故/离异后再娶初婚女；娶=再婚（再醮）妇；聘=定亲未娶 */
+const SP_TERMS = ['配', '继配', '娶', '聘', '侧室'];
+function spouseRoleAt(n, i){
+  const o = n.spRoles && n.spRoles[i];
+  return o || (cfg.vertical ? spouseBookRole(i) : spouseRole(i));
+}
+/* 谱书式称谓（竖排古法用）：配 / 继配 / 三配…… */
+function spouseBookRole(i){
+  return ['配', '继配', '三配', '四配', '五配', '六配', '七配', '八配'][i] || '第' + (i + 1) + '配';
+}
+function spousesText(n){
+  return (n.spouses || []).map((s, i) => spouseRoleAt(n, i) + ' ' + spouseDisplay(s)).join(' · ');
+}
+function displayName(n){
+  let s = dispName(n.name) + (n.gender === 'f' ? '（女）' : '');
+  if (n.zi) s += '，字' + n.zi;
+  if (n.hao) s += '，号' + n.hao;
+  if (n.heir === 'in') s += '，嗣子';
+  if (n.heir === 'out') s += '，嗣出';
+  if (n.heir === 'jian') s += '，兼祧';
+  if (n.zhi) s += '，止';
+  return s + (n.spouses && n.spouses.length ? '（' + spousesText(n) + '）' : '');
+}
+/* 过继徽标提示 */
+function heirTitle(n){
+  return n.heir === 'in' ? '嗣子：过继来继承此支（谱书式「过继TA为子」）'
+       : n.heir === 'out' ? '嗣出：过继给他人为子（谱书式「TA过继某某为子」）'
+       : n.heir === 'jian' ? '兼祧（兼嗣）：一子兼继两房' : '';
+}
+
+/* ---------- 显示设置（本浏览器配置，与族谱数据分开存） ----------
+ * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
+ * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
+ * showSurname：姓名是否带姓氏「周」（关 = 谱书习惯只报名：周勤善 → 勤善）
+ * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数） */
+const CFG_KEY = 'zupu_cfg_v1';
+let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
+(function loadCfg(){
+  try {
+    const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+    if (typeof c.genBase === 'number' && c.genBase >= 1) cfg.genBase = Math.min(99, Math.round(c.genBase));
+    if (typeof c.bookSpouse === 'boolean') cfg.bookSpouse = c.bookSpouse;
+    if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
+    if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
+    if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+  } catch(e){}
+})();
+function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
+function genOffset(){ return Math.max(0, cfg.genBase - 1); }
+function genUnit(){ return genOffset() ? '世' : '代'; }
+/* 阿拉伯数字 → 汉数字（谱书式）：10=十 11=十一 20=廿 23=廿三 30=卅 45=卌五 52=五十二 */
+const CN_D = ['零','一','二','三','四','五','六','七','八','九'];
+function numToCn(n){
+  n = Math.round(n);
+  if (n < 10) return CN_D[n];
+  if (n === 10) return '十';
+  if (n < 20) return '十' + CN_D[n % 10];
+  if (n < 50){
+    const t = ['','','廿','卅','卌'][Math.floor(n / 10)];
+    return t + (n % 10 ? CN_D[n % 10] : '');
+  }
+  return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');
+}
+function genLabel(g){ const v = g + genOffset(); return (cfg.cnNum ? numToCn(v) : v) + genUnit(); }
+const FAMILY_SURN = '周';   // 本谱姓氏；关闭「显示姓氏」时仅作显示层剥除
+function dispName(name){
+  const s = String(name || '');
+  if (cfg.showSurname || s === FAMILY_SURN || !s.startsWith(FAMILY_SURN)) return s;
+  return s.slice(FAMILY_SURN.length);
+}
+/* 谱书式配偶名：姓 + 氏 + 名（复姓取两字；已含「氏」的原样保留） */
+const CS_SURN = '欧阳司马诸葛上官皇甫尉迟慕容令狐宇文轩辕东方端木长孙公孙淳于单于太叔申屠公冶宗政濮阳仲孙钟离鲜于闾丘子车亓官巫马公西漆雕乐正宰父谷梁拓跋夹谷南宫西门东郭呼延第五';
+function spouseDisplay(s){
+  if (!cfg.bookSpouse || !s) return s;
+  if (s.indexOf('氏') > -1) return s;
+  const two = CS_SURN.indexOf(s.slice(0, 2)) > -1;   // 复姓：含只有复姓两字（欧阳 → 欧阳氏）
+  const sur = two ? s.slice(0, 2) : s.slice(0, 1);
+  return sur + '氏' + s.slice(sur.length);           // 只有姓也补氏（黄 → 黄氏）
+}
+function parseYear(v){
+  if (v === null || v === undefined) return null;
+  const m = String(v).match(/(\d{4})/);
+  return m ? parseInt(m[1], 10) : null;
+}
+/* 排行称谓：1→长、2→次、3→三…… */
+const RANK_WORDS = ['长','次','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五'];
+function rankWord(i){ return RANK_WORDS[i] || String(i + 1); }
+function metaLine(n){
+  const parts = [];
+  const bRaw = (n.birth || '').trim(), dRaw = (n.death || '').trim();
+  const by = parseYear(bRaw), dy = parseYear(dRaw);
+  const b = by ? String(by) : bRaw;   // 卡面只露年份；月日收进 tooltip/搜索/备份
+  const d = dy ? String(dy) : dRaw;
+  if (b && d) parts.push(b + ' – ' + d);
+  else if (b) parts.push(b + ' 生');
+  else if (d) parts.push('卒 ' + d);
+  if (n.note) parts.push(n.note);
+  return parts.join(' · ');
+}
+/* 完整生卒（含月日）：仅当写的内容超出四位年份时出现在 tooltip */
+function fullDatesLine(n){
+  const b = (n.birth || '').trim(), d = (n.death || '').trim();
+  const beyondYear = v => !!v && (!parseYear(v) || v !== String(parseYear(v)));
+  if (!beyondYear(b) && !beyondYear(d)) return '';
+  const seg = [b, d].filter(Boolean).join(b && d ? ' – ' : '');
+  return seg ? '生卒：' + seg : '';
+}
+function countDescendants(n){
+  let c = 0;
+  (function w(x){ if (x.children) x.children.forEach(k => { c++; w(k); }); })(n);
+  return c;
+}
+/* anc 的子树里是否包含 id（拖动过继的防环检查用） */
+function subtreeContains(anc, id){
+  if (anc.id === id) return true;
+  if (anc.children) for (const c of anc.children) if (subtreeContains(c, id)) return true;
+  return false;
+}
+/* 有出生年的同辈按年份升序自动排长幼；没数据的保持手动次序、排在其后 */
+function sortSiblings(p){
+  if (!p.children || p.children.length < 2) return false;
+  const known = p.children.filter(c => parseYear(c.birth));
+  if (!known.length) return false;
+  const unknown = p.children.filter(c => !parseYear(c.birth));
+  p.children = known.slice().sort((a, b) => parseYear(a.birth) - parseYear(b.birth)).concat(unknown);
+  return true;
+}
+
+/* ---------- ② 数据层：唯一真源 = 本文件内嵌 JSON ----------
+ * JS 里不再复制一份初始数据（v12 的双份手工同步必然漂移）。
+ * 「初始模板」即本文件内嵌内容的克隆；若内嵌缺失/损坏则退化为空白根，
+ * 可通过「恢复备份（json / 旧版 html）」救回数据。 */
+function migrate(d){
+  if (!d || typeof d !== 'object') return d;
+  Object.keys(d).forEach(k => { if (k[0] === '_') delete d[k]; });
+  if ('spouse' in d){ d.spouses = d.spouse ? [d.spouse] : []; delete d.spouse; }
+  if (!Array.isArray(d.spouses)) d.spouses = [];
+  if (!Array.isArray(d.children)) d.children = [];
+  if (!('birth' in d)) d.birth = '';
+  if (!('death' in d)) d.death = '';
+  if (!('note' in d) || d.note === null) d.note = '';
+  if (!('gender' in d) || d.gender !== 'f') d.gender = '';   // 性别：谱书惯例只标「女」
+  if (!('zi' in d) || d.zi === null) d.zi = '';              // 字
+  if (!('hao' in d) || d.hao === null) d.hao = '';           // 号
+  if (!('heir' in d) || (d.heir !== 'in' && d.heir !== 'out' && d.heir !== 'jian')) d.heir = '';   // 过继：in=嗣子 out=嗣出 jian=兼祧
+  if (!('zhi' in d) || d.zhi !== true) d.zhi = false;   // 止：无传（谱书黑圈标），手动标记
+  if ('spRoles' in d && (typeof d.spRoles !== 'object' || d.spRoles === null || Array.isArray(d.spRoles))) delete d.spRoles;
+  else if (d.spRoles){
+    const cleanR = {};
+    Object.keys(d.spRoles).forEach(k => {
+      const i = +k;
+      if (d.spRoles[k] && i >= 0 && i < d.spouses.length) cleanR[k] = d.spRoles[k];
+    });
+    if (Object.keys(cleanR).length) d.spRoles = cleanR; else delete d.spRoles;
+  }
+  if (typeof d.expanded !== 'boolean') d.expanded = true;
+  if ('zibei' in d && !Array.isArray(d.zibei)) delete d.zibei;   // 字辈表（根节点字段，随文件走）
+  if ('clan' in d && (typeof d.clan !== 'object' || d.clan === null || Array.isArray(d.clan))) delete d.clan;   // 谱序（堂号/源流）
+  d.children.forEach(migrate);
+  return d;
+}
+
+/* ---------- 字辈定代 ----------
+ * 优先级：名字含字辈字（权威）> 父辈推算 > 同辈推算 > 世系偏移。
+ * 推算结果与字辈冲突时（如中间缺一代），以字辈为准并在角标提示里注明。 */
+function computeGenerations(){
+  const map = new Map();   // id -> {gen, src:'match'|'parent'|'sibling'|'depth', zi, via, conflict}
+  const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  if (!zb.length) return map;
+  const matchOf = name => {
+    const s = String(name || '');
+    for (let i = 0; i < zb.length; i++) if (zb[i] && s.includes(zb[i])) return { gen: i + 1, zi: zb[i] };
+    return null;
+  };
+  let anchors = 0;
+  (function pass1(n){
+    if (n.id !== 'root'){
+      const m = matchOf(n.name);
+      if (m){ map.set(n.id, { gen: m.gen, src: 'match', zi: m.zi }); anchors++; }
+    }
+    if (n.children) n.children.forEach(pass1);
+  })(treeData);
+  (function pass2(n, pgen){
+    /* 子代 = 父代 + 1；pgen 传入的是「当前节点自己的代数」 */
+    if (n.id !== 'root' && !map.get(n.id) && pgen != null)
+      map.set(n.id, { gen: pgen + 1, src: 'parent' });
+    const myGen = n.id === 'root' ? null : (map.get(n.id) ? map.get(n.id).gen : (pgen != null ? pgen + 1 : null));
+    if (n.children) n.children.forEach(c => pass2(c, myGen));
+  })(treeData, null);
+  (function pass3(n){
+    if (!n.children || !n.children.length) return;
+    const known = n.children.find(c => map.get(c.id));
+    if (known){
+      const g = map.get(known.id);
+      n.children.forEach(c => { if (!map.get(c.id)) map.set(c.id, { gen: g.gen, src: 'sibling', via: known.name }); });
+    }
+    n.children.forEach(pass3);
+  })(treeData);
+  if (anchors){
+    let off = null;
+    (function find(n, d){
+      if (off != null) return;
+      const e = map.get(n.id);
+      if (e && e.src === 'match'){ off = e.gen - d; return; }
+      if (n.children) n.children.forEach(c => find(c, d + 1));
+    })(treeData, 0);
+    (function fill(n, d){
+      if (n.id !== 'root' && !map.get(n.id)) map.set(n.id, { gen: d + off, src: 'depth' });
+      if (n.children) n.children.forEach(c => fill(c, d + 1));
+    })(treeData, 0);
+  }
+  (function conflicts(n, pgen){
+    if (n.id !== 'root'){
+      const e = map.get(n.id);
+      if (e && e.src === 'match' && pgen != null && e.gen !== pgen + 1) e.conflict = pgen + 1;
+    }
+    const g = n.id === 'root' ? null : (map.get(n.id) ? map.get(n.id).gen : pgen);
+    if (n.children) n.children.forEach(c => conflicts(c, g));
+  })(treeData, null);
+  return map;
+}
+function genTitle(g, n){
+  const p = findParent(n.id);
+  const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  const ziOfGen = zbList[g.gen - 1] || '';
+  const unused = ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';
+  const base = genOffset() ? '（谱书世数，应用自算第' + g.gen + '代）' : '';
+  switch (g.src){
+    case 'match':
+      return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base
+        + (g.conflict ? '（注意：按父辈推算应为' + genLabel(g.conflict) + '，树中可能缺一代）' : '');
+    case 'parent':  return '由父/母「' + (p ? dispName(p.name) : '') + '」推算：' + genLabel(g.gen) + base + unused;
+    case 'sibling': return '与「' + dispName(g.via || '') + '」同辈推算：' + genLabel(g.gen) + base + unused;
+    default:        return '按世系推算：' + genLabel(g.gen) + base + unused;
+  }
+}
+/* 序列化前清理：布局把 _w/_x/_y 写进数据对象，绝不能持久化。
+   顶层先判 typeof，否则配偶字符串会被 Object.keys 拆成逐字对象（历史教训） */
+function sanitize(n){
+  if (n === null || typeof n !== 'object') return n;
+  if (Array.isArray(n)) return n.map(sanitize);
+  const out = {};
+  Object.keys(n).forEach(k => {
+    if (k[0] === '_') return;
+    out[k] = sanitize(n[k]);
+  });
+  return out;
+}
+function deepEq(a, b){
+  if (a === b) return true;
+  if (typeof a !== typeof b || a === null || b === null) return false;
+  if (Array.isArray(a)) return Array.isArray(b) && a.length === b.length && a.every((v, i) => deepEq(v, b[i]));
+  if (typeof a === 'object'){
+    const ka = Object.keys(a), kb = Object.keys(b);
+    return ka.length === kb.length && ka.every(k => deepEq(a[k], b[k]));
+  }
+  return false;
+}
+
+const STORAGE_KEY = 'zupu_data_v4';   // 数据真源：本浏览器（自动保存，无感）
+let treeData;
+let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
+
+const FALLBACK_TEMPLATE = migrate({ id:'root', name:'家族族谱', spouses:[], expanded:true, children:[] });
+const INIT_TEMPLATE = (function(){
+  const el = document.getElementById('__treeData');
+  if (el && el.textContent.trim()){
+    try { return migrate(JSON.parse(JSON.stringify(JSON.parse(el.textContent.trim())))); }
+    catch(e){ /* 内嵌损坏 → 空白模板，靠导入救回 */ }
+  }
+  return FALLBACK_TEMPLATE;
+})();
+
+function nodeCount(d){
+  let c = 0;
+  (function w(n){ if (n.id !== 'root') c++; if (n.children) n.children.forEach(w); })(d);
+  return c;
+}
+
+/* 载入：本浏览器的数据永远是真源；浏览器里没有时（首次使用/换电脑），
+   在「文件内嵌数据 / 旧版草稿」里挑成员最多的一份做初始 —— 自动抢救 */
+(function loadData(){
+  let best = null, bestCount = -1, bestSrc = '';
+  const consider = (d, src) => {
+    if (!d) return;
+    const c = nodeCount(d);
+    if (c > bestCount){ best = d; bestCount = c; bestSrc = src; }
+  };
+  try {
+    const v4 = localStorage.getItem(STORAGE_KEY);
+    if (v4) consider(migrate(JSON.parse(v4)), 'browser');
+  } catch(e){}
+  const el = document.getElementById('__treeData');
+  if (el && el.textContent.trim()){
+    try { consider(migrate(JSON.parse(el.textContent.trim())), 'file'); } catch(e){}
+  }
+  try {
+    Object.keys(localStorage).forEach(k => {
+      if (k === STORAGE_KEY || !/^zupu_tree_data_v/.test(k)) return;
+      try { consider(migrate(JSON.parse(localStorage.getItem(k))), 'legacy-draft'); } catch(e){}
+    });
+  } catch(e){}
+  treeData = best ? migrate(JSON.parse(JSON.stringify(best)))
+                  : JSON.parse(JSON.stringify(INIT_TEMPLATE));
+  _seededFrom = best ? bestSrc : 'empty';
+  /* 字辈表是应用级配置：胜出的数据若没有（如旧草稿早于字辈功能），
+     从其他候选（文件内嵌 / 任意旧草稿）自动补齐，保证角标不丢 */
+  if (!Array.isArray(treeData.zibei) || !treeData.zibei.length){
+    const zbFrom = raw => {
+      try {
+        const d = migrate(JSON.parse(raw));
+        if (Array.isArray(d.zibei) && d.zibei.length) return d.zibei;
+      } catch(e){}
+      return null;
+    };
+    let zb = null;
+    const el = document.getElementById('__treeData');
+    if (el && el.textContent.trim()) zb = zbFrom(el.textContent.trim());
+    if (!zb){
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (!zb && /^zupu_tree_data_v/.test(k)) zb = zbFrom(localStorage.getItem(k));
+        });
+      } catch(e){}
+    }
+    if (zb) treeData.zibei = zb;
+  }
+  /* 谱序（堂号/源流）与字辈同理：浏览器胜出数据缺失时从文件内嵌/旧草稿补齐 */
+  if (!treeData.clan){
+    const clanFrom = raw => {
+      try {
+        const d = migrate(JSON.parse(raw));
+        if (d.clan && typeof d.clan === 'object') return d.clan;
+      } catch(e){}
+      return null;
+    };
+    let cl = null;
+    const el = document.getElementById('__treeData');
+    if (el && el.textContent.trim()) cl = clanFrom(el.textContent.trim());
+    if (!cl){
+      try {
+        Object.keys(localStorage).forEach(k => {
+          if (!cl && /^zupu_tree_data_v/.test(k)) cl = clanFrom(localStorage.getItem(k));
+        });
+      } catch(e){}
+    }
+    if (cl) treeData.clan = JSON.parse(JSON.stringify(cl));
+  }
+})();
+
+function saveData(){
+  /* 每次渲染（即每次编辑）无条件下自动保存到本浏览器 —— 保存是无感的 */
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitize(treeData))); } catch(e){}
+}
+
+/* ---------- ③ 历史栈（撤销 / 重做）----------
+ * 快照是 sanitize 后的完整树 JSON 字符串，提交点只在真正改变数据的动作；
+ * 同一节点的连续折叠/展开在 1 秒内合并成一条，防止刷满栈。 */
+const HIST_MAX = 100;
+let _undoStack = [], _redoStack = [];
+let _lastOpKey = '', _lastOpT = 0;
+function historySnapshot(){ return JSON.stringify(sanitize(treeData)); }
+function pushHistory(opKey){
+  const t = Date.now();
+  if (opKey && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
+  _undoStack.push(historySnapshot());
+  if (_undoStack.length > HIST_MAX) _undoStack.shift();
+  _redoStack.length = 0;
+  _lastOpKey = opKey || ''; _lastOpT = t;
+  refreshUndoButtons();
+}
+function undo(){
+  if (!_undoStack.length){ toast('没有可撤销的操作'); return; }
+  _redoStack.push(historySnapshot());
+  treeData = migrate(JSON.parse(_undoStack.pop()));
+  afterHistoryJump(); toast('已撤销');
+}
+function redo(){
+  if (!_redoStack.length){ toast('没有可重做的操作'); return; }
+  _undoStack.push(historySnapshot());
+  treeData = migrate(JSON.parse(_redoStack.pop()));
+  afterHistoryJump(); toast('已重做');
+}
+function afterHistoryJump(){
+  selectedId = null; closeMenu(); closeSearchHighlights();
+  render();
+}
+function refreshUndoButtons(){
+  document.getElementById('__undoBtn').disabled = !_undoStack.length;
+  document.getElementById('__redoBtn').disabled = !_redoStack.length;
+}
+
+/* ---------- ④ 渲染：三遍法（建DOM实测宽度 → 递归布局 → 摆放+肘形连线） ---------- */
+let selectedId = null;
+
+/* 最近一次渲染的字辈映射（搜索列表显示代数用） */
+let LAST_GENS = new Map();
+
+/* 布局常量 */
+const H_SPACE = 26;
+const V_SPACE = 96;
+const PAD = 60;
+const ROW_GAP_V = 46;   // 竖排：世代行间距
+
+/* 所有可见节点的世界坐标矩形（id → {x 中心, y 顶, w 宽, h 高}）。
+   拖动过继的悬停命中检测用纯数学（不依赖 elementFromPoint，缩放/拖动中都稳定） */
+const nodeRects = new Map();
+
+function render(){
+  const nodesEl = document.getElementById('nodes');
+  const linesG  = document.getElementById('linesG');
+  const svg     = document.getElementById('lines');
+  const stage   = document.getElementById('stage');
+
+  nodesEl.innerHTML = '<div id="__dropMarker"></div>';
+  linesG.innerHTML = '';
+  nodeRects.clear();
+  stage.classList.toggle('v', !!cfg.vertical);   // 必须在测量前：竖排 CSS 改变卡片尺寸
+
+  /* 第一遍：建 DOM，实测 label 宽高（offsetWidth 不受缩放影响） */
+  const GENS = computeGenerations();
+  LAST_GENS = GENS;
+  const domMap = new Map();
+  function createDom(n, depth, orderIdx, orderTotal){
+    const wrap = document.createElement('div');
+    wrap.className = 'node g' + Math.min(depth, 5)
+      + (selectedId === n.id ? ' selected' : '')
+      + (n.id === 'note' ? ' meta-note' : '');
+    wrap.dataset.id = n.id;
+
+    /* 角标：出生年蓝框=自动排；无生年橙框=手动排行称谓 */
+    if (n.id !== 'root' && n.id !== 'note'){
+      const yr = parseYear(n.birth);
+      if (yr){
+        const rk = document.createElement('span');
+        rk.className = 'rank by';
+        rk.textContent = String(yr);
+        rk.title = '出生年 ' + yr + '：同辈按出生年自动排序，年长在左';
+        wrap.appendChild(rk);
+      } else if (orderTotal > 1){
+        const rk = document.createElement('span');
+        rk.className = 'rank';
+        rk.textContent = rankWord(orderIdx);
+        rk.title = '同辈第 ' + (orderIdx + 1) + ' 位（最左为长）。补填出生年即可自动排序';
+        wrap.appendChild(rk);
+      }
+    }
+
+    const label = document.createElement('div');
+    label.className = 'node-label';
+    const meta = metaLine(n);
+    label.innerHTML = esc(dispName(n.name)) + (n.gender === 'f' ? '<span class="gx" title="女性成员">女</span>' : '') +
+      (n.heir ? '<span class="heir' + (n.heir === 'out' ? ' out' : n.heir === 'jian' ? ' jian' : '') + '" title="' + esc(heirTitle(n)) + '">嗣</span>' : '') +
+      (n.zhi ? '<span class="zhi" title="止：谱书凡例，无传者以黑圈标止">止</span>' : '') +
+      (n.zi ? '<span class="xh" title="字">字' + esc(n.zi) + '</span>' : '') +
+      (n.hao ? '<span class="xh" title="号">号' + esc(n.hao) + '</span>' : '') +
+      (n.spouses || []).map((s, i) =>
+      (cfg.vertical ? '' : ' ') + '<span class="sp" data-sp="' + i + '" title="双击：改名 / 清空移除"><i class="role">' + esc(spouseRoleAt(n, i)) + '</i>' + esc(spouseDisplay(s)) + '</span>'
+    ).join('') + (meta ? '<span class="meta">' + esc(meta) + '</span>' : '');
+    label.title = [displayName(n), fullDatesLine(n), meta, '双击备注行可编辑生卒年与备注'].filter(Boolean).join('\n');
+
+    /* 字辈代数角标（最左侧）：名字含字辈字=权威定代；未用字辈则按父/同辈推算 */
+    const genInfo = GENS.get(n.id);
+    if (genInfo && n.id !== 'root'){
+      const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+      const zi = genInfo.zi || zbList[genInfo.gen - 1] || '';   // 推算代也标注本代字辈字
+      const chip = document.createElement('span');
+      chip.className = 'gen' + (genInfo.src === 'match' ? ' match' : '');
+      chip.textContent = genLabel(genInfo.gen) + (zi ? '·' + zi : '');
+      chip.title = genTitle(genInfo, n);
+      label.insertBefore(chip, label.firstChild);
+    }
+
+    /* 快捷折叠/展开：有后代的卡片右侧常驻切换钮
+       展开=「▾」一点收起；折叠=「▸ N」一点展开（N=后代数） */
+    if (n.children && n.children.length){
+      const cnt = countDescendants(n);
+      const pill = document.createElement('span');
+      pill.className = 'fold';
+      if (n.expanded){
+        pill.textContent = '▾';
+        pill.title = '点击折叠此支（共 ' + cnt + ' 位后代）';
+      } else {
+        pill.textContent = '▸ ' + cnt;
+        pill.title = '此支已折叠，共 ' + cnt + ' 位后代 —— 点击展开';
+      }
+      const metaEl = label.querySelector('.meta');
+      if (metaEl) label.insertBefore(pill, metaEl);   // 插在姓名行内，不掉到备注行下
+      else label.appendChild(pill);
+    }
+
+    wrap.appendChild(label);
+
+    /* 常驻「＋」：点击弹出气泡菜单（点击行为由 #nodes 上的事件委托统一处理） */
+    const qa = document.createElement('button');
+    qa.className = 'quick-add';
+    qa.textContent = '+';
+    qa.title = '打开操作菜单';
+    wrap.appendChild(qa);
+
+    frag.appendChild(wrap);
+    measureQueue.push({ label, depth });
+
+    if (n.expanded && n.children) n.children.forEach((c, i) => createDom(c, depth + 1, i, n.children.length));
+  }
+  const frag = document.createDocumentFragment();
+  const measureQueue = [];
+  createDom(treeData, 0, 0, 1);
+  nodesEl.appendChild(frag);
+  /* 一次性测量：全部挂载后再读取尺寸，避免逐节点强制回流（几百上千人的性能关键） */
+  measureQueue.forEach(q => {
+    const wrap = q.label.parentNode;
+    domMap.set(wrap.dataset.id, { wrap, w: q.label.offsetWidth + 3, lh: q.label.offsetHeight, d: q.depth });
+  });
+
+  /* 谱书竖排（古法）：世代行几何 —— 行高 = 该行最高卡片，行首 y 逐行累计 */
+  const V = !!cfg.vertical;
+  let rowTop = null, rowH = null, rowGen = null;
+  if (V){
+    rowH = [];
+    domMap.forEach(info => { rowH[info.d] = Math.max(rowH[info.d] || 0, info.lh); });
+    rowTop = [PAD];
+    for (let d = 1; d < rowH.length; d++) rowTop[d] = rowTop[d - 1] + (rowH[d - 1] || V_SPACE) + ROW_GAP_V;
+    rowGen = [];
+    (function rg(n, d){
+      if (!rowGen[d]){
+        const g = GENS.get(n.id);
+        if (g) rowGen[d] = g.gen;
+      }
+      if (n.expanded && n.children) n.children.forEach(c => rg(c, d + 1));
+    })(treeData, 0);
+  }
+
+  /* 第二遍：递归布局（孩子居中时只移动子树，父节点不动） */
+  function shiftSubtree(m, dx){
+    m._x += dx;
+    if (m.children) m.children.forEach(c => shiftSubtree(c, dx));
+  }
+  function layout(n, depth, xStart){
+    const own = domMap.get(n.id).w;
+    const kids = (n.expanded && n.children) ? n.children : [];
+    const myTop = V ? rowTop[depth] : depth * V_SPACE + PAD;
+    if (kids.length === 0){
+      n._w = Math.max(own, 80);
+      n._x = xStart + n._w / 2;
+      n._y = myTop;
+      return n._w;
+    }
+    let cw = 0;
+    kids.forEach((c, i) => {
+      cw += layout(c, depth + 1, xStart + cw);
+      if (i < kids.length - 1) cw += H_SPACE;
+    });
+    const myW = Math.max(own, cw);
+    if (myW > cw) kids.forEach(k => shiftSubtree(k, (myW - cw) / 2));
+    n._w = myW;
+    n._x = xStart + myW / 2;
+    n._y = myTop;
+    return myW;
+  }
+  layout(treeData, 0, PAD);
+
+  /* 包围盒：只扫已渲染的子树（折叠节点的子孙没有 DOM） */
+  let maxDepth = 0, minX = Infinity, maxX = -Infinity;
+  (function scan(n, d){
+    if (d > maxDepth) maxDepth = d;
+    const w = domMap.get(n.id).w;
+    if (n._x - w / 2 < minX) minX = n._x - w / 2;
+    if (n._x + w / 2 > maxX) maxX = n._x + w / 2;
+    if (n.expanded && n.children) n.children.forEach(c => scan(c, d + 1));
+  })(treeData, 0);
+  const treeW = (maxX - minX) + PAD * 2;
+  const treeH = V ? (rowTop[maxDepth] + (rowH[maxDepth] || V_SPACE) + PAD)
+                  : (maxDepth + 1) * V_SPACE + PAD;
+
+  stage.style.width  = treeW + 'px';
+  stage.style.height = treeH + 'px';
+  svg.setAttribute('width', treeW);
+  svg.setAttribute('height', treeH);
+  svg.setAttribute('viewBox', '0 0 ' + treeW + ' ' + treeH);
+
+  /* 第三遍：摆 DOM + 肘形母线（从父 label 实测底部出发）
+     所有线段合并进一条 path（大族谱时 SVG 元素数从 O(n) 降到 O(1)） */
+  let lineD = '';
+  function addPath(d){ lineD += d; }
+  function place(n){
+    const info = domMap.get(n.id);
+    info.wrap.style.left = n._x + 'px';
+    info.wrap.style.top  = n._y + 'px';
+    nodeRects.set(n.id, { x: n._x, y: n._y, w: info.w, h: info.lh });
+
+    if (n.expanded && n.children && n.children.length){
+      if (V){
+        /* 竖排：父卡底 → 行间母线 → 各子卡顶（谱书式垂线） */
+        const yTop = n._y + info.lh;
+        const busY = rowTop[info.d] + (rowH[info.d] || V_SPACE) + ROW_GAP_V / 2;
+        const firstX = n.children[0]._x;
+        const lastX  = n.children[n.children.length - 1]._x;
+        addPath('M ' + n._x + ' ' + yTop + ' L ' + n._x + ' ' + busY);
+        if (n.children.length > 1)
+          addPath('M ' + Math.min(firstX, lastX) + ' ' + busY + ' L ' + Math.max(firstX, lastX) + ' ' + busY);
+        n.children.forEach(c => {
+          addPath('M ' + c._x + ' ' + busY + ' L ' + c._x + ' ' + c._y);
+          place(c);
+        });
+      } else {
+        const yTop   = n._y + info.lh;
+        const yChild = n._y + V_SPACE;
+        const midY   = Math.max(yTop + 26, (yTop + yChild) / 2);
+        const firstX = n.children[0]._x;
+        const lastX  = n.children[n.children.length - 1]._x;
+
+        addPath('M ' + n._x + ' ' + yTop + ' L ' + n._x + ' ' + midY);
+        if (n.children.length > 1)
+          addPath('M ' + Math.min(firstX, lastX) + ' ' + midY + ' L ' + Math.max(firstX, lastX) + ' ' + midY);
+        n.children.forEach(c => {
+          addPath('M ' + c._x + ' ' + midY + ' L ' + c._x + ' ' + yChild);
+          place(c);
+        });
+      }
+    }
+  }
+  place(treeData);
+  if (lineD){
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', lineD);
+    linesG.appendChild(p);
+  }
+
+  /* 竖排：行左世数标（谱书页边的「廿三世·勤」；固定汉字数字——阿拉伯数字竖排会逐位竖读）
+     字辈字 = 该行首个成员的定代对应的字辈字，第 0 行为总根不标 */
+  if (V){
+    const zbRows = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+    for (let d = 1; d < rowTop.length; d++){
+      const g = rowGen[d];
+      if (!g) continue;
+      const zi = zbRows[g - 1] || '';
+      const el = document.createElement('div');
+      el.className = 'vrow';
+      el.textContent = numToCn(g + genOffset()) + genUnit() + (zi ? '·' + zi : '');
+      el.title = '本行「' + el.textContent + '」';
+      el.style.top = (rowTop[d] + (rowH[d] || V_SPACE) / 2) + 'px';
+      nodesEl.appendChild(el);
+    }
+  }
+
+  /* 恢复搜索高亮（render 重建了 DOM） */
+  if (_lastQuery) applySearchHighlight();
+
+  applyZoom();
+  updateStats(GENS);
+  updateClanTags();   /* 撤销/重做/导入也会改变谱序，顶栏随渲染同步 */
+  updateSaveState();
+  saveData();   /* 每次渲染（即每次编辑）自动保存到本浏览器 —— 无感 */
+}
+
+/* ---------- 节点交互：事件委托（几百上千人时卡片零监听器，构建快、内存省） ---------- */
+(function attachNodeDelegation(){
+  const nodesEl = document.getElementById('nodes');
+  const nodeOf = e => {
+    const w = e.target.closest('.node');
+    return w ? findNode(w.dataset.id) : null;
+  };
+  nodesEl.addEventListener('click', e => {
+    const t = e.target;
+    if (t.closest('.quick-add')){
+      const w = t.closest('.node'); const n = nodeOf(e);
+      if (n){ e.stopPropagation(); selectNode(n.id); openMenu(w, n); }
+      return;
+    }
+    if (t.closest('.fold')){
+      const n = nodeOf(e);
+      if (n){ e.stopPropagation(); toggleExpand(n); }
+      return;
+    }
+    const label = t.closest('.node-label');
+    if (label){
+      const n = nodeOf(e);
+      if (n){ e.stopPropagation(); selectNode(n.id); }
+    }
+  });
+  nodesEl.addEventListener('dblclick', e => {
+    const t = e.target;
+    const label = t.closest('.node-label');
+    if (!label || label.isContentEditable) return;
+    const n = nodeOf(e);
+    if (!n) return;
+    e.stopPropagation();
+    if (t.closest('.fold')) return;                      // ▾/▸ 有自己的单击行为
+    if (t.closest('.sp')){
+      editSpouseAt(n, parseInt(t.closest('.sp').dataset.sp, 10));
+      return;
+    }
+    if (t.closest('.meta')){ editDetails(n); return; }
+    editNameInline(label, n);
+  });
+})();
+
+function updateStats(GENS){
+  const G = GENS || computeGenerations();
+  let persons = 0, sp = 0, gens = 0;
+  (function w(n, d){
+    if (n.id !== 'root'){ persons++; sp += (n.spouses || []).length; }
+    if (d > gens) gens = d;
+    if (n.children) n.children.forEach(c => w(c, d + 1));
+  })(treeData, 0);
+  let extra = '';
+  const G2 = G;
+  if (G2.size){
+    let lo = Infinity, hi = -Infinity;
+    G2.forEach(v => { if (v.gen < lo) lo = v.gen; if (v.gen > hi) hi = v.gen; });
+    if (hi > -Infinity){
+      const loV = lo + genOffset(), hiV = hi + genOffset();
+      extra = ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();
+    }
+  }
+  const totV = gens + genOffset();
+  document.getElementById('statsChip').innerHTML =
+    '<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(totV) : totV) + ' ' + genUnit() + extra;
+}
+
+/* 保存状态：自动保存无感进行，这里只给一个安心的绿灯 */
+function updateSaveState(){
+  const el = document.getElementById('saveState');
+  if (!el) return;
+  el.classList.add('is-saved');
+  el.innerHTML = '<span class="dot"></span>已保存';
+  el.title = '所有修改都已自动保存在此浏览器 · 备份/换电脑见「文件 ▾」菜单';
+}
+
+function selectNode(id){
+  selectedId = id;
+  document.querySelectorAll('.node').forEach(w => {
+    w.classList.toggle('selected', w.dataset.id === id);
+  });
+}
+
+/* ---------- ⑤ 行内编辑 ---------- */
+function editNameInline(labelEl, n){
+  labelEl.textContent = n.name;
+  labelEl.contentEditable = 'true';
+  labelEl.style.minWidth = '60px';
+  labelEl.focus();
+  const r = document.createRange();
+  r.selectNodeContents(labelEl);
+  const sel = window.getSelection();
+  sel.removeAllRanges(); sel.addRange(r);
+  function commit(){
+    if (labelEl.contentEditable !== 'true') return;   // 防止 blur 与回车双重 commit
+    labelEl.contentEditable = 'false';
+    labelEl.removeEventListener('blur', commit);
+    labelEl.removeEventListener('keydown', onKey);
+    const nv = labelEl.textContent.trim();
+    if (nv && nv !== n.name){ pushHistory('rename:' + n.id); n.name = nv; }
+    render();
+  }
+  function onKey(e){
+    if (e.key === 'Enter'){ e.preventDefault(); commit(); }
+    if (e.key === 'Escape'){ labelEl.textContent = n.name; labelEl.blur(); commit(); }
+  }
+  labelEl.addEventListener('blur', commit);
+  labelEl.addEventListener('keydown', onKey);
+}
+
+function editName(n){
+  const t = prompt('修改姓名：', n.name);
+  if (t !== null && t.trim()){ pushHistory('rename:' + n.id); n.name = t.trim(); render(); }
+}
+
+/* ---------- ⑥ 档案弹窗 ---------- */
+let _dmNode = null;
+function dmIsOpen(){ return document.getElementById('__detailModal').classList.contains('open'); }
+function editDetails(n){
+  _dmNode = n;
+  document.getElementById('__dmTitle').textContent = '人员档案 · ' + dispName(n.name);
+  document.getElementById('__dmName').value  = n.name || '';
+  document.getElementById('__dmBirth').value = n.birth || '';
+  document.getElementById('__dmDeath').value = n.death || '';
+  document.getElementById('__dmNote').value  = n.note || '';
+  document.getElementById('__dmGender').value = n.gender === 'f' ? 'f' : '';
+  document.getElementById('__dmHeir').value = (n.heir === 'in' || n.heir === 'out' || n.heir === 'jian') ? n.heir : '';
+  document.getElementById('__dmZi').value  = n.zi || '';
+  document.getElementById('__dmHao').value = n.hao || '';
+  document.getElementById('__dmZhi').checked = n.zhi === true;
+  /* 配偶称谓：每人可指定 配/继配/娶/聘/侧室（空=按次序默认） */
+  const spHost = document.getElementById('__dmSp');
+  spHost.innerHTML = '';
+  (n.spouses || []).forEach((spName, i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const cur = (n.spRoles && n.spRoles[i]) || '';
+    const opts = ['<option value="">（默认）</option>'].concat(SP_TERMS.map(t =>
+      '<option value="' + t + '"' + (cur === t ? ' selected' : '') + '>' + t + '</option>')).join('');
+    row.innerHTML = '<label>配偶 ' + (i + 1) + ' · ' + esc(spName) + ' 称谓<select data-i="' + i + '">' + opts + '</select></label>';
+    spHost.appendChild(row);
+  });
+  document.getElementById('__detailModal').classList.add('open');
+  document.getElementById('__dmName').focus();
+}
+function closeDetails(){
+  document.getElementById('__detailModal').classList.remove('open');
+  _dmNode = null;
+}
+document.getElementById('__dmCancel').addEventListener('click', closeDetails);
+document.getElementById('__detailModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__detailModal') closeDetails();
+});
+document.getElementById('__dmSave').addEventListener('click', () => {
+  if (!_dmNode) return closeDetails();
+  const n = _dmNode;
+  const nm = document.getElementById('__dmName').value.trim();
+  const birth = document.getElementById('__dmBirth').value.trim();
+  const death = document.getElementById('__dmDeath').value.trim();
+  const note  = document.getElementById('__dmNote').value.trim();
+  const gender = document.getElementById('__dmGender').value === 'f' ? 'f' : '';
+  const heirV = document.getElementById('__dmHeir').value;
+  const heir = (heirV === 'in' || heirV === 'out' || heirV === 'jian') ? heirV : '';
+  const zi  = document.getElementById('__dmZi').value.trim();
+  const hao = document.getElementById('__dmHao').value.trim();
+  const zhi = document.getElementById('__dmZhi').checked === true;
+  const spRoles = {};
+  let spChanged = false;
+  document.querySelectorAll('#__dmSp select').forEach(sel => {
+    const i = sel.dataset.i;
+    const v = sel.value;
+    if (v) spRoles[i] = v;
+    if (v !== ((n.spRoles && n.spRoles[i]) || '')) spChanged = true;
+  });
+  const changed = (nm && nm !== n.name) || birth !== (n.birth || '')
+    || death !== (n.death || '') || note !== (n.note || '') || gender !== (n.gender || '')
+    || heir !== (n.heir || '') || zi !== (n.zi || '') || hao !== (n.hao || '')
+    || zhi !== (n.zhi === true) || spChanged;
+  if (!changed){ closeDetails(); return; }   // 无改动：不入历史栈
+  pushHistory('details:' + n.id);            // 快照必须在改动之前，档案才能真正撤销（v15.12 修复）
+  if (nm) n.name = nm;
+  n.birth = birth;
+  n.death = death;
+  n.note  = note;
+  n.gender = gender;
+  n.heir = heir;
+  n.zi = zi;
+  n.hao = hao;
+  n.zhi = zhi;
+  if (Object.keys(spRoles).length) n.spRoles = spRoles; else delete n.spRoles;
+  closeDetails();
+  if (parseYear(n.birth)){
+    const p = findParent(n.id);
+    if (p && sortSiblings(p))
+      toast('已保存，并按出生年自动重排「' + n.name + '」同辈的长幼（年长在左）');
+    else
+      toast('已保存「' + n.name + '」的档案');
+  } else {
+    toast('已保存「' + n.name + '」的档案（未填出生年，长幼按手动排列）');
+  }
+  render();
+  selectNode(n.id);
+});
+/* 弹窗内回车=保存（备注除外）、Esc=取消。事件到 document 层被键盘总控拦下，
+   不会再触发加同辈之类的全局快捷键（v12 的泄漏 bug） */
+document.getElementById('__detailModal').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.id !== '__dmNote'){
+    e.preventDefault();
+    e.stopPropagation();
+    document.getElementById('__dmSave').click();
+  }
+  if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeDetails(); }
+});
+
+/* ---------- ⑦ 气泡菜单（点击式，不随鼠标消失；右键同样打开） ---------- */
+const ctxMenu = document.getElementById('__ctxMenu');
+function mi(label, cls, hint, fn){
+  const d = document.createElement('div');
+  d.className = 'mi' + (cls ? ' ' + cls : '');
+  d.innerHTML = '<span class="lbl">' + label + '</span>' + (hint ? '<span class="k">' + hint + '</span>' : '');
+  d.onclick = e => { e.stopPropagation(); closeMenu(); fn(); };
+  return d;
+}
+function buildMenuItems(n){
+  ctxMenu.innerHTML = '';
+  if (n.id === 'root'){
+    ctxMenu.appendChild(mi('＋ 第一代', '', '', () => addChild(n)));
+  } else {
+    ctxMenu.appendChild(mi('＋ 配偶', '', 'Ctrl+Shift+S', () => addSpouse(n)));
+    ctxMenu.appendChild(mi('＋ 子女', '', 'Tab', () => addChild(n)));
+    ctxMenu.appendChild(mi('＋ 同辈', '', 'Enter', () => addSibling(n)));
+  }
+  ctxMenu.appendChild(mi(ic('pencil') + '改名', '', 'F2', () => editName(n)));
+  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('card') + '档案', '', 'Ctrl+I', () => editDetails(n)));
+  if (n.children && n.children.length)
+    ctxMenu.appendChild(mi(n.expanded ? ic('fold') + '折叠此支' : ic('unfold') + '展开此支', '', '', () => toggleExpand(n)));
+  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('trash') + '删除', 'danger', '', () => deleteNode(n)));
+}
+function openMenu(wrap, n){
+  document.querySelectorAll('.node').forEach(w => w.classList.remove('menu-open'));
+  wrap.classList.add('menu-open');
+  buildMenuItems(n);
+  /* 先显示再测量：display:none 时 offsetWidth/Height 恒为 0（v12 定位失准根因） */
+  ctxMenu.style.display = 'block';
+  const rect = wrap.getBoundingClientRect();
+  const mw = ctxMenu.offsetWidth;
+  const mh = ctxMenu.offsetHeight;
+  let left = rect.left + rect.width / 2 - mw / 2;
+  left = Math.max(6, Math.min(left, window.innerWidth - mw - 6));
+  let top = rect.bottom + 6;
+  if (top + mh > window.innerHeight - 6) top = Math.max(6, rect.top - mh - 6);
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top  = top + 'px';
+}
+function closeMenu(){
+  ctxMenu.style.display = 'none';
+  document.querySelectorAll('.menu-open').forEach(w => w.classList.remove('menu-open'));
+}
+/* 点击任何空白区域关闭菜单（菜单项与「＋」都 stopPropagation，不会误关） */
+document.addEventListener('click', () => closeMenu());
+
+/* 菜单图标（SVG 线性，替代 emoji） */
+const IC = {
+  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
+  folder:   '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  filetext: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>',
+  print:    '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
+  sort:     '<path d="M4 6h9"/><path d="M4 12h7"/><path d="M4 18h5"/><path d="m17 8 3-3 3 3"/><path d="M20 5v13"/>',
+  reset:    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  unfold:   '<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
+  fold:     '<path d="m7 9 5-5 5 5"/><path d="m7 15 5 5 5-5"/>',
+  pencil:   '<path d="M17 3l4 4L7 21H3v-4z"/>',
+  card:     '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M14 9h4"/><path d="M14 13h4"/><path d="M6 16c1-1.5 3-1.5 4 0"/>',
+  trash:    '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  image:    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
+  pdf:      '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><text x="12" y="16.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">PDF</text>',
+  gear:     '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"'
+};
+function ic(n){
+  return '<svg class="mi-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + IC[n] + '</svg>';
+}
+
+/* ---------- 顶栏下拉菜单：复用同一气泡面板（视图 / 文件） ---------- */
+function openDropdown(btn, build){
+  const wasOpen = btn.classList.contains('menu-open') && ctxMenu.style.display === 'block';
+  closeMenu();
+  if (wasOpen) return;                        // 再点一次 = 收起
+  btn.classList.add('menu-open');
+  ctxMenu.innerHTML = '';                     // 重复打开必须清空，否则菜单项累积
+  build(ctxMenu);
+  ctxMenu.style.display = 'block';            // 先显示再测量（v13 教训）
+  const r = btn.getBoundingClientRect();
+  const mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+  let left = Math.max(6, Math.min(r.right - mw, window.innerWidth - mw - 6));
+  let top = r.bottom + 6;
+  if (top + mh > window.innerHeight - 6) top = Math.max(6, r.top - mh - 6);
+  ctxMenu.style.left = left + 'px';
+  ctxMenu.style.top = top + 'px';
+}
+document.getElementById('btnView').addEventListener('click', e => {
+  e.stopPropagation();
+  const btn = document.getElementById('btnView');
+  openDropdown(btn, m => {
+    m.appendChild(mi(ic('unfold') + '全展开', '', '', () => expandAll(true)));
+    m.appendChild(mi(ic('fold') + '全折叠', '', '', () => expandAll(false)));
+    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + ic('filetext') + '谱书竖排（古法）', '', '', toggleVertical));
+    m.appendChild(mi(ic('card') + '谱序（堂号·源流）…', '', '', openClan));
+    m.appendChild(mi(ic('gear') + '谱书显示设置…', '', '', openSettings));
+  });
+});
+document.getElementById('btnFile').addEventListener('click', e => {
+  e.stopPropagation();
+  const btn = document.getElementById('btnFile');
+  openDropdown(btn, m => {
+    m.appendChild(mi(ic('download') + '备份到文件（json）', '', '', backupToFile));
+    m.appendChild(mi(ic('folder') + '恢复备份（json / 旧版 html）', '', '', () => document.getElementById('__importFile').click()));
+    m.appendChild(mi(ic('image') + '导出图片（png）', '', '', exportPNG));
+    m.appendChild(mi(ic('pdf') + '导出 PDF（图谱）', '', '', exportPDF));
+    m.appendChild(mi(ic('filetext') + '世系录（五世一表）', '', '', exportShixilu));
+    m.appendChild(mi(ic('filetext') + '导出 MD', '', '', exportMarkdown));
+    m.appendChild(mi(ic('print') + '打印（纸质）', '', '', () => window.print()));
+    m.appendChild(mi(ic('sort') + '按生年重排', '', '', actSortByBirth));
+    m.appendChild(mi(ic('reset') + '重置数据', 'danger', '', resetData));
+  });
+});
+
+/* ---------- 帮助弹窗 ---------- */
+function hmIsOpen(){ return document.getElementById('__helpModal').classList.contains('open'); }
+function openHelp(){
+  /* 字辈表网格：蓝框 = 族谱中有人用这个字辈 */
+  const lo = 1 + genOffset(), hi2 = lo + 39;
+  const range = cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi2) : lo + '–' + hi2;
+  document.getElementById('__zbTitle').textContent =
+    '字辈表（第' + range + genUnit() + '，蓝框 = 族谱中已出现）';
+  const host = document.getElementById('__zbGrid');
+  host.innerHTML = '';
+  const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  if (zb.length){
+    let all = '';
+    (function w(n){ all += (n.name || ''); if (n.children) n.children.forEach(w); })(treeData);
+    zb.forEach((z, i) => {
+      const d = document.createElement('span');
+      d.className = 'zb' + (z && all.includes(z) ? ' on' : '');
+      d.innerHTML = esc(z || '·') + '<small>第' + genLabel(i + 1) + '</small>';
+      d.title = '第' + genLabel(i + 1) + '字辈「' + (z || '?') + '」' + (all.includes(z) ? '（族谱中已出现）' : '');
+      host.appendChild(d);
+    });
+  } else {
+    host.innerHTML = '<span class="help-note">本文件尚未配置字辈表</span>';
+  }
+  document.getElementById('__helpModal').classList.add('open');
+}
+function closeHelp(){ document.getElementById('__helpModal').classList.remove('open'); }
+document.getElementById('__helpClose').addEventListener('click', closeHelp);
+document.getElementById('__helpModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__helpModal') closeHelp();
+});
+
+/* ---------- 谱书显示设置弹窗（世代基准 / 配偶谱式） ---------- */
+function smIsOpen(){ return document.getElementById('__setModal').classList.contains('open'); }
+function openSettings(){
+  document.getElementById('__cfgBase').value = cfg.genBase;
+  document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
+  document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
+  document.getElementById('__cfgCn').checked = !!cfg.cnNum;
+  document.getElementById('__setModal').classList.add('open');
+  document.getElementById('__cfgBase').focus();
+}
+function closeSettings(){ document.getElementById('__setModal').classList.remove('open'); }
+function applySettings(){
+  const raw = parseInt(document.getElementById('__cfgBase').value, 10);
+  cfg.genBase = isNaN(raw) ? 1 : Math.max(1, Math.min(99, raw));
+  cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
+  cfg.showSurname = document.getElementById('__cfgSurname').checked;
+  cfg.cnNum = document.getElementById('__cfgCn').checked;
+  saveCfg();
+  closeSettings();
+  render();
+  toast('显示设置已保存：' + (cfg.genBase > 1 ? '字辈第 1 字 = 第 ' + cfg.genBase + ' 世' : '按应用自算代数')
+    + ' · 配偶' + (cfg.bookSpouse ? '谱书式' : '原名')
+    + ' · ' + (cfg.showSurname ? '显示姓氏' : '只报名')
+    + ' · 世数' + (cfg.cnNum ? '用汉字' : '用数字'));
+}
+/* 谱书竖排（古法）开关：视图菜单切换 */
+function toggleVertical(){
+  cfg.vertical = !cfg.vertical;
+  saveCfg();
+  render();
+  fitToScreen();
+  toast(cfg.vertical ? '已切换谱书竖排（古法）：世代成行、名字竖书、行左标世数' : '已切回常规视图');
+}
+
+/* ---------- 谱序（堂号 / 源流）：数据存根节点 clan 字段，随备份导出走 ---------- */
+function clanOf(){
+  return treeData.clan || {};
+}
+function puTitle(){
+  const c = clanOf();
+  return (c.ming || '家族族谱') + (c.tang ? '（' + c.tang + '）' : '');
+}
+function updateClanTags(){
+  const c = clanOf();
+  document.getElementById('__puName').textContent = c.ming || '家族族谱';
+  const tt = document.getElementById('__tangTag');
+  if (c.tang){ tt.textContent = c.tang; tt.style.display = ''; }
+  else tt.style.display = 'none';
+  document.title = (c.ming || '家族族谱') + (c.tang ? ' · ' + c.tang : '');
+}
+function cmIsOpen(){ return document.getElementById('__clanModal').classList.contains('open'); }
+function openClan(){
+  const c = clanOf();
+  const g = id => document.getElementById(id);
+  g('__clMing').value   = c.ming   || '';
+  g('__clTang').value   = c.tang   || '';
+  g('__clChain').value  = c.chain  || '';
+  g('__clYuan').value   = c.yuanzu || '';
+  g('__clShi').value    = c.shizu  || '';
+  g('__clQian').value   = c.qianzu || '';
+  g('__clOrigin').value = c.origin || '';
+  g('__clanModal').classList.add('open');
+  g('__clMing').focus();
+}
+function closeClan(){ document.getElementById('__clanModal').classList.remove('open'); }
+function saveClan(){
+  const g = id => document.getElementById(id).value.trim();
+  const clan = {
+    ming: g('__clMing'), tang: g('__clTang'), chain: g('__clChain'),
+    yuanzu: g('__clYuan'), shizu: g('__clShi'), qianzu: g('__clQian'), origin: g('__clOrigin')
+  };
+  if (deepEq(clan, treeData.clan || {})){ closeClan(); return; }
+  pushHistory('clan');
+  treeData.clan = clan;
+  closeClan();
+  updateClanTags();
+  render();
+  toast('谱序已保存：谱名、堂号将随导出与打印一起出现');
+}
+document.getElementById('__clSave').addEventListener('click', saveClan);
+document.getElementById('__clCancel').addEventListener('click', closeClan);
+document.getElementById('__clanModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__clanModal') closeClan();
+});
+document.getElementById('__clanModal').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA'){
+    e.preventDefault(); e.stopPropagation(); saveClan();
+  }
+  if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeClan(); }
+});
+document.getElementById('__brand').addEventListener('click', openClan);
+document.getElementById('__setSave').addEventListener('click', applySettings);
+document.getElementById('__setCancel').addEventListener('click', closeSettings);
+document.getElementById('__setModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__setModal') closeSettings();
+});
+document.getElementById('__setModal').addEventListener('keydown', e => {
+  if (e.key === 'Enter'){
+    e.preventDefault(); e.stopPropagation(); applySettings();
+  }
+  if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeSettings(); }
+});
+
+/* ---------- ⑧ 编辑动作（每个改动数据的动作都有 pushHistory 提交点） ---------- */
+function addSpouse(n){
+  if (!n.spouses) n.spouses = [];
+  const nth = n.spouses.length + 1;
+  const t = prompt('为「' + n.name + '」添加第 ' + nth + ' 位配偶姓名：\n（如需改名/移除某位配偶，直接双击图上该配偶的名字）');
+  if (t === null) return;
+  const v = t.trim();
+  if (!v) return;
+  if (n.spouses.includes(v)){ toast('「' + v + '」已是 ' + n.name + ' 的配偶，无需重复添加'); return; }
+  pushHistory('addSpouse:' + n.id);
+  n.spouses.push(v);
+  render();
+  toast('已为 ' + n.name + ' 添加配偶「' + v + '」，继续点「＋配偶」可再加');
+}
+
+function editSpouseAt(n, i){
+  if (!n.spouses || i < 0 || i >= n.spouses.length) return;
+  const cur = n.spouses[i];
+  const t = prompt('修改「' + n.name + '」的第 ' + (i + 1) + ' 位配偶：\n（清空并确定 = 移除这位配偶）', cur);
+  if (t === null) return;
+  const v = t.trim();
+  if (!v){
+    if (confirm('确定移除配偶「' + cur + '」？')){
+      pushHistory('rmSpouse:' + n.id + ':' + i);
+      n.spouses.splice(i, 1);
+    } else return;
+  } else {
+    if (v === cur) return;
+    pushHistory('editSpouse:' + n.id + ':' + i);
+    n.spouses[i] = v;
+  }
+  render();
+}
+
+function addChild(n){
+  const t = prompt(
+    n.id === 'root'
+      ? '在「家族族谱」下添加一位第一代成员（新祖辈分支）：'
+      : '为「' + displayName(n) + '」添加子女姓名：'
+  );
+  if (t === null || !t.trim()) return;
+  pushHistory('addChild:' + n.id);
+  if (!n.children) n.children = [];
+  n.expanded = true;
+  n.children.push({ id: genId('c'), name: t.trim(), spouses: [], birth:'', death:'', note:'', expanded: true, children: [] });
+  render();
+  selectNode(n.children[n.children.length - 1].id);
+  toast(n.id === 'root'
+    ? '已添加第一代成员「' + t.trim() + '」（默认排最右=最幼，按住拖动可调长幼）'
+    : '已为 ' + n.name + ' 添加子女「' + t.trim() + '」');
+}
+
+function deleteNode(n){
+  if (n.id === 'root'){ toast('根节点不能删'); return; }
+  const desc = countDescendants(n);
+  const msg = desc
+    ? '删除「' + displayName(n) + '」及其全部 ' + desc + ' 位后代？'
+    : '删除「' + displayName(n) + '」？';
+  if (!confirm(msg)) return;
+  pushHistory('delete:' + n.id);
+  const p = findParent(n.id);
+  if (p) p.children = p.children.filter(c => c.id !== n.id);
+  if (selectedId === n.id) selectedId = null;
+  render();
+  toast('已删除（可用 Ctrl+Z 撤销）');
+}
+
+function addSibling(n){
+  const p = findParent(n.id); if (!p) return;
+  const t = prompt('添加一位与「' + n.name + '」同辈的成员（' + (p.id === 'root' ? '第一代' : '同父母') + '）：');
+  if (t === null || !t.trim()) return;
+  pushHistory('addSibling:' + n.id);
+  const nb = { id: genId('s'), name: t.trim(), spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
+  p.children.push(nb);
+  render();
+  selectNode(nb.id);
+  toast('已添加「' + t.trim() + '」，默认排最右=最幼；按住拖到左边可成为更长');
+}
+
+function toggleExpand(n){
+  pushHistory('fold:' + n.id);
+  n.expanded = !n.expanded;
+  render();
+}
+function expandAll(v){
+  pushHistory('expandAll:' + v);
+  (function w(n){ n.expanded = v; if (n.children) n.children.forEach(w); })(treeData);
+  render();
+}
+function sortAllByBirth(){
+  let touched = 0;
+  (function w(n){ if (sortSiblings(n)) touched++; if (n.children) n.children.forEach(w); })(treeData);
+  return touched;
+}
+
+function actSortByBirth(){
+  pushHistory('sortByBirth');
+  const t = sortAllByBirth();
+  render();
+  toast(t > 0
+    ? '已按出生年重排 ' + t + ' 组同辈（年长在左；无出生年的保持原次序排其后）'
+    : '暂无任何人填出生年，未做改动（先在「档案」里补出生年）');
+}
+
+/* 拖动过继：把 n（连同其后代）挂到 newParent 名下（排最幼），并展开新支让你看到结果 */
+function reparentNode(n, newParent){
+  const old = findParent(n.id);
+  if (!old || newParent.id === old.id) return false;
+  if (subtreeContains(n, newParent.id)) return false;   // 不能挂到自己后代名下（成环）
+  old.children = old.children.filter(c => c.id !== n.id);
+  if (!Array.isArray(newParent.children)) newParent.children = [];
+  newParent.children.push(n);
+  n.expanded = true;
+  newParent.expanded = true;
+  return true;
+}
+
+/* ---------- ⑨ 拖拽：兄弟间换长幼 + 悬停过继（拖到某卡片上停 0.4s = 挂到 TA 名下） ---------- */
+(function(){
+  const stage = document.getElementById('stage');
+  let drag = null;
+  let suppressClickUntil = 0;
+  let dwellT = null;
+
+  function wrapOf(id){ return document.querySelector('.node[data-id="' + id + '"]'); }
+  function clearHoverMarks(){
+    document.querySelectorAll('.node.drop-target, .node.drop-bad').forEach(w =>
+      w.classList.remove('drop-target', 'drop-bad'));
+  }
+  function clearTarget(){
+    if (dwellT){ clearTimeout(dwellT); dwellT = null; }
+    clearHoverMarks();
+    if (drag) drag.targetId = null;
+  }
+  /* 悬停 0.4 秒不动 → 该卡片亮起为「放到 TA 名下」目标 */
+  function scheduleDwell(hoverId){
+    if (dwellT) clearTimeout(dwellT);
+    dwellT = setTimeout(() => {
+      dwellT = null;
+      if (!drag || !drag.moved || drag.hoverId !== hoverId || drag.targetId === hoverId) return;
+      if (subtreeContains(drag.n, hoverId)) return;         // 自己的后代：拒绝
+      clearHoverMarks();
+      drag.targetId = hoverId;
+      const w = wrapOf(hoverId);
+      if (w) w.classList.add('drop-target');
+      const m = document.getElementById('__dropMarker');
+      if (m) m.style.display = 'none';                      // 过继模式下不显示插行线
+    }, 400);
+  }
+
+  document.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    /* 菜单内按下：绝不触发关闭逻辑（mousedown 先于 click，先销毁菜单则 click 落空） */
+    if (e.target.closest && (e.target.closest('#__ctxMenu') || e.target.closest('#searchBox'))) return;
+    closeMenu();
+    const label = e.target.closest && e.target.closest('.node-label');
+    if (!label) return;
+    if (document.activeElement && document.activeElement.contentEditable === 'true') return;
+    const wrap = label.closest('.node');
+    const id = wrap.dataset.id;
+    if (id === 'root') return;
+    const n = findNode(id);
+    const parent = findParent(id);
+    if (!n || !parent) return;   // 独子也可拖：拖去别人名下（过继）；同辈多时左右拖=换长幼
+    drag = {
+      id, n, parent,
+      oldIdx: parent.children.findIndex(c => c.id === id),
+      ids: [], baseLeft: new Map(),
+      moved: false, startX: e.clientX, startY: e.clientY,
+      insertIdx: -1,
+      hoverId: null, targetId: null
+    };
+    (function collect(x){ drag.ids.push(x.id); if (x.children) x.children.forEach(collect); })(n);
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+    if (!drag.moved){
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      drag.moved = true;
+      pushHistory('drag');
+      drag.els = new Map();   // 缓存元素引用：拖动期间零 DOM 查询（性能）
+      drag.ids.forEach(iid => {
+        const w = document.querySelector('.node[data-id="' + iid + '"]');
+        if (w){ drag.baseLeft.set(iid, parseFloat(w.style.left) || 0); w.classList.add('dragging'); drag.els.set(iid, w); }
+      });
+    }
+    /* 整个子树跟随平移（连线落位后重画） */
+    drag.ids.forEach(iid => {
+      const w = drag.els && drag.els.get(iid);
+      if (w && drag.baseLeft.has(iid)) w.style.left = (drag.baseLeft.get(iid) + dx) + 'px';
+    });
+    /* 指针换算画布坐标 */
+    const rect = stage.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / scale;
+    const py = (e.clientY - rect.top) / scale;
+
+    /* —— 悬停命中：光标停在谁身上（数学命中，被拖子树 pointer-events:none）—— */
+    let hover = null;
+    nodeRects.forEach((r0, nid) => {
+      if (nid === drag.id || subtreeContains(drag.n, nid)) return;
+      if (Math.abs(px - r0.x) <= r0.w / 2 + 4 && py >= r0.y - 4 && py <= r0.y + r0.h + 26) hover = nid;
+    });
+    if (drag.targetId && hover !== drag.targetId) clearTarget();
+    drag.hoverId = hover;
+    if (hover && hover !== drag.targetId){
+      const w = wrapOf(hover);
+      if (w && !w.classList.contains('drop-bad')){
+        clearHoverMarks();
+        if (subtreeContains(drag.n, hover)){
+          w.classList.add('drop-bad');                    // 自己的后代：红框拒绝
+        } else {
+          scheduleDwell(hover);
+        }
+      }
+    }
+    if (drag.targetId){ return; }                          // 过继模式下不再更新插行线
+
+    /* —— 兄弟换位逻辑（原有行为）—— */
+    const sibs = drag.parent.children.filter(c => c.id !== drag.id);
+    let idx = 0;
+    for (const s of sibs){ if (px > s._x) idx++; else break; }
+    drag.insertIdx = idx;
+    const m = document.getElementById('__dropMarker');
+    let mx;
+    if (sibs.length === 0){ mx = drag.n._x; }
+    else if (idx === 0){ mx = sibs[0]._x - (sibs[0]._w || 80) / 2 - H_SPACE / 2; }
+    else if (idx >= sibs.length){ mx = sibs[sibs.length - 1]._x + (sibs[sibs.length - 1]._w || 80) / 2 + H_SPACE / 2; }
+    else { mx = (sibs[idx - 1]._x + sibs[idx]._x) / 2; }
+    m.style.left = mx + 'px';
+    m.style.top = (drag.n._y + 12) + 'px';
+    m.style.display = 'block';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (dwellT){ clearTimeout(dwellT); dwellT = null; }
+    const m = document.getElementById('__dropMarker');
+    if (m) m.style.display = 'none';
+    clearHoverMarks();
+    if (!d.moved) return;               // 未达拖动阈值 = 普通点击（历史快照只在 move 阈值时入栈）
+    suppressClickUntil = Date.now() + 350;
+    d.ids.forEach(iid => {
+      const w = document.querySelector('.node[data-id="' + iid + '"]');
+      if (w) w.classList.remove('dragging');
+    });
+
+    /* —— 过继落点：松手时若停在有效目标上 → 挂到 TA 名下 —— */
+    if (d.targetId){
+      const tp = findNode(d.targetId);
+      if (tp && reparentNode(d.n, tp)){
+        selectedId = d.id;
+        render();
+        selectNode(d.id);
+        toast(tp.id === 'root'
+          ? '「' + d.n.name + '」已移入第一代（可拖拽微调长幼）'
+          : '「' + d.n.name + '」已过继到「' + tp.name + '」名下（排最幼，可拖拽微调长幼；Ctrl+Z 可撤销）');
+        return;
+      }
+      /* 目标非法（成环等）→ 落回原处，走普通换位收尾 */
+    }
+
+    /* —— 普通换位落点 —— */
+    const arr = d.parent.children;
+    const me = arr.splice(d.oldIdx, 1)[0];
+    const newIdx = Math.max(0, Math.min(arr.length, d.insertIdx < 0 ? d.oldIdx : d.insertIdx));
+    arr.splice(newIdx, 0, me);
+    render();
+    if (newIdx !== d.oldIdx)
+      toast('已换位：' + me.name + ' 现在是同辈第 ' + (newIdx + 1) + ' 位（排行「' + rankWord(newIdx) + '」，最左为长）');
+  });
+
+  /* 拖完立刻的 click 不触发选中 */
+  document.addEventListener('click', e => {
+    if (Date.now() < suppressClickUntil){ e.stopPropagation(); e.preventDefault(); }
+  }, true);
+})();
+
+/* ---------- ⑩ 缩放 / 平移 ---------- */
+let scale = 1;
+function applyZoom(){
+  document.getElementById('stage').style.transform = 'scale(' + scale + ')';
+  document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
+}
+/* 滚轮缩放：倍速（触控板小增量也顺滑）+ rAF 插值动画，光标锚点全程保持 */
+let targetScale = 1, zoomRaf = null, zoomAnchor = null;
+function animateZoom(){
+  if (zoomRaf) return;
+  const step = () => {
+    const diff = targetScale - scale;
+    if (Math.abs(diff) < 0.0015){
+      scale = targetScale;
+      applyZoom();
+      if (zoomAnchor) zoomAtAnchor();
+      zoomRaf = null;
+      return;
+    }
+    scale += diff * 0.35;
+    applyZoom();
+    if (zoomAnchor) zoomAtAnchor();
+    zoomRaf = requestAnimationFrame(step);
+  };
+  zoomRaf = requestAnimationFrame(step);
+}
+function zoomAtAnchor(){
+  const vp = document.getElementById('viewport');
+  const rect = vp.getBoundingClientRect();
+  const mx = zoomAnchor.cx - rect.left, my = zoomAnchor.cy - rect.top;
+  const wx = (zoomAnchor.sl + mx) / zoomAnchor.s, wy = (zoomAnchor.st + my) / zoomAnchor.s;
+  vp.scrollLeft = Math.max(0, wx * scale - mx);
+  vp.scrollTop  = Math.max(0, wy * scale - my);
+}
+function zoomBy(d){
+  scale = Math.min(2.5, Math.max(0.12, scale + d));
+  targetScale = scale;
+  applyZoom();
+  return scale;
+}
+function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function fitToScreen(){
+  const vp = document.getElementById('viewport');
+  const st = document.getElementById('stage');
+  const w = st.offsetWidth, h = st.offsetHeight;
+  if (!w || !h) return;
+  scale = Math.max(0.12, Math.min((vp.clientWidth - 30) / w, (vp.clientHeight - 30) / h, 1.2));
+  targetScale = scale;
+  applyZoom();
+  vp.scrollTo(0, 0);
+}
+document.getElementById('viewport').addEventListener('wheel', e => {
+  if (e.ctrlKey){
+    e.preventDefault();
+    const vp = document.getElementById('viewport');
+    const rect = vp.getBoundingClientRect();
+    zoomAnchor = { cx: e.clientX, cy: e.clientY, sl: vp.scrollLeft, st: vp.scrollTop, s: scale };
+    setTargetScale(scale * Math.exp(-e.deltaY * 0.0016));
+  }
+}, { passive: false });
+function setTargetScale(ns){
+  targetScale = Math.min(2.5, Math.max(0.12, ns));
+  animateZoom();
+}
+
+/* 平移：拖空白处（避开标签/菜单/搜索框） */
+(function(){
+  const vp = document.getElementById('viewport');
+  let down = false, sx = 0, sy = 0, sl = 0, st = 0;
+  vp.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
+    down = true; sx = e.clientX; sy = e.clientY;
+    sl = vp.scrollLeft; st = vp.scrollTop;
+    vp.classList.add('panning');
+  });
+  window.addEventListener('mousemove', e => {
+    if (!down) return;
+    vp.scrollLeft = sl - (e.clientX - sx);
+    vp.scrollTop  = st - (e.clientY - sy);
+  });
+  window.addEventListener('mouseup', () => { down = false; vp.classList.remove('panning'); });
+})();
+
+/* ---------- ⑪ 搜索（Ctrl+F / 顶栏放大镜；仅搜当前可见分支） ---------- */
+const sbBox = document.getElementById('searchBox');
+const sbInput = document.getElementById('sbInput');
+const sbCount = document.getElementById('sbCount');
+let _lastQuery = '';
+let _hitIds = [];
+let _hitIdx = -1;
+function searchOpenState(){ return sbBox.classList.contains('open'); }
+function openSearch(){
+  sbBox.classList.add('open');
+  sbInput.focus(); sbInput.select();
+}
+function closeSearch(){
+  sbBox.classList.remove('open');
+  document.getElementById('sbList').classList.remove('open');
+  if (document.activeElement === sbInput) sbInput.blur();   // 焦点交还画布：否则快捷键被隐藏输入框吞掉（v15.14 修复）
+  sbInput.value = '';
+  setQuery('');
+}
+function closeSearchHighlights(){
+  document.querySelectorAll('.node.hit, .node.hit-active').forEach(w => w.classList.remove('hit', 'hit-active'));
+  _hitIds = []; _hitIdx = -1; sbCount.textContent = '';
+}
+function setQuery(q){
+  _lastQuery = q.trim();
+  applySearchHighlight();
+}
+function nodeMatches(n, q){
+  return [n.name, n.zi, n.hao].concat(n.spouses || []).concat([n.birth, n.death, n.note])
+    .some(v => v && String(v).includes(q));
+}
+function applySearchHighlight(){
+  document.querySelectorAll('.node.hit, .node.hit-active').forEach(w => w.classList.remove('hit', 'hit-active'));
+  _hitIds = [];
+  if (!_lastQuery){ sbCount.textContent = ''; _hitIdx = -1; renderSbList(); return; }
+  const q = _lastQuery;
+  /* 全树匹配（含折叠分支） */
+  const allIds = [];
+  (function w(n){
+    if (nodeMatches(n, q)) allIds.push(n.id);
+    if (n.children) n.children.forEach(w);
+  })(treeData);
+  /* 命中在折叠支内 → 自动展开其祖先链（搜索不该有盲区） */
+  let expandedAny = false;
+  allIds.forEach(id => {
+    let p = findParent(id);
+    while (p){
+      if (!p.expanded){ p.expanded = true; expandedAny = true; }
+      p = findParent(p.id);
+    }
+  });
+  if (expandedAny){ render(); return; }   // render 尾部会再次进入本函数完成高亮
+  _hitIds = allIds;
+  _hitIds.forEach(id => {
+    const w = document.querySelector('.node[data-id="' + id + '"]');
+    if (w) w.classList.add('hit');
+  });
+  _hitIdx = -1;
+  if (_hitIds.length) stepHit(1);
+  else sbCount.textContent = '无匹配';
+  renderSbList();
+}
+
+/* 结果列表：点选即跳到该成员并居中选中 */
+let _sbSel = 0;
+function renderSbList(){
+  const list = document.getElementById('sbList');
+  if (!_lastQuery || !_hitIds.length){ list.classList.remove('open'); list.innerHTML = ''; return; }
+  list.innerHTML = '';
+  _hitIds.slice(0, 50).forEach((id, i) => {
+    const n = findNode(id);
+    if (!n) return;
+    const item = document.createElement('div');
+    item.className = 'sb-item' + (i === _sbSel ? ' sel' : '');
+    const gen = LAST_GENS.get(id);
+    const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+    const gtxt = gen ? (genLabel(gen.gen) + (gen.zi || zb[gen.gen - 1] ? '·' + (gen.zi || zb[gen.gen - 1]) : '')) : '';
+    item.innerHTML = (gtxt ? '<span class="g">' + esc(gtxt) + '</span>' : '') +
+      '<span class="nm">' + esc(dispName(n.name)) + (n.gender === 'f' ? '<i class="gx">女</i>' : '') + '</span>' +
+      '<span class="sub">' + (metaLine(n) ? esc(metaLine(n)).slice(0, 14) : (gen ? genLabel(gen.gen) : '?')) + '</span>';
+    item.onclick = e => { e.stopPropagation(); jumpToHit(i); };
+    list.appendChild(item);
+  });
+  list.classList.add('open');
+  _sbSel = Math.min(_sbSel, _hitIds.length - 1);
+  const sel = list.querySelector('.sb-item.sel');
+  if (sel) sel.scrollIntoView({ block: 'nearest' });
+}
+function jumpToHit(i){
+  if (!_hitIds.length) return;
+  const prev = _hitIds[_hitIdx];
+  if (prev){
+    const pw = document.querySelector('.node[data-id="' + prev + '"]');
+    if (pw) pw.classList.remove('hit-active');
+  }
+  _hitIdx = i;
+  const id = _hitIds[i];
+  const w = document.querySelector('.node[data-id="' + id + '"]');
+  if (!w) return;
+  w.classList.add('hit-active');
+  sbCount.textContent = (i + 1) + '/' + _hitIds.length;
+  const n = findNode(id);
+  const r0 = nodeRects.get(id);
+  const vp = document.getElementById('viewport');
+  vp.scrollTo({
+    left: n._x * scale - vp.clientWidth / 2,
+    top:  (n._y + (r0 ? r0.h / 2 : 0)) * scale - vp.clientHeight / 2,
+    behavior: 'smooth'
+  });
+  selectNode(id);
+  renderSbList();
+}
+function sbMoveSel(dir){
+  if (!_hitIds.length) return;
+  _sbSel = ((_sbSel + dir) % _hitIds.length + _hitIds.length) % _hitIds.length;
+  renderSbList();
+  jumpToHit(_sbSel);
+}
+function stepHit(dir){
+  if (!_hitIds.length) return;
+  const prev = _hitIds[_hitIdx];
+  if (prev){
+    const pw = document.querySelector('.node[data-id="' + prev + '"]');
+    if (pw) pw.classList.remove('hit-active');
+  }
+  _hitIdx = ((_hitIdx + dir) % _hitIds.length + _hitIds.length) % _hitIds.length;
+  const id = _hitIds[_hitIdx];
+  const w = document.querySelector('.node[data-id="' + id + '"]');
+  if (!w) return;
+  w.classList.add('hit-active');
+  sbCount.textContent = (_hitIdx + 1) + '/' + _hitIds.length;
+  const n = findNode(id);
+  const r0 = nodeRects.get(id);
+  const vp = document.getElementById('viewport');
+  vp.scrollTo({
+    left: n._x * scale - vp.clientWidth / 2,
+    top:  (n._y + (r0 ? r0.h / 2 : 0)) * scale - vp.clientHeight / 2,
+    behavior: 'smooth'
+  });
+}
+sbInput.addEventListener('input', () => setQuery(sbInput.value));
+sbInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown'){ e.preventDefault(); sbMoveSel(1); return; }
+  if (e.key === 'ArrowUp'){ e.preventDefault(); sbMoveSel(-1); return; }
+  if (e.key === 'Enter'){ e.preventDefault(); jumpToHit(_sbSel); }
+});
+document.getElementById('sbNext').onclick = () => stepHit(1);
+document.getElementById('sbPrev').onclick = () => stepHit(-1);
+document.getElementById('sbClose').onclick = () => { closeSearch(); };
+
+/* ---------- ⑫ 导入 / 导出 / 保存到文件 / 打印 ---------- */
+function exportMarkdown(){
+  let s = '# ' + puTitle() + '\n\n';
+  (function md(n, d){
+    let line = dispName(n.name) + (n.gender === 'f' ? '（女）' : '');
+    if (n.zi) line += '（字' + n.zi + '）';
+    if (n.hao) line += '（号' + n.hao + '）';
+    if (n.heir === 'in') line += '（嗣子）';
+    if (n.heir === 'out') line += '（嗣出）';
+    if (n.heir === 'jian') line += '（兼祧）';
+    if (n.zhi) line += '（止）';
+    line += (n.spouses && n.spouses.length ? '（' + spousesText(n) + '）' : '');
+    const b = (n.birth || '').trim(), de = (n.death || '').trim();
+    if (b || de) line += '（' + [b, de].filter(Boolean).join(' – ') + '）';
+    if (n.note) line += ' — ' + n.note;
+    s += '  '.repeat(d) + '- ' + line + '\n';
+    if (n.children) n.children.forEach(c => md(c, d + 1));
+  })(treeData, 0);
+  download('家族族谱.md', s, 'text/markdown;charset=utf-8');
+}
+
+/* ---------- 世系录（欧式：五世一表，每人一行行传） ---------- */
+function exportShixilu(){
+  const GENSX = LAST_GENS.size ? LAST_GENS : computeGenerations();
+  const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  /* 行第：与卡片角标同一套规则（有生年按年排序，无生年按手动次序） */
+  const ranks = new Map();
+  (function rk(n){
+    if (n.children && n.children.length > 1){
+      const known = n.children.filter(c => parseYear(c.birth));
+      const unknown = n.children.filter(c => !parseYear(c.birth));
+      known.slice().sort((a, b) => parseYear(a.birth) - parseYear(b.birth)).concat(unknown)
+        .forEach((c, i) => { ranks.set(c.id, i); });
+    }
+    if (n.children) n.children.forEach(rk);
+  })(treeData);
+  const rows = [];
+  (function w(n){
+    if (n.id !== 'root'){
+      const g = GENSX.get(n.id);
+      rows.push({
+        gen: g ? g.gen : null,
+        zi: g ? (g.zi || zb[g.gen - 1] || '') : '',
+        name: n.name || '', ziname: n.zi || '', hao: n.hao || '',
+        rank: ranks.has(n.id) ? rankWord(ranks.get(n.id)) : '',
+        birth: (n.birth || '').trim(), death: (n.death || '').trim(),
+        spouses: spousesText(n),
+        kids: (n.children || []).map(c => dispName(c.name) + (c.gender === 'f' ? '（女）' : '')).join('、'),
+        heir: n.heir === 'in' ? '嗣子' : n.heir === 'out' ? '嗣出' : n.heir === 'jian' ? '兼祧' : '',
+        zhi: n.zhi ? '止' : '',
+        note: n.note || ''
+      });
+    }
+    if (n.children) n.children.forEach(w);
+  })(treeData);
+  /* 五世一表：按谱世（=应用代数+世代基准）每五代分一表 */
+  const groups = new Map();
+  rows.forEach(r => {
+    const s = r.gen ? r.gen + genOffset() : 0;
+    const gi = s === 0 ? -1 : Math.floor((s - 1) / 5);
+    if (!groups.has(gi)) groups.set(gi, []);
+    groups.get(gi).push(r);
+  });
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  const today = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  let html = '<!doctype html><html lang="zh"><head><meta charset="utf-8"><title>' + esc(puTitle() + ' · 世系录') + '</title><style>'
+    + 'body{font-family:"Songti SC","SimSun",serif;color:#222;margin:32px auto;max-width:1120px;padding:0 18px}'
+    + 'h1{font-size:22px;color:#16324f;margin:0 0 4px}'
+    + 'h2{font-size:16px;color:#16324f;border-bottom:1.5px solid #c8d2dc;padding-bottom:4px;margin:26px 0 8px}'
+    + '.sub{color:#667;font-size:12.5px;margin-bottom:16px}'
+    + '.pre{white-space:pre-wrap;font-size:13px;line-height:1.85;background:#f7f9fb;border:1px solid #dde4ec;border-radius:8px;padding:10px 14px;margin:8px 0 2px}'
+    + 'table{width:100%;border-collapse:collapse;font-size:13px;margin:6px 0 14px}'
+    + 'th,td{border:1px solid #b9c3cf;padding:5px 8px;text-align:left;vertical-align:top;line-height:1.55}'
+    + 'th{background:#eef2f7;color:#16324f;font-weight:700;white-space:nowrap}'
+    + 'tr:nth-child(even) td{background:#fafbfc}'
+    + 'td.c{white-space:nowrap}'
+    + '@media print{body{margin:8mm}.pre{background:none}}'
+    + '</style></head><body>';
+  html += '<h1>' + esc(puTitle()) + ' · 世系录</h1>';
+  html += '<div class="sub">欧式 · 五世一表 · 导出于 ' + today + ' · 共 ' + rows.length + ' 人</div>';
+  const c = clanOf();
+  if (c.chain)  html += '<div class="pre"><b>源流世系：</b>' + esc(c.chain) + '</div>';
+  if (c.yuanzu) html += '<div class="pre"><b>先祖：</b>' + esc(c.yuanzu) + '</div>';
+  if (c.shizu)  html += '<div class="pre"><b>始祖记：</b>' + esc(c.shizu) + '</div>';
+  if (c.qianzu) html += '<div class="pre"><b>' + esc((c.qianzu.split('：')[0] || '始迁祖')) + '：</b>' + esc(c.qianzu.split('：').slice(1).join('：')) + '</div>';
+  if (c.origin) html += '<div class="pre"><b>家族来源：</b>' + esc(c.origin) + '</div>';
+  Array.from(groups.keys()).sort((a, b) => a - b).forEach(gi => {
+    const list = groups.get(gi);
+    if (gi < 0) html += '<h2>未定世次</h2>';
+    else {
+      const s0 = gi * 5 + 1, s1 = gi * 5 + 5;
+      html += '<h2>第' + numToCn(s0) + '世至第' + numToCn(s1) + '世</h2>';
+    }
+    html += '<table><tr><th>世次</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>';
+    list.forEach(r => {
+      const ji = [r.heir, r.zhi, r.note].filter(Boolean).join('；');
+      html += '<tr>'
+        + '<td class="c">' + (r.gen ? numToCn(r.gen + genOffset()) + '世' + (r.zi ? '·' + r.zi : '') : '—') + '</td>'
+        + '<td><b>' + esc(dispName(r.name)) + '</b></td>'
+        + '<td>' + esc(r.ziname) + '</td>'
+        + '<td>' + esc(r.hao) + '</td>'
+        + '<td class="c">' + esc(r.rank) + '</td>'
+        + '<td class="c">' + esc(r.birth) + '</td>'
+        + '<td class="c">' + esc(r.death) + '</td>'
+        + '<td>' + esc(r.spouses) + '</td>'
+        + '<td>' + esc(r.kids) + '</td>'
+        + '<td>' + esc(ji) + '</td>'
+        + '</tr>';
+    });
+    html += '</table>';
+  });
+  html += '</body></html>';
+  download((clanOf().ming || '家族族谱') + '-世系录-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.html',
+           html, 'text/html;charset=utf-8');
+  toast('世系录已下载（五世一表）：浏览器打开即可查阅或打印');
+}
+
+function download(name, content, type){
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+/* 校验导入结构：递归检查每人是合法对象 */
+function validTree(d){
+  if (!d || typeof d !== 'object' || Array.isArray(d)) return false;
+  if (typeof d.name !== 'string' || typeof d.id !== 'string' || !d.id) return false;
+  if (!Array.isArray(d.spouses) || !d.spouses.every(s => typeof s === 'string')) return false;
+  if (!Array.isArray(d.children)) return false;
+  return d.children.every(validTree);
+}
+
+document.getElementById('__importFile').addEventListener('change', function(){
+  const f = this.files && this.files[0];
+  this.value = '';
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      let txt = reader.result;
+      if (/\.html?$/i.test(f.name)){
+        const m = txt.match(/<script id="__treeData"[^>]*>([\s\S]*?)<\/script>/);
+        if (!m) throw new Error('这个 HTML 里没有族谱数据');
+        txt = m[1];
+      }
+      const d = JSON.parse(txt);
+      if (!validTree(d)) throw new Error('结构不符：需要 {id,name,children[]} 树');
+      if ((!Array.isArray(d.zibei) || !d.zibei.length) && Array.isArray(treeData.zibei))
+        d.zibei = treeData.zibei;   // 导入旧数据时保留本族字辈表
+      pushHistory('import');
+      treeData = migrate(d);
+      selectedId = null;
+      render();
+      fitToScreen();
+      toast('已导入「' + f.name + '」，数据已自动保存');
+    } catch(e){
+      alert('导入失败：不是有效的族谱 JSON 文件\n' + e.message);
+    }
+  };
+  reader.readAsText(f, 'utf-8');
+});
+
+function resetData(){
+  if (!confirm('确定重置？当前族谱将被清空，恢复到本文件自带的初始数据。\n（如需保留，先「备份到文件」；误删可用 Ctrl+Z）')) return;
+  pushHistory('reset');
+  treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+  selectedId = null;
+  render();
+  fitToScreen();
+  toast('已重置为本文件的初始数据（再次「保存到文件」可固化）');
+}
+
+/* 备份到文件：纯下载一份 json（无弹窗、不写任何已有文件）。
+   数据真源在浏览器，备份用于换电脑 / 防清缓存 */
+function backupToFile(){
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  const fname = '家族族谱-备份-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+              + '-' + pad(d.getHours()) + pad(d.getMinutes()) + '.json';
+  download(fname, JSON.stringify(sanitize(treeData), null, 2), 'application/json');
+  toast('备份已下载：' + fname);
+}
+
+/* ---------- 图谱导出（png / pdf）----------
+ * 按布局数据在 canvas 重绘全树（不受当前缩放/平移影响），含连线、字辈角标、
+ * 排行角标、折叠角标、生卒年备注；PDF 为内嵌 jpeg 的单页文档，零依赖。 */
+function exportPalette(){
+  const cs = getComputedStyle(document.documentElement);
+  const v = k => cs.getPropertyValue(k).trim();
+  return {
+    line: v('--line'), text: v('--text'), textLight: v('--text-light'),
+    rootBg: v('--root-bg'), rootFg: v('--root-fg'),
+    rank: v('--rank-bg'), birth: v('--birth-bg'),
+    g: [v('--g1'), v('--g2'), v('--g3'), v('--g4'), v('--g5')]
+  };
+}
+function exportTreeCanvas(){
+  const stage = document.getElementById('stage');
+  let W = stage.offsetWidth, H = stage.offsetHeight;
+  if (!W || !H) throw new Error('画布尚未渲染');
+  {   /* 标题行宽度自适应：谱名（堂号）· 日期 在窄画布（竖排）下不被裁切 */
+    const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
+    const t0 = puTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
+    W = Math.max(W, Math.min(560, t0.length * 17 + 40));
+  }
+  let S = Math.min(3, 12000 / Math.max(W, H));
+  if (!isFinite(S) || S <= 0) S = 1;
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(W * S); cv.height = Math.round(H * S + 46 * S);
+  const ctx = cv.getContext('2d');
+  ctx.scale(S, S);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H + 46);
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  ctx.fillStyle = '#16324f';
+  ctx.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.fillText(puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), 20, 30);
+  ctx.translate((W - stage.offsetWidth) / 2, 46);   /* 加宽出的边距左右均分，树居中 */
+
+  const P = exportPalette();
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+  const depthMap = new Map(), rankMap = new Map();
+  (function walk(n, depth, idx, total){
+    depthMap.set(n.id, depth);
+    rankMap.set(n.id, { idx, total });
+    if (n.expanded && n.children) n.children.forEach((c, i) => walk(c, depth + 1, i, n.children.length));
+  })(treeData, 0, 0, 1);
+  const GENS = computeGenerations();
+  const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  const FONT = '"PingFang SC","Microsoft YaHei",sans-serif';
+
+  ctx.strokeStyle = cfg.vertical ? '#d5dde6' : P.line; ctx.lineWidth = 1.5;
+  (function lines(n){
+    const r = nodeRects.get(n.id); if (!r) return;
+    if (n.expanded && n.children && n.children.length){
+      const f = nodeRects.get(n.children[0].id), l = nodeRects.get(n.children[n.children.length - 1].id);
+      if (f && l){
+        ctx.beginPath();
+        if (cfg.vertical){
+          const yTop = r.y + r.h;
+          const busY = Math.max(yTop + 8, (yTop + f.y) / 2);
+          ctx.moveTo(r.x, yTop); ctx.lineTo(r.x, busY);
+          if (n.children.length > 1){ ctx.moveTo(Math.min(f.x, l.x), busY); ctx.lineTo(Math.max(f.x, l.x), busY); }
+          n.children.forEach(c => {
+            const cr = nodeRects.get(c.id);
+            if (cr){ ctx.moveTo(cr.x, busY); ctx.lineTo(cr.x, cr.y); }
+          });
+        } else {
+          const yTop = r.y + r.h, yChild = r.y + V_SPACE;
+          const midY = Math.max(yTop + 26, (yTop + yChild) / 2);
+          ctx.moveTo(r.x, yTop); ctx.lineTo(r.x, midY);
+          if (n.children.length > 1){ ctx.moveTo(Math.min(f.x, l.x), midY); ctx.lineTo(Math.max(f.x, l.x), midY); }
+          n.children.forEach(c => {
+            const cr = nodeRects.get(c.id);
+            if (cr){ ctx.moveTo(cr.x, midY); ctx.lineTo(cr.x, yChild); }
+          });
+        }
+        ctx.stroke();
+      }
+      n.children.forEach(lines);
+    }
+  })(treeData);
+
+  function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+  function ellipText(t, maxW){
+    if (ctx.measureText(t).width <= maxW) return t;
+    while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+    return t + '…';
+  }
+  /* 竖排节点绘制：列自右向左（古法阅读序）——名字 → 女/嗣 → 字号 → 配偶 */
+  function drawNodeV(n, r, depth){
+    const x = r.x - r.w / 2, y = r.y, w = r.w, h = r.h;
+    const isRoot = n.id === 'root', isNote = n.id === 'note';
+    const gcol = P.g[Math.min(Math.max(depth, 1), 5) - 1];
+    if (isRoot){   /* 始祖：纸色底 + 细墨线，其余不画框（框退后、字为主角） */
+      ctx.setLineDash([]);
+      rr(x, y, w, h, 3);
+      ctx.fillStyle = '#fffdf8'; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(93,80,60,.5)'; ctx.stroke();
+    }
+    ctx.textBaseline = 'middle';
+    /* 与 DOM 竖排一致：单列自上而下 名→女→嗣→止→字号→配偶（称谓+名） */
+    let cy = y + 10;
+    const seg = (t, size, weight, color) => {
+      size = +size || 13;   // 防御：size 传错也不污染 cy 坐标
+      ctx.font = weight + ' ' + size + 'px ' + FONT;
+      ctx.fillStyle = color; ctx.textAlign = 'center';   // v15.23 修复：漏掉这行导致整列字左对齐起笔、视觉整体偏右
+      for (let i = 0; i < t.length; i++){
+        ctx.fillText(t[i], x + w / 2, cy + size / 2);
+        cy += size + 2.5;
+      }
+    };
+    seg(dispName(n.name), isRoot ? 16.5 : 16, '600', isRoot ? '#16324f' : (isNote ? '#a0a8b2' : '#29231c'));
+    if (n.gender === 'f') seg('女', 11, '600', '#b04a72');
+    if (n.heir) seg('嗣', 11, '700', n.heir === 'jian' ? '#2f6390' : (n.heir === 'out' ? '#b8842e' : '#a2661b'));
+    if (n.zhi) seg('止', 11, '700', '#3c4a57');
+    if (n.zi) seg('字' + n.zi, 11, '400', '#9aa9bb');
+    if (n.hao) seg('号' + n.hao, 11, '400', '#9aa9bb');
+    (n.spouses || []).forEach((s, si) => {
+      seg(spouseRoleAt(n, si), 9, '400', 'rgba(150,156,164,.95)');
+      seg(spouseDisplay(s), 12, '400', '#9aa0a8');
+    });
+    if (!n.expanded && n.children && n.children.length){
+      const t = '▸ ' + countDescendants(n);
+      ctx.font = '600 10px ' + FONT;
+      ctx.fillStyle = '#66768c'; ctx.textAlign = 'center';
+      ctx.fillText(t, x + w / 2, y - 12);   /* 与 DOM 一致：折叠钮悬于卡片上缘之外 */
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+  (function drawNode(n){
+    const r = nodeRects.get(n.id);
+    if (r){
+      const depth = depthMap.get(n.id) || 0;
+      if (cfg.vertical){ drawNodeV(n, r, depth); }
+      else{
+      const x = r.x - r.w / 2, y = r.y, w = r.w, h = r.h;
+      const isRoot = n.id === 'root', isNote = n.id === 'note';
+      const gcol = P.g[Math.min(Math.max(depth, 1), 5) - 1];
+      ctx.setLineDash(isNote ? [5, 4] : []);
+      rr(x, y, w, h, isRoot ? 11 : 9);
+      ctx.fillStyle = isRoot ? P.rootBg : '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = isRoot ? P.rootBg : (isNote ? P.textLight : gcol);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const gen = GENS.get(n.id);
+      let chipW = 0;
+      if (gen){
+        const zi = gen.zi || zbList[gen.gen - 1] || '';
+        const t = genLabel(gen.gen) + (zi ? '·' + zi : '');
+        ctx.font = '600 10px ' + FONT;
+        chipW = ctx.measureText(t).width + 10;
+        const match = gen.src === 'match';
+        rr(x + 14, y + 4, chipW, 16, 5);
+        ctx.fillStyle = match ? '#e8f1fa' : '#eef2f7'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = match ? '#b9d6ee' : '#dbe3ec'; ctx.stroke();
+        ctx.fillStyle = match ? '#2f6390' : '#66768c';
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText(t, x + 19, y + 12.5);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
+
+      if (!isRoot && !isNote){
+        const rk = rankMap.get(n.id);
+        const yr = parseYear(n.birth);
+        const badge = (t, bg) => {
+          ctx.font = '700 10px ' + FONT;
+          const bw = Math.max(ctx.measureText(t).width + 8, 16);
+          rr(x - 8, y - 8, bw, 16, 8);
+          ctx.fillStyle = bg; ctx.fill();
+          ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(t, x - 8 + bw / 2, y);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        };
+        if (yr) badge(String(yr), P.birth);
+        else if (rk.total > 1) badge(rankWord(rk.idx), P.rank);
+      }
+
+      if (!n.expanded && n.children && n.children.length){
+        const t = '▸ ' + countDescendants(n);
+        ctx.font = '600 10px ' + FONT;
+        const pw = ctx.measureText(t).width + 12;
+        rr(x + w - pw - 6, y + 4, pw, 16, 8);
+        ctx.fillStyle = '#eef2f7'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = '#d5dde6'; ctx.stroke();
+        ctx.fillStyle = '#66768c'; ctx.fillText(t, x + w - pw, y + 12.5);
+      }
+
+      const padX = isRoot ? 18 : 13;
+      let tx = x + padX + chipW + (chipW ? 5 : 0);
+      const nameY = y + (isRoot ? 20 : 15);
+      ctx.textAlign = 'left';
+      ctx.font = (isRoot ? '600 15px ' : '600 13px ') + FONT;
+      ctx.fillStyle = isRoot ? P.rootFg : (isNote ? P.textLight : P.text);
+      const nmTxt = dispName(n.name);
+      ctx.fillText(nmTxt, tx, nameY);
+      tx += ctx.measureText(nmTxt).width;
+      if (n.gender === 'f'){
+        ctx.font = '600 9.5px ' + FONT;
+        const gw = ctx.measureText('女').width + 7;
+        rr(tx + 3, nameY - 11, gw, 14, 4);
+        ctx.fillStyle = '#fbe9f0'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = '#eebcd0'; ctx.stroke();
+        ctx.fillStyle = '#b04a72'; ctx.textBaseline = 'middle';
+        ctx.fillText('女', tx + 3 + gw / 2, nameY - 4);
+        ctx.textBaseline = 'alphabetic';
+        tx += gw + 3;
+      }
+      if (n.heir){
+        ctx.font = '700 9.5px ' + FONT;
+        const gw = ctx.measureText('嗣').width + 7;
+        rr(tx + 3, nameY - 11, gw, 14, 4);
+        if (n.heir === 'jian'){ ctx.fillStyle = '#eaf4fb'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#7fb3d5'; }
+        else { ctx.fillStyle = n.heir === 'out' ? '#ffffff' : '#fdf3e3'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = '#e8c88a'; }
+        ctx.stroke();
+        if (n.heir === 'out') ctx.setLineDash([2, 2]);
+        ctx.fillStyle = n.heir === 'jian' ? '#2f6390' : '#a2661b'; ctx.textBaseline = 'middle';
+        ctx.fillText('嗣', tx + 3 + gw / 2, nameY - 4);
+        ctx.setLineDash([]);
+        ctx.textBaseline = 'alphabetic';
+        tx += gw + 3;
+      }
+      if (n.zhi){
+        ctx.beginPath();
+        ctx.arc(tx + 11, nameY - 4.5, 7.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff'; ctx.fill();
+        ctx.lineWidth = 1.2; ctx.strokeStyle = '#52616f'; ctx.stroke();
+        ctx.fillStyle = '#3c4a57';
+        ctx.font = '700 9px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('止', tx + 11, nameY - 4);
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        tx += 20;
+      }
+      if (n.zi || n.hao){
+        const t = (n.zi ? '字' + n.zi : '') + (n.zi && n.hao ? ' ' : '') + (n.hao ? '号' + n.hao : '');
+        ctx.font = '400 10px ' + FONT;
+        ctx.fillStyle = isRoot ? 'rgba(255,255,255,.6)' : P.textLight;
+        ctx.fillText(t, tx + 4, nameY);
+        tx += ctx.measureText(t).width + 4;
+      }
+      if (n.spouses && n.spouses.length){
+        n.spouses.forEach((sp, si) => {
+          ctx.font = '400 9px ' + FONT;
+          const role = spouseRoleAt(n, si);
+          ctx.fillStyle = isRoot ? 'rgba(255,255,255,.55)' : '#8fa0b5';
+          ctx.fillText(role, tx + 4, nameY);
+          tx += ctx.measureText(role).width + 8;
+          const spTxt = spouseDisplay(sp);
+          ctx.font = '400 13px ' + FONT;
+          ctx.fillStyle = isRoot ? 'rgba(255,255,255,.66)' : P.textLight;
+          ctx.fillText(spTxt, tx, nameY);
+          tx += ctx.measureText(spTxt).width + 6;
+        });
+      }
+
+      const meta = metaLine(n);
+      if (meta){
+        ctx.font = '400 10px ' + FONT;
+        ctx.fillStyle = isRoot ? 'rgba(255,255,255,.75)' : P.textLight;
+        ctx.fillText(ellipText(meta, w - padX * 2), x + padX, y + h - 7);
+      }
+      }
+    }
+    if (n.expanded && n.children) n.children.forEach(drawNode);
+  })(treeData);
+
+  /* 竖排：行左世数标（与页面上的谱书页边标注一致，固定汉字数字） */
+  if (cfg.vertical){
+    const rowGenX = [];
+    (function rgx(n, d){
+      if (!rowGenX[d]){
+        const g = LAST_GENS.get(n.id);
+        if (g) rowGenX[d] = g.gen;
+      }
+      if (n.expanded && n.children) n.children.forEach(c => rgx(c, d + 1));
+    })(treeData, 0);
+    const zbX = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+    ctx.font = '600 13.5px ' + FONT;
+    ctx.fillStyle = '#9aa9bb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    for (let d = 1; d < rowGenX.length; d++){
+      const g = rowGenX[d];
+      if (!g) continue;
+      let minY = null;
+      (function ny(n, dd){
+        if (dd === d){
+          const r0 = nodeRects.get(n.id);
+          if (r0 && (minY === null || r0.y < minY)) minY = r0.y;
+        }
+        if (n.expanded && n.children) n.children.forEach(c => ny(c, dd + 1));
+      })(treeData, 0);
+      if (minY !== null){
+        const zi = zbX[g - 1] || '';
+        const t = numToCn(g + genOffset()) + genUnit() + (zi ? '·' + zi : '');
+        for (let i = 0; i < t.length; i++) ctx.fillText(t[i], 8, minY + 14 + i * 16);
+      }
+    }
+    ctx.textBaseline = 'alphabetic';
+  }
+  return cv;
+}
+function stampName(ext){
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  return '家族族谱-图-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+       + '-' + pad(d.getHours()) + pad(d.getMinutes()) + ext;
+}
+function exportPNG(){
+  try {
+    const cv = exportTreeCanvas();
+    cv.toBlob(bl => {
+      download(stampName('.png'), bl, 'image/png');
+      toast('图片已下载（' + cv.width + '×' + cv.height + '）');
+    }, 'image/png');
+  } catch(e){ toast('导出失败：' + e.message); }
+}
+function exportPDF(){
+  try {
+    const cv = exportTreeCanvas();
+    const b64 = cv.toDataURL('image/jpeg', 0.95).split(',')[1];
+    const img = atob(b64);
+    const W = Math.round(cv.width * 0.75), H = Math.round(cv.height * 0.75);
+    const content = 'q\n' + W + ' 0 0 ' + H + ' 0 0 cm\n/Im1 Do\nQ\n';
+    const parts = [], offsets = [0, 0, 0, 0, 0, 0];
+    let pos = 0;
+    const add = str => { parts.push(str); pos += str.length; };
+    const obj = (num, body) => { offsets[num] = pos; add(num + ' 0 obj\n' + body + '\nendobj\n'); };
+    add('%PDF-1.4\n');
+    obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+    obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+    obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + W + ' ' + H + '] /Resources << /XObject << /Im1 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>');
+    obj(5, '<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream');
+    offsets[4] = pos;
+    add('4 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + cv.width + ' /Height ' + cv.height +
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + img.length + ' >>\nstream\n');
+    parts.push(img); pos += img.length;
+    add('\nendstream\nendobj\n');
+    const xref = pos;
+    add('xref\n0 6\n0000000000 65535 f\n');
+    for (let i = 1; i <= 5; i++) add(String(offsets[i]).padStart(10, '0') + ' 00000 n\n');
+    add('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+    const bytes = new Uint8Array(pos);
+    let p = 0;
+    parts.forEach(seg => { for (let i = 0; i < seg.length; i++) bytes[p++] = seg.charCodeAt(i) & 0xff; });
+    download(stampName('.pdf'), bytes, 'application/pdf');
+    toast('PDF 已下载（' + W + '×' + H + ' pt）');
+  } catch(e){ toast('导出失败：' + e.message); }
+}
+
+/* 谱书竖排打印页：克隆当前舞台（卡片/连线/行左世数标），按 A4 纵向可打印区缩放，可装订成册 */
+function buildPrintDomVertical(){
+  const area = document.getElementById('printArea');
+  area.innerHTML = '';
+  const h = document.createElement('h2');
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  h.textContent = puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  area.appendChild(h);
+  const stage = document.getElementById('stage');
+  const clone = stage.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.className = 'ps v';
+  clone.style.transform = 'none';
+  clone.style.width = stage.offsetWidth + 'px';
+  clone.style.height = stage.offsetHeight + 'px';
+  clone.style.left = '0';
+  clone.style.top = '0';
+  clone.querySelectorAll('.quick-add').forEach(q => q.remove());
+  clone.querySelectorAll('.selected,.hit,.hit-active,.menu-open').forEach(el =>
+    el.classList.remove('selected', 'hit', 'hit-active', 'menu-open'));
+  const s = Math.min(1, 700 / stage.offsetWidth, 1030 / stage.offsetHeight);   /* A4 纵向可打印区 ≈ 186×273mm */
+  const wrap = document.createElement('div');
+  wrap.className = 'pstage-wrap';
+  wrap.style.width = Math.ceil(stage.offsetWidth * s) + 'px';
+  wrap.style.height = Math.ceil(stage.offsetHeight * s) + 'px';
+  clone.style.transform = 'scale(' + s + ')';
+  clone.style.transformOrigin = 'top left';
+  wrap.appendChild(clone);
+  area.appendChild(wrap);
+  let cnt = 0;
+  (function w2(n){ if (n.id !== 'root') cnt++; if (n.children) n.children.forEach(w2); })(treeData);
+  const note = document.createElement('div');
+  note.className = 'pmeta';
+  note.style.marginTop = '6px';
+  note.textContent = '谱书竖排 · 共 ' + cnt + ' 人' + (s < 1 ? '（整图已按页面缩放 ' + Math.round(s * 100) + '%）' : '');
+  area.appendChild(note);
+}
+
+/* 打印：画布绝对坐标跨页会切破卡片，改为现场生成文档式大纲（打印全部分支，无视折叠） */
+function printMemberRow(n, gen, rank){
+  let core = '<b>' + esc(dispName(n.name || '')) + '</b>';
+  if (n.gender === 'f') core += '（女）';
+  if (n.heir === 'in') core += '（嗣子）';
+  if (n.heir === 'out') core += '（嗣出）';
+  if (n.heir === 'jian') core += '（兼祧）';
+  if (n.zhi) core += '（止）';
+  const zx = [];
+  if (n.zi) zx.push('字' + n.zi);
+  if (n.hao) zx.push('号' + n.hao);
+  const sps = (n.spouses && n.spouses.length)
+    ? '<span class="psp">（' + esc(spousesText(n)) + '）</span>' : '';
+  let extra = '';
+  const b = (n.birth || '').trim(), de = (n.death || '').trim();
+  if (b || de) extra += '<span class="pmeta">（' + esc([b, de].filter(Boolean).join(' – ')) + '）</span>';
+  if (n.note) extra += '<span class="pmeta">— ' + esc(n.note) + '</span>';
+  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (gen.zi ? '·' + gen.zi : '')) + '</span>'
+                      : (rank ? '<span class="pgen">' + esc(rank) + '</span>' : '');
+  return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
+}
+function buildPrintDomReal(){
+  if (cfg.vertical) return buildPrintDomVertical();
+  const area = document.getElementById('printArea');
+  area.innerHTML = '';
+  const GENSX = LAST_GENS.size ? LAST_GENS : computeGenerations();
+  const ranks = new Map();
+  (function rk(n){
+    if (n.children && n.children.length > 1){
+      const known = n.children.filter(c => parseYear(c.birth));
+      const unknown = n.children.filter(c => !parseYear(c.birth));
+      known.slice().sort((a, b) => parseYear(a.birth) - parseYear(b.birth)).concat(unknown)
+        .forEach((c, i) => { ranks.set(c.id, i); });
+    }
+    if (n.children) n.children.forEach(rk);
+  })(treeData);
+  const h = document.createElement('h2');
+  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  h.textContent = puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  area.appendChild(h);
+  const c = clanOf();
+  const xu = document.createElement('div');
+  xu.className = 'pxu';
+  let xuHtml = '';
+  if (c.chain)  xuHtml += '<div><b>源流世系：</b>' + esc(c.chain) + '</div>';
+  if (c.yuanzu) xuHtml += '<div><b>先祖：</b>' + esc(c.yuanzu) + '</div>';
+  if (c.shizu)  xuHtml += '<div><b>始祖记：</b>' + esc(c.shizu) + '</div>';
+  if (c.qianzu) xuHtml += '<div><b>' + esc((c.qianzu.split('：')[0] || '始迁祖')) + '：</b>' + esc(c.qianzu.split('：').slice(1).join('：')) + '</div>';
+  if (c.origin) xuHtml += '<div><b>家族来源：</b>' + esc(c.origin) + '</div>';
+  if (xuHtml){ xu.innerHTML = xuHtml; area.appendChild(xu); }
+  const rootUl = document.createElement('ul');
+  rootUl.className = 'ptree';
+  (function li(n, ul){
+    const row = document.createElement('li');
+    row.innerHTML = printMemberRow(n, n.id === 'root' ? null : GENSX.get(n.id), ranks.get(n.id));
+    if (n.children && n.children.length){
+      const sub = document.createElement('ul');
+      n.children.forEach(c => li(c, sub));
+      row.appendChild(sub);
+    }
+    ul.appendChild(row);
+  })(treeData, rootUl);
+  area.appendChild(rootUl);
+}
+window.addEventListener('beforeprint', buildPrintDomReal);
+
+/* ---------- ⑬ 键盘总控（分层守卫：搜索框 > 弹窗 > 输入型目标 > 全局快捷键） ---------- */
+document.addEventListener('keydown', e => {
+  const target = e.target;
+  const typing = target && (
+    target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+  );
+  /* Esc 最优先处理：无论焦点在哪都能层层退出 */
+  if (e.key === 'Escape'){
+    if (hmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeHelp(); return; }
+    if (searchOpenState()){ e.preventDefault(); e.stopPropagation(); closeSearch(); return; }
+    if (cmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeClan(); return; }
+    if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
+    if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
+    closeMenu();
+    return;
+  }
+  /* 其余按键：输入中 / 弹窗开着 一律不触发全局快捷键（v12 泄漏 bug 根因） */
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || e.defaultPrevented) return;
+
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'f'){ e.preventDefault(); openSearch(); return; }
+  if (mod && e.key.toLowerCase() === 's' && !e.shiftKey){
+    e.preventDefault();   // 已自动保存：拦下浏览器另存即可
+    toast('已自动保存，无需手动操作');
+    return;
+  }
+  if (mod && e.key.toLowerCase() === 'z'){
+    e.preventDefault();
+    if (e.shiftKey) redo(); else undo();
+    return;
+  }
+  if (mod && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); return; }
+
+  const n = selectedId ? findNode(selectedId) : null;
+  if (!n) return;
+  if (e.key === 'Tab'){ e.preventDefault(); addChild(n); }
+  else if (e.key === 'Enter' && n.id !== 'root'){ e.preventDefault(); addSibling(n); }
+  else if (e.key === 'Delete'){ deleteNode(n); }
+  else if (e.key === 'F2'){ e.preventDefault(); editName(n); }
+  else if (mod && e.shiftKey && e.key.toLowerCase() === 's'){ e.preventDefault(); addSpouse(n); }
+  else if (mod && e.key.toLowerCase() === 'i'){ e.preventDefault(); editDetails(n); }
+});
+
+/* 右键节点 = 打开同一份操作菜单 */
+document.getElementById('viewport').addEventListener('contextmenu', e => {
+  const w = e.target.closest && e.target.closest('.node');
+  if (!w) return;
+  e.preventDefault();
+  const n = findNode(w.dataset.id);
+  if (!n) return;
+  selectNode(n.id);
+  openMenu(w, n);
+});
+
+/* 点空白取消选中（绑在外层容器：悬浮提示条 pointer-events:none，点击落到容器） */
+document.querySelector('.canvas-wrap').addEventListener('click', e => {
+  if (e.target.id === 'viewport' || e.target.id === 'stage' || e.target.id === 'nodes'
+      || e.target.classList.contains('canvas-wrap')){
+    selectedId = null;
+    document.querySelectorAll('.node').forEach(w => w.classList.remove('selected'));
+  }
+});
+
+/* toast：复用静态元素 */
+let _toastT;
+function toast(msg){
+  const el = document.getElementById('__toast');
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => { el.style.opacity = '0'; }, 2600);
+}
+
+/* 测试/调试句柄（内部工具，普通使用无需理会） */
+window.__ZP = {
+  ver: '15.29',
+  get cfg(){ return cfg; },
+  get data(){ return treeData; },
+  set data(v){ treeData = migrate(JSON.parse(JSON.stringify(v))); pushHistory('zpSet'); render(); },
+  get scale(){ return scale; },
+  historyLens(){ return [_undoStack.length, _redoStack.length]; },
+  rects(){ return nodeRects; },
+  storageKey(){ return STORAGE_KEY; },
+  findNode, sanitize, snapshot: historySnapshot
+};
+
+/* 初始化 */
+render();
+fitToScreen();
+refreshUndoButtons();
+updateClanTags();
+if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');
+else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');
+</script>
+
+<div id="printArea"></div>
+
+
+
+</body></html>

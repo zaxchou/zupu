@@ -1,0 +1,13 @@
+# 测试产物
+tests/_out/
+__pycache__/
+*.pyc
+
+# zip 分发时代的说明（git 仓库用 README.md）
+README-解压说明.txt
+
+# 过时的旧快照（数据以 家族族谱-数据.json 为准）
+家族族谱-思维导图.md
+
+# 历史调试/补丁脚本
+tests/_p*.py
