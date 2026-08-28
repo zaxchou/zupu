@@ -10,6 +10,7 @@
 [![Tests](https://img.shields.io/badge/tests-47%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
+[![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
 
 *把修谱这件事，放回每个家庭的电脑里。*
 
@@ -40,7 +41,9 @@
 
 ## 🚀 快速开始
 
-**方式一（推荐）**：到 [Releases](https://github.com/zaxchou/zupu/releases) 下载 zip，
+**方式〇（最快）**：直接打开在线版 → **[https://zaxchou.github.io/zupu/](https://zaxchou.github.io/zupu/)**
+
+**方式一（本地使用，推荐）**：到 [Releases](https://github.com/zaxchou/zupu/releases) 下载 zip，
 解压后双击 `index.html`。首次使用会弹出向导：
 
 - **先看看示例** — 用内置的赵钱孙李演示谱熟悉操作
