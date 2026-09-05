@@ -98,6 +98,33 @@ def t_i18n_ja_smoke(b):
     ctx.close()
 
 
+@testcase
+def t_i18n_zh_hant_smoke(b):
+    ctx, page, errs, cons = fresh_page(b)
+    goto_lang(page, lang_url(r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\index-zh-Hant.html", "fixture_hant.html"))
+    check(page.locator("#__wizModal").is_visible(), "繁：首次載入彈出歡迎嚮導")
+    page.locator('#__wizModal [data-wiz="demo"]').click()
+    page.wait_for_timeout(150)
+    check(not page.locator("#__wizModal").is_visible(), "繁：選擇後嚮導關閉")
+    check("儲存" in page.locator("#saveState").inner_text(), "繁：狀態燈為台灣用語（儲存）",
+          page.locator("#saveState").inner_text())
+    check("檔案" in page.locator("#btnFile").inner_text(), "繁：檔案選單為台灣用語")
+    stats = page.locator("#statsChip").inner_text()
+    check("位成員" in stats, "繁：統計條為繁體", stats)
+    check(page.evaluate("window.__ZP.data.name") == "家族族譜", "繁：示例譜已轉繁體",
+          page.evaluate("window.__ZP.data.name"))
+    dlg = DialogRecorder(page)
+    dlg.queue("prompt", "趙傳心")
+    page.locator('.node .quick-add').first.click()
+    page.locator("#__ctxMenu .mi", has_text="第一代").click()
+    page.wait_for_timeout(250)
+    check(page.evaluate("window.__ZP.data.children.length") == 2, "繁：可正常添加成員")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4') === null"), "繁：獨立儲存（不寫簡體鍵）")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4_hant') !== null"), "繁：寫入自己的儲存鍵")
+    check(not errs, "繁：無 JS 錯誤", str(errs))
+    ctx.close()
+
+
 if __name__ == "__main__":
     ok = run_module(_sys.modules[__name__], "t_i18n 多语言版本")
     _sys.exit(0 if ok else 1)

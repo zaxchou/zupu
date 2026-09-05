@@ -1,6 +1,6 @@
 <div align="center">
 
-[中文](README.md) | [English](README.en.md) | **日本語**
+[简体中文](README.md) | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | **日本語**
 
 <img src="docs/cover-ja.png" alt="家系図・伝代ツリー" width="100%">
 
@@ -8,8 +8,8 @@
 
 **シングルファイル · 依存ゼロ · ローカルファーストのオープンソース家系図アプリ**
 
-[![Version](https://img.shields.io/badge/version-v15.32-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.33-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![オンラインで試す](https://img.shields.io/badge/オンライン-デモ-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -42,7 +42,7 @@
 - **配偶者の譜式** — 譜書式表示、人ごとの呼称（配 / 継配 / 娶 / 聘 / 側室）
 - **出力** — PNG / PDF / **世系録（欧式・五世一表）** / Markdown / 製本印刷
 - **自動保存** — 編集は即保存（ブラウザ内）。json バックアップで機種変更も簡単
-- **3 つの言語** — 中文 / English / 日本語。データモデルは共通で、バックアップは互換
+- **4 つの言語** — 简体中文 / 繁體中文 / English / 日本語。データモデルは共通で、バックアップは互換
 
 ## 🚀 はじめ方
 
@@ -51,7 +51,7 @@
 
 **方法 1（ローカル、推奨）**：[Releases](https://github.com/zaxchou/zupu/releases) から
 言語に合ったファイル 1 つをダウンロード（日本語：`index-ja.html`。中文 `index.html` /
-English `index-en.html` も可）、ダブルクリック。初回はウィザードが出ます：
+繁體中文 `index-zh-Hant.html` / English `index-en.html` も可）、ダブルクリック。初回はウィザードが出ます：
 
 - **まずデモを見る** — 自由にいじれるサンプル家系図
 - **白紙から始める** — 譜名を入れて第一世代から作成

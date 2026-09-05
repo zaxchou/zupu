@@ -1,6 +1,6 @@
 <div align="center">
 
-[中文](README.md) | **English** | [日本語](README.ja.md)
+[简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
 <img src="docs/cover-en.png" alt="Zupu · Family Tree" width="100%">
 
@@ -8,8 +8,8 @@
 
 **Single file · Zero dependencies · Local-first open-source genealogy**
 
-[![Version](https://img.shields.io/badge/version-v15.32-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.33-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![Try online](https://img.shields.io/badge/try%20it-online-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -46,7 +46,7 @@ labels in the left margin — print it / export it to PDF and **bind it into a b
 - **Exports** — PNG / PDF / **Genealogy tables (European style, five generations per table)** /
   Markdown / book print
 - **Auto-save** — edits are saved instantly (browser-local); back up to json to move machines
-- **Three languages** — 中文 / English / 日本語, same data model, interchangeable backups
+- **Four languages** — 简体中文 / 繁體中文 / English / 日本語 — same data model, interchangeable backups
 
 ## 🚀 Quick start
 
@@ -55,7 +55,8 @@ labels in the left margin — print it / export it to PDF and **bind it into a b
 
 **Option 1 (local, recommended)**: from [Releases](https://github.com/zaxchou/zupu/releases),
 download the single file for your language — English: `index-en.html`
-(中文 `index.html`, 日本語 `index-ja.html`). One file is everything —
+(简体中文 `index.html`, 繁體中文 `index-zh-Hant.html`, 日本語 `index-ja.html`).
+One file is everything —
 double-click it; a first-run wizard appears:
 
 - **Explore the demo** — a sample tree you can play with freely

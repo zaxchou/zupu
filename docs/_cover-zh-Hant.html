@@ -1,42 +1,42 @@
 <!doctype html>
-<html lang="zh">
+<html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
   html,body{width:1280px;height:640px;overflow:hidden}
   body{
-    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
     background:
       radial-gradient(ellipse at 85% 15%, rgba(176,58,46,.05), transparent 55%),
       radial-gradient(ellipse at 10% 90%, rgba(93,80,60,.07), transparent 50%),
       linear-gradient(160deg,#faf6ec 0%,#f4eee0 55%,#efe6d2 100%);
     position:relative;color:#29231c;
   }
-  /* 文武线（外粗内细双框） */
+  /* 文武線（外粗內細雙框） */
   .frame-outer{position:absolute;inset:18px;border:2.5px solid rgba(93,80,60,.55);border-radius:2px}
   .frame-inner{position:absolute;inset:26px;border:1px solid rgba(93,80,60,.35);border-radius:2px}
-  /* 右侧竖排大标题 */
+  /* 右側豎排大標題 */
   .title-v{
     position:absolute;top:88px;right:150px;
     writing-mode:vertical-rl;text-orientation:upright;
-    font-family:"Songti SC","SimSun",serif;font-weight:700;
+    font-family:"Songti TC","PMingLiU","SimSun",serif;font-weight:700;
     font-size:96px;letter-spacing:18px;color:#29231c;
   }
-  /* 印章：传家之谱 */
+  /* 印章：傳家之譜 */
   .seal{
     position:absolute;right:118px;top:520px;width:104px;height:104px;
     background:linear-gradient(150deg,#b03a2e,#96301f);
     border-radius:8px;display:grid;grid-template-columns:1fr 1fr;place-items:center;
     box-shadow:0 3px 10px rgba(150,48,31,.35);padding:10px;
   }
-  .seal span{font-family:"KaiTi","STKaiti","SimSun",serif;font-weight:700;
+  .seal span{font-family:"PMingLiU","KaiTi",serif;font-weight:700;
     font-size:30px;color:#fdf6ea;line-height:1}
   .seal-sub{position:absolute;right:96px;top:636px;font-size:13px;letter-spacing:6px;color:#8a7d68}
-  /* 左侧文字区 */
+  /* 左側文字區 */
   .kicker{position:absolute;left:96px;top:104px;font-size:20px;letter-spacing:10px;color:#8a6a2a;font-weight:600}
   .kicker b{color:#b03a2e}
-  h1{position:absolute;left:90px;top:150px;font-family:"Songti SC","SimSun",serif;
+  h1{position:absolute;left:90px;top:150px;font-family:"Songti TC","PMingLiU","SimSun",serif;
      font-size:76px;font-weight:700;color:#1f1b14;letter-spacing:4px}
   .en{position:absolute;left:96px;top:252px;font-size:16px;letter-spacing:5px;color:#8a7d68;font-weight:500}
   .desc{position:absolute;left:96px;top:300px;font-size:19px;color:#4a4438;letter-spacing:2px}
@@ -44,11 +44,11 @@
   .chips{position:absolute;left:96px;top:362px;display:flex;gap:12px}
   .chip{font-size:15px;padding:5px 14px;border-radius:14px;background:rgba(93,80,60,.08);
         border:1px solid rgba(93,80,60,.22);color:#4a4438;letter-spacing:1px}
-  /* 中部迷你吊线谱 */
+  /* 中部迷你吊線譜 */
   .tree{position:absolute;left:96px;top:436px;display:flex;gap:56px;align-items:flex-start}
   .col{display:flex;flex-direction:column;align-items:center}
   .gen{font-size:12px;color:#9a8f79;letter-spacing:2px;margin-bottom:8px}
-  .name{writing-mode:vertical-rl;text-orientation:upright;font-family:"Songti SC","SimSun",serif;
+  .name{writing-mode:vertical-rl;text-orientation:upright;font-family:"Songti TC","PMingLiU","SimSun",serif;
         font-size:22px;font-weight:700;color:#29231c;background:rgba(255,253,248,.85);
         border:1px solid rgba(93,80,60,.28);border-radius:5px;padding:10px 6px}
   .root .name{background:#29231c;color:#f4eee0;border-color:#29231c;font-size:15px}
@@ -60,7 +60,7 @@
   .tag.o{background:transparent;border:1px solid rgba(93,80,60,.4);color:#4a4438}
   .github{position:absolute;right:300px;bottom:52px;font-size:15px;color:#6b6152;letter-spacing:1px}
   .github b{color:#29231c}
-  /* 竖排名字的吊线（各列与横母线相连） */
+  /* 豎排名字的吊線（各列與橫母線相連） */
   .drop{width:1.5px;height:14px;background:#b9ab90;margin:0 auto}
 </style>
 </head>
@@ -68,30 +68,30 @@
   <div class="frame-outer"></div>
   <div class="frame-inner"></div>
 
-  <div class="kicker"><b>开源</b> · 单文件 · 本地优先 · 无账号</div>
-  <h1>家族族谱 · 传代树</h1>
+  <div class="kicker"><b>開源</b> · 單檔案 · 本地優先 · 無帳號</div>
+  <h1>家族族譜 · 傳代樹</h1>
   <div class="en">ZUPU · A SINGLE-FILE FAMILY GENEALOGY · OFFLINE FIRST · MIT</div>
-  <div class="desc">零依赖 · <b>谱书竖排（古法）</b> · 字辈定代 · 五世一表世系录 · 无感自动保存</div>
+  <div class="desc">零依賴 · <b>譜書豎排（古法）</b> · 字輩定代 · 五世一表世系錄 · 無感自動儲存</div>
   <div class="chips">
-    <div class="chip">常规传代树</div><div class="chip">谱书竖排</div>
-    <div class="chip">字辈定代</div><div class="chip">PNG / PDF / 世系录</div>
+    <div class="chip">常規傳代樹</div><div class="chip">譜書豎排</div>
+    <div class="chip">字輩定代</div><div class="chip">PNG / PDF / 世系錄</div>
   </div>
 
-  <!-- 迷你吊线谱：横母线垂珠 -->
+  <!-- 迷你吊線譜：橫母線垂珠 -->
   <div class="tree">
     <div class="col root"><div class="gen">第一代</div><div class="name">德祖</div><div class="drop"></div></div>
-    <div class="col"><div class="gen">第二代</div><div class="name">承业</div><div class="drop"></div></div>
-    <div class="col"><div class="gen">第三代</div><div class="name">传家</div><div class="drop"></div></div>
-    <div class="col"><div class="gen">第四代</div><div class="name">世泽</div></div>
+    <div class="col"><div class="gen">第二代</div><div class="name">承業</div><div class="drop"></div></div>
+    <div class="col"><div class="gen">第三代</div><div class="name">傳家</div><div class="drop"></div></div>
+    <div class="col"><div class="gen">第四代</div><div class="name">世澤</div></div>
   </div>
   <div class="bus" style="display:none"></div>
 
   <div class="foot">
-    <div class="tag">v15.33</div><div class="tag o">53 测试用例</div><div class="tag o">MIT License</div>
+    <div class="tag">v15.33</div><div class="tag o">53 測試用例</div><div class="tag o">MIT License</div>
   </div>
   <div class="github">github.com/<b>zaxchou/zupu</b></div>
 
-  <div class="title-v">家族族谱</div>
-  <div class="seal"><span>传</span><span>家</span><span>之</span><span>谱</span></div>
+  <div class="title-v">家族族譜</div>
+  <div class="seal"><span>傳</span><span>家</span><span>之</span><span>譜</span></div>
 </body>
 </html>

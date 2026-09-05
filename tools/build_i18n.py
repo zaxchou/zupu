@@ -878,6 +878,41 @@ def _seed_sub(seed):
         return m.group(1) + '\n' + _dump(seed) + '\n' + m.group(2)
     return r
 
+# ============================================================ 繁体中文（OpenCC 全文件转换）
+def build_hant():
+    """繁体版：整文件 s2twp（简→繁台湾用语，代码全 ASCII 不受影响），
+    叠加独立存储键与 lang 属性。示例谱与注释一并转换，四语言内容保持同构。"""
+    from opencc import OpenCC
+    cc = OpenCC('s2twp')
+    src = cc.convert(io.open(SRC, encoding='utf-8').read())
+    errs = []
+    for old, new in [
+      ('<html lang="zh-CN">', '<html lang="zh-Hant">'),
+      ("const STORAGE_KEY = 'zupu_data_v4';", "const STORAGE_KEY = 'zupu_data_v4_hant';"),
+      ("const CFG_KEY = 'zupu_cfg_v1';", "const CFG_KEY = 'zupu_cfg_v1_hant';"),
+      # s2twp 用词微调：台湾惯用「帳號」
+      ('賬號', '帳號'),
+    ]:
+        n = src.count(old)
+        if n != 1:
+            errs.append('x%d: %r' % (n, old[:50]))
+            continue
+        src = src.replace(old, new)
+    # 哨兵：台湾用语必须出现，简体原文必须消失
+    for sentinel in ['儲存', '檔案', '字輩', '家族族譜']:
+        if sentinel not in src:
+            errs.append('sentinel missing: ' + sentinel)
+    for leftover in ['数据真源', '字辈表']:
+        if leftover in src:
+            errs.append('simplified leftover: ' + leftover)
+    if errs:
+        print('zh-Hant FAIL')
+        for e in errs: print('  ' + e)
+        return False
+    io.open(os.path.join(ROOT, 'index-zh-Hant.html'), 'w', encoding='utf-8', newline='').write(src)
+    print('zh-Hant -> index-zh-Hant.html OK')
+    return True
+
 if __name__ == '__main__':
     base = io.open(SRC, encoding='utf-8').read()
     ok = True
@@ -895,4 +930,5 @@ if __name__ == '__main__':
       ("const STORAGE_KEY = 'zupu_data_v4';", "const STORAGE_KEY = 'zupu_data_v4_ja';"),
       ("const CFG_KEY = 'zupu_cfg_v1';", "const CFG_KEY = 'zupu_cfg_v1_ja';"),
     ])
+    ok &= build_hant()
     sys.exit(0 if ok else 1)
