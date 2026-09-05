@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:640px;overflow:hidden}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#1c2333;position:relative;
+    background:
+      radial-gradient(ellipse at 78% 6%, rgba(139,152,222,.16), transparent 46%),
+      radial-gradient(ellipse at 96% 92%, rgba(186,160,220,.13), transparent 42%),
+      radial-gradient(ellipse at 4% 96%, rgba(120,165,190,.10), transparent 36%),
+      linear-gradient(180deg,#f8f9fc 0%,#f4f6fa 100%);
+  }
+  .grid{position:absolute;inset:0;
+    background-image:linear-gradient(rgba(30,60,100,.045) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(30,60,100,.045) 1px,transparent 1px);
+    background-size:40px 40px}
+  /* 右侧：真实软件截图卡（oil-cover 式主角：微透视、被画布裁切、浅阴影） */
+  .shot{
+    position:absolute;top:-36px;right:-44px;width:372px;height:760px;
+    transform:rotate(6.5deg);transform-origin:top center;
+    border-radius:16px;overflow:hidden;
+    border:1px solid rgba(255,255,255,.85);
+    box-shadow:0 18px 44px rgba(30,35,40,.12), 0 4px 12px rgba(30,35,40,.06);
+    background:#f6f8fb}
+  .shot img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  /* 截图卡顶部仿窗口条 */
+  .shot .bar{position:absolute;top:0;left:0;right:0;height:26px;background:#eef1f6;
+    border-bottom:1px solid rgba(30,60,100,.06);display:flex;align-items:center;gap:6px;padding:0 12px}
+  .shot .bar i{width:9px;height:9px;border-radius:50%;background:#d5dbe4;display:inline-block}
+  .shot .bar i:nth-child(1){background:#ee9a9a}.shot .bar i:nth-child(2){background:#f0d49a}.shot .bar i:nth-child(3){background:#a8d5b0}
+  .shot .bar s{margin-left:8px;text-decoration:none;font-size:10px;color:#8a94a6;letter-spacing:1px}
+  /* 截图卡的淡紫氛围反光 */
+  .glow{position:absolute;top:-60px;right:-40px;width:520px;height:520px;border-radius:50%;
+    background:radial-gradient(circle,rgba(139,152,222,.20),transparent 65%);filter:blur(6px)}
+
+  .kicker{position:absolute;left:84px;top:74px;display:flex;gap:10px;align-items:center}
+  .pill{font-size:13px;padding:4px 13px;border-radius:11px;letter-spacing:1px;
+    background:rgba(139,152,222,.14);color:#4a5578;font-weight:600}
+  .pill.o{background:rgba(176,58,46,.08);color:#8f3328}
+  h1{position:absolute;left:80px;top:118px;font-size:112px;font-weight:800;
+     color:#1c2333;letter-spacing:6px;line-height:1;white-space:nowrap}
+  .t2{position:absolute;left:84px;top:252px;display:flex;align-items:center;gap:18px}
+  .t2 .serif{font-family:"Songti SC","SimSun",serif;font-weight:700;font-size:84px;
+     color:#1c2333;letter-spacing:8px;line-height:1}
+  .t2 .chip-hl{font-size:15px;font-weight:600;color:#4a5578;letter-spacing:2px;
+     background:rgba(139,152,222,.16);border:1px solid rgba(139,152,222,.32);
+     padding:8px 16px;border-radius:18px}
+  .en{position:absolute;left:86px;top:372px;font-size:15px;letter-spacing:4px;color:#8a94a6;font-weight:500}
+  .chips{position:absolute;left:84px;top:418px;display:flex;gap:13px}
+  .chip{font-size:15px;padding:7px 17px;border-radius:15px;letter-spacing:1px;border:1px solid transparent;font-weight:500}
+  .chip.b{background:rgba(139,152,222,.13);border-color:rgba(139,152,222,.30);color:#3f4a70}
+  .chip.t{background:rgba(110,160,185,.13);border-color:rgba(110,160,185,.30);color:#38596a}
+  .chip.g{background:rgba(190,160,100,.14);border-color:rgba(190,160,100,.32);color:#6f5f2a}
+  .foot{position:absolute;left:86px;bottom:52px;display:flex;gap:9px;align-items:center}
+  .tag{font-size:13px;padding:4px 12px;border-radius:11px;background:#1c2333;color:#f2f4f8;letter-spacing:1px}
+  .tag.o{background:rgba(28,35,51,.06);border:1px solid rgba(28,35,51,.16);color:#4a5578}
+  .github{position:absolute;left:86px;bottom:18px;font-size:14px;color:#8a94a6;letter-spacing:.5px}
+  .github b{color:#1c2333}
+  /* 小印章：产品角标 */
+  .seal{position:absolute;left:872px;top:134px;width:52px;height:52px;transform:rotate(-4deg);
+    background:linear-gradient(150deg,#b03a2e,#96301f);border-radius:7px;
+    display:grid;grid-template-columns:1fr 1fr;place-items:center;padding:5px;
+    box-shadow:0 2px 8px rgba(150,48,31,.3)}
+  .seal span{font-family:"KaiTi","STKaiti",serif;font-weight:700;font-size:15px;color:#fdf6ea;line-height:1}
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div>
+
+  <div class="kicker">
+    <span class="pill o">开源 · MIT</span>
+    <span class="pill">零依赖 · 单文件</span>
+  </div>
+  <h1>家族族谱</h1>
+  <div class="seal"><span>传</span><span>家</span><span>之</span><span>谱</span></div>
+  <div class="t2">
+    <span class="serif">传代树</span>
+    <span class="chip-hl">本地优先 · 编辑即存</span>
+  </div>
+  <div class="en">ZUPU · A SINGLE-FILE FAMILY GENEALOGY · OFFLINE FIRST</div>
+  <div class="chips">
+    <div class="chip b">谱书竖排（古法）</div>
+    <div class="chip t">字辈定代</div>
+    <div class="chip g">五世一表世系录</div>
+  </div>
+
+  <div class="shot">
+    <img src="_shot-vert.png" alt="">
+    <div class="bar"><i></i><i></i><i></i><s>Zupu · 谱书竖排</s></div>
+  </div>
+
+  <div class="foot">
+    <div class="tag">v15.33</div><div class="tag o">53 tests</div><div class="tag o">MIT License</div>
+  </div>
+  <div class="github">github.com/<b>zaxchou/zupu</b></div>
+</body>
+</html>
