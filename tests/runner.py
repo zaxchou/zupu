@@ -7,7 +7,7 @@ except Exception:
     pass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MODULES = ["t_core.py", "t_edit.py", "t_fold_drag.py", "t_reparent.py", "t_zibei.py", "t_bookfmt.py", "t_wizard.py", "t_autosave.py", "t_export.py", "t_perf.py", "t_view.py"]
+MODULES = ["t_core.py", "t_edit.py", "t_fold_drag.py", "t_reparent.py", "t_zibei.py", "t_bookfmt.py", "t_wizard.py", "t_autosave.py", "t_export.py", "t_i18n.py", "t_perf.py", "t_view.py"]
 
 results = []
 for m in MODULES:

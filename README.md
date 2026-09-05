@@ -1,13 +1,15 @@
 <div align="center">
 
+**中文** | [English](README.en.md) | [日本語](README.ja.md)
+
 <img src="docs/cover.png" alt="家族族谱 · 传代树" width="100%">
 
 # 家族族谱 · 传代树 (Zupu)
 
 **单文件 · 零依赖 · 本地优先的开源族谱应用**
 
-[![Version](https://img.shields.io/badge/version-v15.31-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-47%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.32-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -31,6 +33,8 @@
 ## ✨ 功能
 
 - **两种视图** — 常规传代树 / 谱书竖排（古法），打印跟随视图模式
+- **三种语言** — 中文 `index.html` / English `index-en.html` / 日本語 `index-ja.html`，
+  界面与示例谱各自本地化，备份 json 三语通用
 - **编辑齐全** — 添加 / 删除 / 改名 / 档案（性别、过继嗣子·嗣出·兼祧、字、号、止）、
   拖拽排序、拖动过继（防成环）、撤销重做
 - **字辈定代** — 自定义字辈表，按名字自动推算每人世代，支持谱书世数基准对齐
@@ -44,7 +48,8 @@
 **方式〇（最快）**：直接打开在线版 → **[https://zaxchou.github.io/zupu/](https://zaxchou.github.io/zupu/)**
 
 **方式一（本地使用，推荐）**：到 [Releases](https://github.com/zaxchou/zupu/releases) 下载 zip，
-解压后双击 `index.html`。首次使用会弹出向导：
+解压后按你的语言双击 `index.html`（中文）/ `index-en.html`（English）/ `index-ja.html`（日本語）。
+首次使用会弹出向导：
 
 - **先看看示例** — 用内置的赵钱孙李演示谱熟悉操作
 - **从空白开始** — 填上你的谱名（如「李氏族谱」）和堂号，从第一代建起

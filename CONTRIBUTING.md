@@ -12,7 +12,8 @@
 
 1. 先读 `handoff.md`——里面有完整架构说明、数据约定与历史踩坑（§8），能避免重复踩坑；
 2. 主文件是 `index.html`（单文件应用），数据真源在浏览器 localStorage，
-   `data.json` 只是仓库快照；
+   `data.json` 只是仓库快照；英文/日文版（`index-en.html` / `index-ja.html`）
+   由 `tools/build_i18n.py` 从母本生成——改完母本重跑一次，失配会逐条报告；
 3. 保持三个不引入：不加构建工具、不加运行时依赖、不加网络请求。
 
 ## 跑测试
