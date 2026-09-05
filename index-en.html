@@ -817,7 +817,7 @@ function heirTitle(n){
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数） */
-const CFG_KEY = 'zupu_cfg_v1';
+const CFG_KEY = 'zupu_cfg_v1_en';
 let cfg = { genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
@@ -1041,7 +1041,7 @@ function deepEq(a, b){
   return false;
 }
 
-const STORAGE_KEY = 'zupu_data_v4';   // 数据真源：本浏览器（自动保存，无感）
+const STORAGE_KEY = 'zupu_data_v4_en';   // 数据真源：本浏览器（自动保存，无感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
 

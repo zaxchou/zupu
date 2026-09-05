@@ -60,6 +60,8 @@ def t_i18n_en_smoke(b):
     legend = page.locator(".legend").inner_text()
     check(not _re.search(r"[\u3400-\u9fff]", legend), "EN: legend has no Chinese", legend)
     check(not page.evaluate("window.__ZP.data.demo"), "EN: demo flag cleared after choosing")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4') === null"), "EN: standalone storage (never writes the zh key)")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4_en') !== null"), "EN: writes its own storage key")
     check(not errs, "EN: no JS errors", str(errs))
     ctx.close()
 
@@ -90,6 +92,8 @@ def t_i18n_ja_smoke(b):
     page.wait_for_timeout(250)
     check(page.evaluate('window.__ZP.data.children.length') == 2, "JA: メンバー追加が動く")
     check(not page.evaluate("window.__ZP.data.demo"), "JA: 選択後に demo フラグ解除")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4') === null"), "JA: 独立ストレージ（中国語版のキーに書かない）")
+    check(page.evaluate("localStorage.getItem('zupu_data_v4_ja') !== null"), "JA: 自分のストレージキーに書く")
     check(not errs, "JA: JS エラーなし", str(errs))
     ctx.close()
 

@@ -885,9 +885,14 @@ if __name__ == '__main__':
       ('<html lang="zh-CN">', '<html lang="en">'),
       ('<title>家族族谱 · 传代树（可编辑）</title>', '<title>Zupu · Family Tree Builder (editable)</title>'),
       ('%E6%97%8F%3C/text%3E', 'T%3C/text%3E'),   # favicon：族 → T
+      # 完全独立：各语言文件使用自己的浏览器存储（数据与设置互不相通）
+      ("const STORAGE_KEY = 'zupu_data_v4';", "const STORAGE_KEY = 'zupu_data_v4_en';"),
+      ("const CFG_KEY = 'zupu_cfg_v1';", "const CFG_KEY = 'zupu_cfg_v1_en';"),
     ])
     ok &= build('ja', JA, SEED_JA, 'index-ja.html', [
       ('<html lang="zh-CN">', '<html lang="ja">'),
       ('<title>家族族谱 · 传代树（可编辑）</title>', '<title>家系図・伝代ツリー（編集可）</title>'),
+      ("const STORAGE_KEY = 'zupu_data_v4';", "const STORAGE_KEY = 'zupu_data_v4_ja';"),
+      ("const CFG_KEY = 'zupu_cfg_v1';", "const CFG_KEY = 'zupu_cfg_v1_ja';"),
     ])
     sys.exit(0 if ok else 1)
