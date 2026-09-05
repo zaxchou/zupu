@@ -6,7 +6,7 @@
 
 # Zupu · Family Tree
 
-**Single file · Zero dependencies · Local-first open-source genealogy**
+**A double-click electronic genealogy: record your family, auto-number generations, print & bind**
 
 [![Version](https://img.shields.io/badge/version-v15.33-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
@@ -20,9 +20,9 @@
 
 ---
 
-**One HTML file is all there is**: double-click it and start building your family tree.
-No network, no account, no server — your data lives only in your own browser, and every
-edit is saved automatically. English version: `index-en.html`. 日本語は [`index-ja.html`](README.ja.md)（[日本語 README](README.ja.md)）.
+**One HTML file is all there is**: double-click it and it works — send it to family and it
+works for them too. No network, no account, nothing to install; your data lives in your own
+browser, and every change is saved automatically.
 
 | Standard tree | Vertical book layout (traditional) |
 | --- | --- |
@@ -32,21 +32,22 @@ The **vertical book layout** follows the conventions of traditional Chinese gene
 books: generations as rows, names written top-to-bottom (right to left), generation
 labels in the left margin — print it / export it to PDF and **bind it into a book**.
 
-## ✨ Features
+## ✨ What it does for you
 
-- **Two views** — standard tree / vertical book layout; printing follows the current view
-- **Full editing** — add / delete / rename / profiles (sex, adoption in·out·dual-heir,
-  courtesy & art names, no-issue mark), drag to reorder, drag to adopt (cycle-safe),
-  undo & redo
-- **Zibei generations** — define your generation-char table; every member's generation
-  is inferred from their name, alignable with a book's numbering
-- **Pedigree preface** — tree name, hall name, lineage, founder record, family origin;
-  automatically included in exports
-- **Spouse conventions** — book-style display, per-spouse terms (m. / 2nd m. / betrothed / concubine)
-- **Exports** — PNG / PDF / **Genealogy tables (European style, five generations per table)** /
-  Markdown / book print
-- **Auto-save** — edits are saved instantly (browser-local); back up to json to move machines
-- **Four languages** — 简体中文 / 繁體中文 / English / 日本語 — same data model, interchangeable backups
+- **Fill in your family like a form** — click “＋” to add, double-click to rename, drag cards
+  to reorder siblings; drop one onto another to adopt. Ctrl+Z undoes anything
+- **Names in, generations out** — paste your generation-char list (e.g. “德承传世泽”) and
+  everyone's generation is numbered automatically; align it with your old book, so “the 23rd
+  generation” there reads “the 23rd generation” here
+- **Print a real genealogy book** — vertical text, generations as rows, five generations per
+  table; export to PDF and take it straight to the print shop for binding. Tree name, hall
+  name, lineage and founder record print up front
+- **Spouse terms follow the old books** — first spouse / remarried, adopted heir / adopted
+  out / dual heir, no-issue mark — the classic conventions are all here
+- **Your data stays yours** — offline, no account, nothing uploaded; one-click json backup,
+  and restoring on another computer is a double-click away
+- **Still opens decades from now** — no dependencies, no services: one file on a USB stick
+  is an heirloom
 
 ## 🚀 Quick start
 
