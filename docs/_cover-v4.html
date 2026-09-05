@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:640px;overflow:hidden}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#1e2530;position:relative;
+    background:
+      radial-gradient(ellipse at 10% -4%, rgba(250,196,150,.42), transparent 46%),
+      radial-gradient(ellipse at 52% -8%, rgba(186,164,242,.30), transparent 44%),
+      radial-gradient(ellipse at 100% 4%, rgba(160,196,242,.26), transparent 42%),
+      radial-gradient(ellipse at 100% 100%, rgba(158,224,182,.30), transparent 44%),
+      radial-gradient(ellipse at 0% 104%, rgba(250,214,150,.30), transparent 40%),
+      linear-gradient(180deg,#fbfbfd 0%,#f6f7fb 100%);
+  }
+  .grid{position:absolute;inset:0;
+    background-image:linear-gradient(rgba(40,60,110,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(40,60,110,.05) 1px,transparent 1px);
+    background-size:40px 40px}
+
+  /* ---- 顶部：logo + 产品名 ---- */
+  .brand{position:absolute;left:72px;top:54px;display:flex;align-items:center;gap:13px}
+  .brand .seal{width:44px;height:44px;border-radius:8px;transform:rotate(-4deg);
+    background:linear-gradient(150deg,#c14a3c,#9c2f24);display:grid;grid-template-columns:1fr 1fr;
+    place-items:center;padding:4px;box-shadow:0 3px 9px rgba(150,48,31,.32)}
+  .brand .seal span{font-family:"KaiTi","STKaiti",serif;font-weight:700;font-size:13px;color:#fdf6ea;line-height:1}
+  .brand .name{font-size:21px;font-weight:800;letter-spacing:1px}
+  .brand .name i{font-style:normal;color:#9c2f24}
+
+  /* ---- 标题区 ---- */
+  .t1{position:absolute;left:70px;top:126px;font-size:100px;font-weight:800;color:#1e2530;
+      letter-spacing:5px;line-height:1;white-space:nowrap}
+  .t2{position:absolute;left:74px;top:246px;font-size:74px;line-height:1.15;white-space:nowrap}
+  .t2 .serif{font-family:"Songti SC","SimSun",serif;font-weight:700;letter-spacing:6px;
+      background:linear-gradient(transparent 58%, rgba(214,238,150,.85) 58%, rgba(214,238,150,.85) 92%, transparent 92%);
+      padding:0 6px}
+  .t2 .accent{font-family:"Songti SC","SimSun",serif;font-style:italic;color:#6a54c9}
+  .sub{position:absolute;left:76px;top:356px;font-size:18px;letter-spacing:2px;color:#5b6472}
+  .chips{position:absolute;left:74px;top:404px;display:flex;gap:13px}
+  .chip{font-size:15px;padding:7px 17px;border-radius:15px;letter-spacing:1px;border:1px solid transparent;font-weight:500;background:rgba(255,255,255,.72)}
+  .chip.p{border-color:rgba(150,130,230,.35);color:#5a4a9e}
+  .chip.m{border-color:rgba(90,170,130,.35);color:#2f6e4c}
+  .chip.g{border-color:rgba(200,150,60,.38);color:#7a5c18}
+
+  .foot{position:absolute;left:74px;bottom:50px;display:flex;gap:9px;align-items:center}
+  .tag{font-size:13px;padding:4px 12px;border-radius:11px;background:#1e2530;color:#f2f4f8;letter-spacing:1px}
+  .tag.o{background:rgba(30,37,48,.06);border:1px solid rgba(30,37,48,.15);color:#4a5568}
+  .github{position:absolute;left:75px;bottom:16px;font-size:14px;color:#8a92a2;letter-spacing:.5px}
+  .github b{color:#1e2530}
+
+  /* ---- 右侧：3D 透视窗口（真实截图） ---- */
+  .scene{position:absolute;right:-58px;top:104px;width:640px;height:480px;
+         perspective:1500px;perspective-origin:30% 40%}
+  .win{width:640px;height:430px;border-radius:14px;overflow:hidden;position:relative;
+       background:#fff;border:1px solid rgba(255,255,255,.9);
+       transform:rotateX(10deg) rotateY(-13deg) rotate(1.5deg);
+       box-shadow:-26px 34px 64px rgba(35,40,80,.16), 0 8px 18px rgba(35,40,80,.07)}
+  .win .bar{height:30px;background:#f0f2f7;border-bottom:1px solid rgba(30,60,110,.07);
+       display:flex;align-items:center;gap:7px;padding:0 14px}
+  .win .bar i{width:10px;height:10px;border-radius:50%}
+  .win .bar i:nth-child(1){background:#f0908d}.win .bar i:nth-child(2){background:#f2ce7b}.win .bar i:nth-child(3){background:#93d3a0}
+  .win .bar s{text-decoration:none;margin-left:10px;font-size:11px;color:#8a92a2;letter-spacing:1px}
+  .win img{width:100%;height:calc(100% - 30px);object-fit:cover;object-position:top left;display:block}
+
+  /* 浮动小卡：字辈定代（第二层深度） */
+  .mini{position:absolute;right:428px;top:428px;width:250px;border-radius:12px;
+    background:#232a38;color:#e8ecf4;padding:14px 16px;
+    transform:rotate(-3deg);
+    box-shadow:0 16px 36px rgba(35,40,80,.24), 0 4px 12px rgba(35,40,80,.10);
+    font-size:12.5px;letter-spacing:.5px}
+  .mini .mt{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+  .mini .mt b{font-size:13px;color:#fff}
+  .mini .mt span{font-size:10px;color:#8f9ab0;border:1px solid rgba(255,255,255,.22);border-radius:8px;padding:1px 7px}
+  .mini .row{display:flex;gap:6px;flex-wrap:wrap}
+  .mini .z{background:rgba(255,255,255,.10);border-radius:7px;padding:3px 8px}
+  .mini .z.on{background:rgba(140,150,240,.30);color:#cdd3ff}
+
+  /* 点缀 */
+  .spark{position:absolute;left:620px;top:96px;color:#8b8ce0;font-size:26px;transform:rotate(-8deg)}
+  .spark.s2{left:52px;top:470px;font-size:17px;color:#e0a86a}
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+
+  <div class="brand">
+    <div class="seal"><span>传</span><span>家</span><span>之</span><span>谱</span></div>
+    <div class="name">Zupu <i>·</i> 家族族谱</div>
+  </div>
+
+  <div class="t1">家族族谱</div>
+  <div class="t2"><span class="serif">传代树</span><span class="accent">谱书古法</span></div>
+  <div class="sub">单文件 · 零依赖 · 本地优先 · 编辑即自动保存</div>
+  <div class="chips">
+    <div class="chip p">谱书竖排（古法）</div>
+    <div class="chip m">字辈定代</div>
+    <div class="chip g">五世一表世系录</div>
+  </div>
+  <div class="spark">✦</div>
+  <div class="spark s2">✦</div>
+
+  <div class="scene">
+    <div class="win">
+      <div class="bar"><i></i><i></i><i></i><s>Zupu · 传代树</s></div>
+      <img src="_shot-horiz.png" alt="">
+    </div>
+  </div>
+  <div class="mini">
+    <div class="mt"><b>字辈定代</b><span>自动推算</span></div>
+    <div class="row">
+      <span class="z on">勤 · 廿三世</span><span class="z">承 · 廿四世</span><span class="z">传 · 廿五世</span>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="tag">v15.33</div><div class="tag o">53 tests</div><div class="tag o">MIT License</div>
+  </div>
+  <div class="github">github.com/<b>zaxchou/zupu</b></div>
+</body>
+</html>
