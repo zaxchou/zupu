@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:640px;overflow:hidden}
+  body{
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    color:#29231c;position:relative;
+    /* 左侧纸底：与水墨图的纸色无缝衔接 */
+    background:
+      radial-gradient(ellipse at 8% 12%, rgba(176,58,46,.07), transparent 42%),
+      radial-gradient(ellipse at 40% 100%, rgba(93,80,60,.08), transparent 45%),
+      radial-gradient(ellipse at 0% 85%, rgba(120,140,150,.10), transparent 38%),
+      linear-gradient(90deg,#efe9dd 0%,#efe9dd 46%,#f0eadc 100%);
+  }
+  /* 右侧水墨艺术（AI 生成）：左缘渐隐融入纸底 */
+  .art{
+    position:absolute;top:0;right:0;width:585px;height:640px;
+    background:url('_art-ink.png') no-repeat;
+    background-size:auto 640px;
+    background-position:-719px 0;   /* 取原画 x∈[1150,2048] 区域（挂牌与枝干） */
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 26%);
+            mask-image:linear-gradient(90deg,transparent 0,#000 26%);
+  }
+  /* 细网格（左半区） */
+  .grid{position:absolute;inset:0;
+    background-image:linear-gradient(rgba(93,80,60,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(93,80,60,.05) 1px,transparent 1px);
+    background-size:36px 36px;
+    -webkit-mask-image:linear-gradient(90deg,#000 40%,transparent 72%);
+            mask-image:linear-gradient(90deg,#000 40%,transparent 72%);
+  }
+  .frame-outer{position:absolute;inset:18px;border:2.5px solid rgba(93,80,60,.5);border-radius:2px;pointer-events:none}
+  .frame-inner{position:absolute;inset:26px;border:1px solid rgba(93,80,60,.32);border-radius:2px;pointer-events:none}
+
+  .kicker{position:absolute;left:72px;top:92px;font-size:17px;letter-spacing:6px;color:#8a6a2a;font-weight:600}
+  .kicker b{color:#b03a2e}
+  h1{position:absolute;left:66px;top:136px;font-family:"Songti SC","SimSun",serif;
+     font-size:78px;font-weight:700;color:#221d15;letter-spacing:2px;white-space:nowrap}
+  .stroke{position:absolute;left:70px;top:242px;width:236px;height:7px;border-radius:4px;
+          background:linear-gradient(90deg,rgba(176,58,46,.85),rgba(176,58,46,.35))}
+  .sub{position:absolute;left:72px;top:272px;font-size:19px;letter-spacing:3px;color:#6b6152}
+  .chips{position:absolute;left:72px;top:330px;display:flex;gap:14px}
+  .chip{font-size:16px;padding:7px 18px;border-radius:16px;letter-spacing:1px;border:1px solid transparent}
+  .chip.r{background:rgba(176,58,46,.10);border-color:rgba(176,58,46,.30);color:#8f3328}
+  .chip.t{background:rgba(93,110,125,.12);border-color:rgba(93,110,125,.32);color:#41545f}
+  .chip.g{background:rgba(150,120,52,.13);border-color:rgba(150,120,52,.35);color:#6f5a24}
+  .foot{position:absolute;left:72px;bottom:56px;display:flex;gap:10px;align-items:center}
+  .tag{font-size:14px;padding:4px 12px;border-radius:12px;background:#29231c;color:#f4eee0;letter-spacing:1px}
+  .tag.o{background:transparent;border:1px solid rgba(93,80,60,.4);color:#4a4438}
+  .github{position:absolute;left:72px;bottom:20px;font-size:14px;color:#6b6152;letter-spacing:1px}
+  .github b{color:#29231c}
+
+  /* 印章：压在画面右下（尺寸与位置精确盖住底图里的乱码印） */
+  .seal{position:absolute;right:41px;bottom:2px;width:132px;height:132px;
+    background:linear-gradient(150deg,#b03a2e,#96301f);
+    border-radius:10px;display:grid;grid-template-columns:1fr 1fr;place-items:center;
+    box-shadow:0 3px 10px rgba(150,48,31,.35);padding:12px;z-index:5}
+  .seal span{font-family:"KaiTi","STKaiti","SimSun",serif;font-weight:700;
+    font-size:36px;color:#fdf6ea;line-height:1}
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="art"></div>
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+
+  <div class="kicker"><b>开源</b> · 单文件 · 本地优先 · 无账号</div>
+  <h1>家族族谱 · 传代树</h1>
+  <div class="stroke"></div>
+  <div class="sub">单文件 · 零依赖 · 本地优先 · 编辑即存</div>
+  <div class="chips">
+    <div class="chip r">谱书竖排（古法）</div>
+    <div class="chip t">字辈定代</div>
+    <div class="chip g">五世一表世系录</div>
+  </div>
+
+  <div class="foot">
+    <div class="tag">v15.33</div><div class="tag o">53 测试用例</div><div class="tag o">MIT License</div>
+  </div>
+  <div class="github">github.com/<b>zaxchou/zupu</b></div>
+
+  <div class="seal"><span>传</span><span>家</span><span>之</span><span>谱</span></div>
+</body>
+</html>
