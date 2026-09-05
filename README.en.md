@@ -2,7 +2,7 @@
 
 [中文](README.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover.png" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.png" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 

@@ -2,7 +2,7 @@
 
 [中文](README.md) | [English](README.en.md) | **日本語**
 
-<img src="docs/cover.png" alt="家系図・伝代ツリー" width="100%">
+<img src="docs/cover-ja.png" alt="家系図・伝代ツリー" width="100%">
 
 # 家系図・伝代ツリー (Zupu)
 

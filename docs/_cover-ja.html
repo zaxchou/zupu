@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:640px;overflow:hidden}
+  body{
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Microsoft YaHei",sans-serif;
+    background:
+      radial-gradient(ellipse at 85% 15%, rgba(176,58,46,.05), transparent 55%),
+      radial-gradient(ellipse at 10% 90%, rgba(93,80,60,.07), transparent 50%),
+      linear-gradient(160deg,#faf6ec 0%,#f4eee0 55%,#efe6d2 100%);
+    position:relative;color:#29231c;
+  }
+  /* 文武线（外粗内细双框） */
+  .frame-outer{position:absolute;inset:18px;border:2.5px solid rgba(93,80,60,.55);border-radius:2px}
+  .frame-inner{position:absolute;inset:26px;border:1px solid rgba(93,80,60,.35);border-radius:2px}
+  /* 右侧竖排大标题 */
+  .title-v{
+    position:absolute;top:88px;right:150px;
+    writing-mode:vertical-rl;text-orientation:upright;
+    font-family:"Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif;font-weight:700;
+    font-size:96px;letter-spacing:18px;color:#29231c;
+  }
+  /* 印章：传家之谱 */
+  .seal{
+    position:absolute;right:118px;top:520px;width:104px;height:104px;
+    background:linear-gradient(150deg,#b03a2e,#96301f);
+    border-radius:8px;display:grid;grid-template-columns:1fr 1fr;place-items:center;
+    box-shadow:0 3px 10px rgba(150,48,31,.35);padding:10px;
+  }
+  .seal span{font-family:"Yu Mincho","MS Mincho",serif;font-weight:700;
+    font-size:30px;color:#fdf6ea;line-height:1}
+  .seal-sub{position:absolute;right:96px;top:636px;font-size:13px;letter-spacing:6px;color:#8a7d68}
+  /* 左侧文字区 */
+  .kicker{position:absolute;left:96px;top:104px;font-size:20px;letter-spacing:5px;color:#8a6a2a;font-weight:600}
+  .kicker b{color:#b03a2e}
+  h1{position:absolute;left:90px;top:150px;font-family:"Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif;
+     font-size:76px;font-weight:700;color:#1f1b14;letter-spacing:4px}
+  .en{position:absolute;left:96px;top:252px;font-size:16px;letter-spacing:5px;color:#8a7d68;font-weight:500}
+  .desc{position:absolute;left:96px;top:300px;font-size:19px;color:#4a4438;letter-spacing:2px}
+  .desc b{color:#b03a2e;font-weight:700}
+  .chips{position:absolute;left:96px;top:362px;display:flex;gap:12px}
+  .chip{font-size:15px;padding:5px 14px;border-radius:14px;background:rgba(93,80,60,.08);
+        border:1px solid rgba(93,80,60,.22);color:#4a4438;letter-spacing:1px}
+  /* 中部迷你吊线谱 */
+  .tree{position:absolute;left:96px;top:436px;display:flex;gap:56px;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center}
+  .gen{font-size:12px;color:#9a8f79;letter-spacing:2px;margin-bottom:8px}
+  .name{writing-mode:vertical-rl;text-orientation:upright;font-family:"Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif;
+        font-size:22px;font-weight:700;color:#29231c;background:rgba(255,253,248,.85);
+        border:1px solid rgba(93,80,60,.28);border-radius:5px;padding:10px 6px}
+  .root .name{background:#29231c;color:#f4eee0;border-color:#29231c;font-size:15px}
+  .wife{writing-mode:vertical-rl;text-orientation:upright;font-size:13px;color:#9aa0a8;margin-left:-26px;margin-top:14px}
+  .link{width:1.5px;height:26px;background:#b9ab90;margin:0 auto}
+  .bus{position:absolute;left:96px;top:424px;width:474px;height:0}
+  .foot{position:absolute;left:96px;bottom:52px;display:flex;gap:10px}
+  .tag{font-size:14px;padding:4px 12px;border-radius:12px;background:#29231c;color:#f4eee0;letter-spacing:1px}
+  .tag.o{background:transparent;border:1px solid rgba(93,80,60,.4);color:#4a4438}
+  .github{position:absolute;right:300px;bottom:52px;font-size:15px;color:#6b6152;letter-spacing:1px}
+  .github b{color:#29231c}
+  /* 竖排名字的吊线（各列与横母线相连） */
+  .drop{width:1.5px;height:14px;background:#b9ab90;margin:0 auto}
+</style>
+</head>
+<body>
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+
+  <div class="kicker"><b>オープンソース</b> · 単一ファイル · ローカル優先 · アカウント不要</div>
+  <h1>家系図・伝代ツリー</h1>
+  <div class="en">ZUPU · A SINGLE-FILE FAMILY GENEALOGY · OFFLINE FIRST · MIT</div>
+  <div class="desc">依存ゼロ · <b>譜書縦書き（古法）</b> · 字輩世代判定 · 五世一表・世系録 · 自動保存</div>
+  <div class="chips">
+    <div class="chip">通常ツリー</div><div class="chip">譜書縦書き</div>
+    <div class="chip">字輩世代</div><div class="chip">PNG / PDF / 世系録</div>
+  </div>
+
+  <!-- 迷你吊线谱：横母线垂珠 -->
+  <div class="tree">
+    <div class="col root"><div class="gen">第一世代</div><div class="name">林家</div><div class="drop"></div></div>
+    <div class="col"><div class="gen">第二世代</div><div class="name">義郎</div><div class="drop"></div></div>
+    <div class="col"><div class="gen">第三世代</div><div class="name">正雄</div><div class="drop"></div></div>
+    <div class="col"><div class="gen">第四世代</div><div class="name">健太</div></div>
+  </div>
+  <div class="bus" style="display:none"></div>
+
+  <div class="foot">
+    <div class="tag">v15.32</div><div class="tag o">52 テスト</div><div class="tag o">MIT License</div>
+  </div>
+  <div class="github">github.com/<b>zaxchou/zupu</b></div>
+
+  <div class="title-v">家系図</div>
+  <div class="seal"><span>家</span><span>系</span><span>図</span><span>譜</span></div>
+</body>
+</html>
