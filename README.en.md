@@ -54,8 +54,9 @@ labels in the left margin — print it / export it to PDF and **bind it into a b
 (Chinese UI; use `index-en.html` from a release for English).
 
 **Option 1 (local, recommended)**: from [Releases](https://github.com/zaxchou/zupu/releases),
-download the single file for your language — English: `index-en.html` (中文 `index.html`,
-日本語 `index-ja.html`) — or grab the full zip. Double-click it; a first-run wizard appears:
+download the single file for your language — English: `index-en.html`
+(中文 `index.html`, 日本語 `index-ja.html`). One file is everything —
+double-click it; a first-run wizard appears:
 
 - **Explore the demo** — a sample tree you can play with freely
 - **Start from scratch** — enter your family name and start with generation one
