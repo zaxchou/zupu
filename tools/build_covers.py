@@ -10,9 +10,14 @@ EN = [
   ('<html lang="zh">', '<html lang="en">'),
   ('font-family:"PingFang SC","Microsoft YaHei",sans-serif;', 'font-family:"Segoe UI",Arial,sans-serif;'),
   ('"Songti SC","SimSun",serif', 'Georgia,"Times New Roman",serif', 3),
-  ('text-orientation:upright', 'text-orientation:mixed', 3),   # 拉丁字母书脊式（旋转 90°，可读）
-  ('font-size:96px;letter-spacing:18px;color:#29231c;', 'font-size:64px;letter-spacing:6px;line-height:1.15;color:#29231c;'),
-  ('font-size:22px;font-weight:700;color:#29231c;background:', 'font-size:15px;font-weight:700;color:#29231c;background:'),
+  # 右侧大标题改横排（两行右对齐），不用古法纵排
+  ('position:absolute;top:88px;right:150px;\n    writing-mode:vertical-rl;text-orientation:upright;',
+   'position:absolute;top:132px;right:96px;text-align:right;'),
+  ('font-size:96px;letter-spacing:18px;color:#29231c;',
+   'font-size:80px;line-height:1.12;letter-spacing:0;color:#29231c;'),
+  # 迷你树名字牌改横排
+  ('.name{writing-mode:vertical-rl;text-orientation:upright;', '.name{'),
+  ('border-radius:5px;padding:10px 6px}', 'border-radius:5px;padding:6px 14px}'),
   ('font-size:76px;font-weight:700;color:#1f1b14;letter-spacing:4px', 'font-size:72px;font-weight:700;color:#1f1b14;letter-spacing:0'),
   ('letter-spacing:10px;color:#8a6a2a', 'letter-spacing:3px;color:#8a6a2a'),
   ('letter-spacing:2px}\n  .desc b', 'letter-spacing:.5px}\n  .desc b'),
