@@ -47,9 +47,9 @@
 
 **方式〇（最快）**：直接打开在线版 → **[https://zaxchou.github.io/zupu/](https://zaxchou.github.io/zupu/)**
 
-**方式一（本地使用，推荐）**：到 [Releases](https://github.com/zaxchou/zupu/releases) 下载 zip，
-解压后按你的语言双击 `index.html`（中文）/ `index-en.html`（English）/ `index-ja.html`（日本語）。
-首次使用会弹出向导：
+**方式一（本地使用，推荐）**：到 [Releases](https://github.com/zaxchou/zupu/releases) 按语言下载——
+中文 `index.html` / English `index-en.html` / 日本語 `index-ja.html`，单文件下载即用；
+也可以下完整 zip。首次使用会弹出向导：
 
 - **先看看示例** — 用内置的赵钱孙李演示谱熟悉操作
 - **从空白开始** — 填上你的谱名（如「李氏族谱」）和堂号，从第一代建起

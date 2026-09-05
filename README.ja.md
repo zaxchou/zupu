@@ -49,8 +49,9 @@
 **方法 0（最速）**：オンライン版を開く → **[https://zaxchou.github.io/zupu/](https://zaxchou.github.io/zupu/)**
 （UI は中国語。日本語は Release の `index-ja.html` を）
 
-**方法 1（ローカル、推奨）**：[Releases](https://github.com/zaxchou/zupu/releases) から zip を
-ダウンロードして展開し、`index-ja.html` をダブルクリック。初回はウィザードが出ます：
+**方法 1（ローカル、推奨）**：[Releases](https://github.com/zaxchou/zupu/releases) から
+言語に合ったファイル 1 つをダウンロード（日本語：`index-ja.html`。中文 `index.html` /
+English `index-en.html` も可）、ダブルクリック。初回はウィザードが出ます：
 
 - **まずデモを見る** — 自由にいじれるサンプル家系図
 - **白紙から始める** — 譜名を入れて第一世代から作成

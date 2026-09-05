@@ -53,9 +53,9 @@ labels in the left margin — print it / export it to PDF and **bind it into a b
 **Option 0 (fastest)**: open the online version → **[https://zaxchou.github.io/zupu/](https://zaxchou.github.io/zupu/)**
 (Chinese UI; use `index-en.html` from a release for English).
 
-**Option 1 (local, recommended)**: download the zip from
-[Releases](https://github.com/zaxchou/zupu/releases), unzip, and double-click
-`index-en.html`. A first-run wizard appears:
+**Option 1 (local, recommended)**: from [Releases](https://github.com/zaxchou/zupu/releases),
+download the single file for your language — English: `index-en.html` (中文 `index.html`,
+日本語 `index-ja.html`) — or grab the full zip. Double-click it; a first-run wizard appears:
 
 - **Explore the demo** — a sample tree you can play with freely
 - **Start from scratch** — enter your family name and start with generation one
