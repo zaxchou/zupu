@@ -2,7 +2,7 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.png" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
