@@ -598,6 +598,7 @@ function render(){
 
   stage.style.width  = treeW + 'px';
   stage.style.height = treeH + 'px';
+  stage._baseW = treeW; stage._baseH = treeH;   // 未缩放基准：缩放时按此扩大滚动范围
   svg.setAttribute('width', treeW);
   svg.setAttribute('height', treeH);
   svg.setAttribute('viewBox', '0 0 ' + treeW + ' ' + treeH);
@@ -1567,7 +1568,11 @@ function reparentNode(n, newParent){
 /* ---------- ⑩ 缩放 / 平移 ---------- */
 let scale = 1;
 function applyZoom(){
-  document.getElementById('stage').style.transform = 'scale(' + scale + ')';
+  const stEl = document.getElementById('stage');
+  stEl.style.transform = 'scale(' + scale + ')';
+  /* transform 不扩大滚动范围（Chrome 实测）：盒子尺寸必须同步为缩放后大小，
+     否则缩放后画布外围既显示不出来也滚动不到 */
+  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
 /* 滚轮缩放：倍速（触控板小增量也顺滑）+ rAF 插值动画，光标锚点全程保持 */

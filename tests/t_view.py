@@ -90,9 +90,12 @@ def t_native_wheel_and_blank_drag_pan(b):
     ctx, page, errs, cons = fresh_page(b, width=900, height=470)
     goto(page)
     page.locator('button[title="恢复 1:1"]').click()
+    page.locator('[data-act="zoomin"]').click()
+    page.locator('[data-act="zoomin"]').click()
+    page.wait_for_timeout(150)
     ovf = page.evaluate("""() => {
       const vp=document.getElementById('viewport'), st=document.getElementById('stage');
-      return { sw: st.offsetWidth*__ZP.scale, sh: st.offsetHeight*__ZP.scale,
+      return { sw: st.offsetLeft + st.offsetWidth*__ZP.scale, sh: st.offsetHeight*__ZP.scale,
                cw: vp.clientWidth, ch: vp.clientHeight };
     }""")
     check(ovf["sw"] > ovf["cw"] and ovf["sh"] > ovf["ch"], "存在双向溢出", str(ovf))
@@ -104,7 +107,7 @@ def t_native_wheel_and_blank_drag_pan(b):
       const vp=document.getElementById('viewport');
       const r=vp.getBoundingClientRect();
       vp.scrollTo(0,0);
-      return { x: Math.round(r.left + r.width*0.30), y: Math.round(r.top + 20) };
+      return { x: Math.round(r.left + r.width*0.30), y: Math.round(r.top + 150) };
     }""")
     lim0 = page.evaluate("""() => {
       const vp=document.getElementById('viewport'), st=document.getElementById('stage');
