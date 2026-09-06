@@ -26,7 +26,7 @@ browser, and every change is saved automatically.
 
 | Standard tree | Vertical book layout (traditional) |
 | --- | --- |
-| ![Standard tree](docs/preview-tree.png) | ![Vertical book](docs/preview-vertical.png) |
+| ![Standard tree](docs/preview-tree-en.png) | ![Vertical book](docs/preview-vertical-en.png) |
 
 The **vertical book layout** follows the conventions of traditional Chinese genealogy
 books: generations as rows, names written top-to-bottom (right to left), generation

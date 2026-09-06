@@ -26,7 +26,7 @@
 
 | 通常ツリー | 譜書縦書き（古法） |
 | --- | --- |
-| ![通常ツリー](docs/preview-tree.png) | ![縦書き](docs/preview-vertical.png) |
+| ![通常ツリー](docs/preview-tree-ja.png) | ![縦書き](docs/preview-vertical-ja.png) |
 
 **譜書縦書き（古法）**は伝統的な族譜の体裁を再現：世代ごとに行をまとめ、名を縦書き
 （右→左）、行の左に世代を表示——印刷 / PDF 出力すればそのまま**製本できます**。
