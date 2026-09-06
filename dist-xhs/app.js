@@ -1058,6 +1058,7 @@ document.getElementById('btnView').addEventListener('click', e => {
     m.appendChild(mi((cfg.vertical ? '✓ ' : '') + ic('filetext') + '谱书竖排（古法）', '', '', toggleVertical));
     m.appendChild(mi(ic('card') + '谱序（堂号·源流）…', '', '', openClan));
     m.appendChild(mi(ic('gear') + '谱书显示设置…', '', '', openSettings));
+  if (IS_TOUCH || window.innerWidth <= 860) m.appendChild(mi('❓ 帮助 / 快捷键', '', '', openHelp));
   });
 });
 document.getElementById('btnFile').addEventListener('click', e => {
@@ -1614,7 +1615,8 @@ function fitToScreen(){
   scale = Math.max(0.12, Math.min((vp.clientWidth - 30) / w, (vp.clientHeight - 30) / h, 1.2));
   targetScale = scale;
   applyZoom();
-  vp.scrollTo(0, 0);
+  const sw2 = vp.scrollWidth - vp.clientWidth, sh2 = vp.scrollHeight - vp.clientHeight;
+  vp.scrollTo(sw2 / 2, sh2 / 2);   /* 居中：四周留对称余量 */
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
   if (e.ctrlKey){
