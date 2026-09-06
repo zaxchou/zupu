@@ -300,6 +300,7 @@ function deepEq(a, b){
 }
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小红书容器环境
+var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const STORAGE_KEY = 'zupu_data_v4';   // 数据真源：本浏览器（自动保存，无感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
@@ -1240,7 +1241,11 @@ function wizardBlank(){
   closeWizard(); render(); fitToScreen();
   toast('空白族谱「' + ming + '」已创建：点第一个「＋」添加第一代成员');
 }
-function wizardImport(){ closeWizard(); document.getElementById('__importFile').click(); }
+function wizardImport(){
+  closeWizard();
+  if (IS_XHS){ pasteImport(); }   // 容器的文件选择器只能选图片，走粘贴导入
+  else { document.getElementById('__importFile').click(); }
+}
 document.querySelectorAll('#__wizModal [data-wiz]').forEach(b => {
   b.addEventListener('click', () => { b.dataset.wiz === 'demo' ? wizardDemo() : wizardImport(); });
 });
@@ -2593,5 +2598,11 @@ fitToScreen();
 refreshUndoButtons();
 updateClanTags();
 if (treeData.demo) openWizard();   /* 首次使用：示例数据 + 三选一向导 */
+if (IS_TOUCH && !localStorage.getItem('zupu_gesture_hint')){
+  localStorage.setItem('zupu_gesture_hint', '1');
+  var gh = document.getElementById('__gestureHint');
+  gh.classList.add('show');
+  setTimeout(function(){ gh.classList.remove('show'); }, 4500);
+}
 if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');
 else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');

@@ -473,7 +473,20 @@ html{touch-action:manipulation}
   .fold{width:24px;height:20px;font-size:12px}
   #searchBox{left:8px;right:8px;width:auto}
   #searchBox input{width:auto;flex:1;min-width:0}
+  #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
+  #__uipModal{align-items:flex-start;padding-top:9vh}
+  #__pasteModal{align-items:flex-start;padding-top:5vh}
+  .wiz-actions{flex-direction:column}
+  .wiz-actions [data-wiz]{width:100%}
+  .modal .row{display:block}
+  .modal .row>*+*{margin-left:0}
+  .modal .row label{margin-bottom:10px}
 }
+#__gestureHint{position:fixed;left:50%;bottom:calc(64px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  transform:translateX(-50%);background:rgba(12,20,34,.92);color:#fff;font-size:13px;letter-spacing:1px;
+  padding:10px 18px;border-radius:20px;z-index:95;opacity:0;transition:opacity .5s;pointer-events:none;
+  max-width:92vw;text-align:center}
+#__gestureHint.show{opacity:1}
 </style>
 </head>
 <body>
@@ -544,6 +557,7 @@ html{touch-action:manipulation}
 </div>
 
 <div id="__ctxMenu" style="display: none;"></div>
+<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>
 <div id="__uipModal">
   <div class="uip-box">
     <h3 id="__uipTitle">输入</h3>
@@ -650,11 +664,11 @@ html{touch-action:manipulation}
     <h3>欢迎使用家族族谱</h3>
     <p class="help-note" style="margin-bottom:12px">
       这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。
-      当前载入的是示例数据（赵钱孙李演示谱），三选一：
+      当前载入的是示例数据，三选一：
     </p>
     <div class="wiz-actions">
       <button type="button" data-wiz="demo"><b>先看看示例</b>赵钱孙李演示谱，可随意折腾</button>
-      <button type="button" data-wiz="import"><b>导入备份</b>恢复你自己的 json 数据</button>
+      <button type="button" data-wiz="import"><b>导入之前的备份</b>老用户专用：恢复你以前导出的 json 文件</button>
     </div>
     <div class="row">
       <label>谱名（从空白开始时使用）<input id="__wizMing" placeholder="如 赵氏族谱 / 李氏家谱"></label>
