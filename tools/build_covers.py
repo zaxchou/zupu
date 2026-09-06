@@ -1,121 +1,60 @@
 # -*- coding: utf-8 -*-
-"""从 docs/_cover.html（中文封面源）生成 docs/_cover-en.html / docs/_cover-ja.html。
-替换带断言，失配即报错。渲染 PNG 由调用方用 Playwright 完成。"""
-import io, os, sys
+"""四语言封面：docs/_cover{,en,ja,zh-Hant}-v4.html → docs/cover{,en,ja,zh-Hant}.jpg
+（1920×960 JPEG，Playwright 渲染）。
+
+版本发布时只改下面 VERSION / OLD_VERSION / OLD_TAGS，脚本幂等写入四张模板再渲染。
+模板里的界面截图引用 docs/preview-tree*.png（由 tests/_out/_shot_readme.py 生成）。
+"""
+import io
+import os
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'docs', '_cover.html')
 
-EN = [
-  ('<html lang="zh">', '<html lang="en">'),
-  ('font-family:"PingFang SC","Microsoft YaHei",sans-serif;', 'font-family:"Segoe UI",Arial,sans-serif;'),
-  ('"Songti SC","SimSun",serif', 'Georgia,"Times New Roman",serif', 3),
-  # 右侧大标题改横排（两行右对齐），不用古法纵排
-  ('position:absolute;top:88px;right:150px;\n    writing-mode:vertical-rl;text-orientation:upright;',
-   'position:absolute;top:132px;right:96px;text-align:right;'),
-  ('font-size:96px;letter-spacing:18px;color:#29231c;',
-   'font-size:80px;line-height:1.12;letter-spacing:0;color:#29231c;'),
-  # 迷你树名字牌改横排
-  ('.name{writing-mode:vertical-rl;text-orientation:upright;', '.name{'),
-  ('border-radius:5px;padding:10px 6px}', 'border-radius:5px;padding:6px 14px}'),
-  ('font-size:76px;font-weight:700;color:#1f1b14;letter-spacing:4px', 'font-size:72px;font-weight:700;color:#1f1b14;letter-spacing:0'),
-  ('letter-spacing:10px;color:#8a6a2a', 'letter-spacing:3px;color:#8a6a2a'),
-  ('letter-spacing:2px}\n  .desc b', 'letter-spacing:.5px}\n  .desc b'),
-  ('<b>开源</b> · 单文件 · 本地优先 · 无账号', '<b>Open source</b> · Single file · Local-first · No account'),
-  ('<h1>家族族谱 · 传代树</h1>', '<h1>Family Tree</h1>'),
-  ('零依赖 · <b>谱书竖排（古法）</b> · 字辈定代 · 五世一表世系录 · 无感自动保存',
-   'Zero dependencies · <b>Vertical book layout</b> · Zibei generations · Auto-save'),
-  ('<div class="chip">常规传代树</div><div class="chip">谱书竖排</div>',
-   '<div class="chip">Standard tree</div><div class="chip">Vertical book</div>'),
-  ('<div class="chip">字辈定代</div><div class="chip">PNG / PDF / 世系录</div>',
-   '<div class="chip">Zibei generations</div><div class="chip">PNG / PDF / Tables</div>'),
-  ('>第一代<', '>Gen 1<'), ('>第二代<', '>Gen 2<'), ('>第三代<', '>Gen 3<'), ('>第四代<', '>Gen 4<'),
-  ('>德祖<', '>Arthur<'), ('>承业<', '>James<'), ('>传家<', '>Robert<'), ('>世泽<', '>Michael<'),
-  ('测试用例', 'tests'),
-  ('<span>传</span><span>家</span><span>之</span><span>谱</span>',
-   '<span>Z</span><span>U</span><span>P</span><span>U</span>'),
-  ('<div class="title-v">家族族谱</div>', '<div class="title-v">FAMILY<br>TREE</div>'),
-]
+VERSION = 'v15.35'
+OLD_VERSION = 'v15.33'
+SUFFIXES = {'': '-v4', '-en': '-en-v4', '-ja': '-ja-v4', '-zh-Hant': '-zh-Hant-v4'}
+OLD_TAGS = {'': '53 tests', '-en': '53 tests', '-ja': '53 テスト', '-zh-Hant': '53 測試用例'}
+NEW_TAGS = {'': '51 测试用例', '-en': '51 tests', '-ja': '51 テスト', '-zh-Hant': '51 測試用例'}
 
-JA = [
-  ('<html lang="zh">', '<html lang="ja">'),
-  ('font-family:"PingFang SC","Microsoft YaHei",sans-serif;',
-   'font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Microsoft YaHei",sans-serif;'),
-  ('"Songti SC","SimSun",serif', '"Yu Mincho","Hiragino Mincho ProN","MS Mincho",serif', 3),
-  ('font-family:"KaiTi","STKaiti","SimSun",serif', 'font-family:"Yu Mincho","MS Mincho",serif'),
-  ('letter-spacing:10px;color:#8a6a2a', 'letter-spacing:5px;color:#8a6a2a'),
-  ('<b>开源</b> · 单文件 · 本地优先 · 无账号', '<b>オープンソース</b> · 単一ファイル · ローカル優先 · アカウント不要'),
-  ('<h1>家族族谱 · 传代树</h1>', '<h1>家系図・伝代ツリー</h1>'),
-  ('零依赖 · <b>谱书竖排（古法）</b> · 字辈定代 · 五世一表世系录 · 无感自动保存',
-   '依存ゼロ · <b>譜書縦書き（古法）</b> · 字輩世代判定 · 五世一表・世系録 · 自動保存'),
-  ('<div class="chip">常规传代树</div><div class="chip">谱书竖排</div>',
-   '<div class="chip">通常ツリー</div><div class="chip">譜書縦書き</div>'),
-  ('<div class="chip">字辈定代</div><div class="chip">PNG / PDF / 世系录</div>',
-   '<div class="chip">字輩世代</div><div class="chip">PNG / PDF / 世系録</div>'),
-  ('>第一代<', '>第一世代<'), ('>第二代<', '>第二世代<'), ('>第三代<', '>第三世代<'), ('>第四代<', '>第四世代<'),
-  ('>德祖<', '>林家<'), ('>承业<', '>義郎<'), ('>传家<', '>正雄<'), ('>世泽<', '>健太<'),
-  ('测试用例', 'テスト'),
-  ('<span>传</span><span>家</span><span>之</span><span>谱</span>',
-   '<span>家</span><span>系</span><span>図</span><span>譜</span>'),
-  ('<div class="title-v">家族族谱</div>', '<div class="title-v">家系図</div>'),
-]
 
-def build(table, out):
-    s = io.open(SRC, encoding='utf-8').read()
-    errs = []
-    for item in table:
-        old, new = item[0], item[1]
-        want = item[2] if len(item) > 2 else 1
-        n = s.count(old)
-        if n != want:
-            errs.append('x%d (want x%d): %r' % (n, want, old[:50]))
-            continue
-        s = s.replace(old, new)
-    if errs:
-        print(out, 'FAIL')
-        for e in errs: print('  ' + e)
+def update_template(suffix):
+    src = os.path.join(ROOT, 'docs', '_cover%s.html' % SUFFIXES[suffix])
+    s = io.open(src, encoding='utf-8').read()
+    if '>%s<' % VERSION in s:
+        print('_cover%sv4.html 已是 %s' % (suffix, VERSION))
+        return True
+    if s.count('>%s<' % OLD_VERSION) != 1:
+        print('_cover%sv4.html 找不到 %s，请检查版本常量' % (suffix, OLD_VERSION))
         return False
-    io.open(os.path.join(ROOT, 'docs', out), 'w', encoding='utf-8', newline='').write(s)
-    print(out, 'OK')
+    s = s.replace('>%s<' % OLD_VERSION, '>%s<' % VERSION)
+    old_tag = OLD_TAGS[suffix]
+    if s.count(old_tag) != 1:
+        print('_cover%sv4.html 找不到用例数标记 %r' % (suffix, old_tag))
+        return False
+    s = s.replace(old_tag, NEW_TAGS[suffix])
+    io.open(src, 'w', encoding='utf-8', newline='').write(s)
+    print('_cover%sv4.html -> %s / %s' % (suffix, VERSION, NEW_TAGS[suffix]))
     return True
 
-def build_hant_cover():
-    """繁体封面：整文件 s2twp + 台湾正黑/明体字体替换。"""
-    from opencc import OpenCC
-    cc = OpenCC('s2twp')
-    s = cc.convert(io.open(SRC, encoding='utf-8').read())
-    pairs = [
-      ('<html lang="zh">', '<html lang="zh-Hant">'),
-      ('font-family:"PingFang SC","Microsoft YaHei",sans-serif;',
-       'font-family:"PingFang TC","Microsoft JhengHei",sans-serif;'),
-      ('"Songti SC","SimSun",serif', '"Songti TC","PMingLiU","SimSun",serif', 3),
-      ('font-family:"KaiTi","STKaiti","SimSun",serif', 'font-family:"PMingLiU","KaiTi",serif'),
-      ('賬號', '帳號'),
-    ]
-    errs = []
-    for item in pairs:
-        old, new = item[0], item[1]
-        want = item[2] if len(item) > 2 else 1
-        n = s.count(old)
-        if n != want:
-            errs.append('x%d (want x%d): %r' % (n, want, old[:40]))
-            continue
-        s = s.replace(old, new)
-    if errs:
-        print('_cover-zh-Hant.html FAIL')
-        for e in errs: print('  ' + e)
-        return False
-    io.open(os.path.join(ROOT, 'docs', '_cover-zh-Hant.html'), 'w', encoding='utf-8', newline='').write(s)
-    print('_cover-zh-Hant.html OK')
-    return True
+
+def render(suffix):
+    from playwright.sync_api import sync_playwright
+    html = os.path.join(ROOT, 'docs', '_cover%s.html' % SUFFIXES[suffix])
+    out = os.path.join(ROOT, 'docs', 'cover%s.jpg' % suffix)
+    with sync_playwright() as p:
+        b = p.chromium.launch()
+        pg = b.new_page(viewport={'width': 1280, 'height': 640}, device_scale_factor=1.5)
+        pg.goto('file:///' + html.replace('\\', '/'))
+        pg.wait_for_timeout(400)
+        pg.screenshot(path=out, type='jpeg', quality=88)
+        b.close()
+    print('cover%s.jpg OK (%d bytes)' % (suffix, os.path.getsize(out)))
+
 
 if __name__ == '__main__':
-    # 版本与用例数只维护在中文源里，其余语言继承
-    src = io.open(SRC, encoding='utf-8').read()
-    if 'v15.35' not in src:   # 幂等：已升级则跳过
-        for old, new in [('v15.33', 'v15.35'), ('53 测试用例', '51 测试用例')]:
-            assert src.count(old) == 1, old
-            src = src.replace(old, new)
-        io.open(SRC, 'w', encoding='utf-8', newline='').write(src)
-    ok = build(EN, '_cover-en.html') & build(JA, '_cover-ja.html') & build_hant_cover()
+    ok = all(update_template(sfx) for sfx in ['', '-en', '-ja', '-zh-Hant'])
+    if ok or '--force-render' in sys.argv:
+        for sfx in ['', '-en', '-ja', '-zh-Hant']:
+            render(sfx)
     sys.exit(0 if ok else 1)
