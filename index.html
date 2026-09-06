@@ -97,7 +97,8 @@ body{
 }
 .viewport::-webkit-scrollbar{display:none}
 .viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:76px;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
+#stage{position:absolute;top:76px;left:0}
+#scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
 #stage.v #lines path,.ps #lines path{stroke:#d5dde6}
@@ -801,9 +802,11 @@ html{touch-action:manipulation}
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
-    <div id="stage" style="width: 234px; height: 540px; transform: scale(0.9);">
-      <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
-      <div id="nodes"><div id="__dropMarker"></div></div>
+    <div id="stage" style="width: 234px; height: 540px;">
+      <div id="scaler">
+        <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
+        <div id="nodes"><div id="__dropMarker"></div></div>
+      </div>
     </div>
   </div>
   <div id="searchBox">
@@ -2402,12 +2405,13 @@ function reparentNode(n, newParent){
 
 /* ---------- ⑩ 缩放 / 平移 ---------- */
 let scale = 1;
-function applyZoom(){
+function applyZoom(recenter){
   const stEl = document.getElementById('stage');
-  stEl.style.transform = 'scale(' + scale + ')';
-  /* transform 不扩大滚动范围（Chrome 实测）：盒子尺寸必须同步为缩放后大小，
-     否则缩放后画布外围既显示不出来也滚动不到 */
+  const scEl = document.getElementById('scaler');
+  scEl.style.transform = 'scale(' + scale + ')';
+  /* stage 盒子 = 基准×缩放：滚动范围随之正确（transform 不产生滚动范围） */
   if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (recenter) centerStage();   /* 锚点缩放（滚轮）期间不重居中：会和锚点补偿打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
 /* 滚轮缩放：倍速（触控板小增量也顺滑）+ rAF 插值动画，光标锚点全程保持 */
@@ -2418,13 +2422,13 @@ function animateZoom(){
     const diff = targetScale - scale;
     if (Math.abs(diff) < 0.0015){
       scale = targetScale;
-      applyZoom();
+      applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
       zoomRaf = null;
       return;
     }
     scale += diff * 0.35;
-    applyZoom();
+    applyZoom(!zoomAnchor && !window.__pinchActive);
     if (zoomAnchor) zoomAtAnchor();
     zoomRaf = requestAnimationFrame(step);
   };
@@ -2447,6 +2451,14 @@ function zoomBy(d){
   return scale;
 }
 function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function centerStage(){
+  /* 按当前缩放把舞台在视口内居中：水平居中解决“靠左”，垂直居中让画布上下都有余量 */
+  const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
+  if (!stEl._baseW) return;
+  const barTop = window.innerWidth <= 860 ? 120 : 76;
+  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
+  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+}
 function fitToScreen(){
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
@@ -2455,8 +2467,7 @@ function fitToScreen(){
   scale = Math.max(0.12, Math.min((vp.clientWidth - 30) / w, (vp.clientHeight - 30) / h, 1.2));
   targetScale = scale;
   applyZoom();
-  const sw2 = vp.scrollWidth - vp.clientWidth, sh2 = vp.scrollHeight - vp.clientHeight;
-  vp.scrollTo(sw2 / 2, sh2 / 2);   /* 居中：四周留对称余量 */
+  centerStage();
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
   if (e.ctrlKey){
@@ -2538,6 +2549,7 @@ function setTargetScale(ns){
   vp.addEventListener('touchstart', e => {
     if (e.touches.length === 2){
       clearLP();
+      window.__pinchActive = true;
       pinch = { d0: tdist(e.touches), s0: scale };
     }
   }, { passive: true });
@@ -2547,7 +2559,8 @@ function setTargetScale(ns){
       setTargetScale(pinch.s0 * tdist(e.touches) / pinch.d0);
     }
   }, { passive: false });
-  vp.addEventListener('touchend', () => { pinch = null; }, { passive: true });
+  vp.addEventListener('touchend', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
+  vp.addEventListener('touchcancel', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
 })();
 
 /* ---------- ⑪ 搜索（Ctrl+F / 顶栏放大镜；仅搜当前可见分支） ---------- */

@@ -97,7 +97,8 @@ body{
 }
 .viewport::-webkit-scrollbar{display:none}
 .viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:76px;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
+#stage{position:absolute;top:76px;left:0}
+#scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
 #stage.v #lines path,.ps #lines path{stroke:#d5dde6}
@@ -699,9 +700,11 @@ html{touch-action:manipulation}
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
-    <div id="stage" style="width: 234px; height: 540px; transform: scale(0.9);">
-      <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
-      <div id="nodes"><div id="__dropMarker"></div></div>
+    <div id="stage" style="width: 234px; height: 540px;">
+      <div id="scaler">
+        <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
+        <div id="nodes"><div id="__dropMarker"></div></div>
+      </div>
     </div>
   </div>
   <div id="searchBox">
