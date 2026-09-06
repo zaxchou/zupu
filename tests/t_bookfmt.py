@@ -565,9 +565,10 @@ def t_spouse_terms(b):
     goto_book(page)
     dlg = DialogRecorder(page)
     # 先给 z1 加第二位配偶（默认次序称谓=续弦）
-    dlg.queue("prompt", "王秀兰")   # 必须在点击前入队：prompt 随点击同步弹出
     page.locator('.node[data-id="z1"] .quick-add').click()
     page.locator("#__ctxMenu .mi", has_text="配偶").click()
+    page.fill("#__uipInput", "王秀兰")
+    page.click("#__uipOk")
     page.wait_for_timeout(200)
     role2 = page.locator('.node[data-id="z1"] .sp[data-sp="1"] .role').inner_text()
     check(role2 == "续弦", "次序默认称谓：续弦", role2)

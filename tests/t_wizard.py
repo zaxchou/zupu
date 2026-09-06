@@ -84,9 +84,10 @@ def t_wizard_blank_start(b):
     check(not page.locator("#__wizModal").is_visible(), "不再弹向导")
     # 之后正常编辑可用：＋ 添加第一代
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "李元怙")   # prompt 随点击同步弹出，须先入队
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="第一代").click()
+    page.fill("#__uipInput", "李元怙")
+    page.click("#__uipOk")
     page.wait_for_timeout(150)
     check(page.locator(".node").count() == 2, "空白谱可正常添加成员")
     check(not errs, "无 JS 错误", str(errs))
@@ -108,9 +109,10 @@ def t_wizard_nag_stops_after_real_edit(b):
     page.locator("#__wizModal").click(position={"x": 12, "y": 12})
     page.wait_for_timeout(120)
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "测试子代")   # prompt 随点击同步弹出，须先入队
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="第一代").click()
+    page.fill("#__uipInput", "测试子代")
+    page.click("#__uipOk")
     page.wait_for_timeout(250)
     check(page.evaluate("window.__ZP.data.demo") is None, "真实编辑后 demo 标记摘除",
           str(page.evaluate("window.__ZP.data.demo")))

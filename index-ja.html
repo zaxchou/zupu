@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>家系図・伝代ツリー（編集可）</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2316324f'/%3E%3Ctext x='32' y='32' font-family=%22Songti SC,SimSun,serif%22 font-size='42' font-weight='700' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'%3E%E6%97%8F%3C/text%3E%3C/svg%3E">
 
@@ -38,27 +38,17 @@ body{
   overflow:hidden;
 }
 /* ---------- 顶栏：品牌 + 高频图标 + 下拉菜单，单行不放平铺按钮堆 ---------- */
-.topbar{
-  display:flex;align-items:center;gap:6px;
-  height:46px;padding:0 10px;
-  background:rgba(255,255,255,.045);
-  border:1px solid rgba(255,255,255,.09);
-  border-radius:11px;
-  margin-bottom:10px;
-}
-.brand{display:flex;align-items:center;gap:8px;margin-right:8px;user-select:none;cursor:pointer}
+.topbar{display:flex;align-items:center;height:46px;padding:0 10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:11px;margin-bottom:10px;}
+/* ---------- 顶栏：品牌 + 高频图标 + 下拉菜单，单行不放平铺按钮堆 ---------- */
+.topbar>*+*{margin-left:6px}
+.brand{display:flex;align-items:center;margin-right:8px;user-select:none;cursor:pointer;}
+.brand>*+*{margin-left:8px}
 .brand:hover .name{color:#fff}
 .brand svg{display:block}
 .brand .name{color:#eaf2f9;font-size:15px;font-weight:600;letter-spacing:.5px;white-space:nowrap}
 .brand .tag{color:#7f93aa;font-size:10px;border:1px solid rgba(127,147,170,.35);border-radius:4px;padding:1px 5px}
-.btn{
-  display:inline-flex;align-items:center;gap:5px;
-  height:30px;padding:0 9px;
-  background:transparent;border:1px solid transparent;border-radius:8px;
-  color:#a8bdd2;font-size:12.5px;font-family:inherit;
-  cursor:pointer;white-space:nowrap;
-  transition:background .13s,color .13s,border-color .13s;
-}
+.btn{display:inline-flex;align-items:center;height:30px;padding:0 9px;background:transparent;border:1px solid transparent;border-radius:8px;color:#a8bdd2;font-size:12.5px;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .13s,color .13s,border-color .13s;}
+.btn>*+*{margin-left:5px}
 .btn:hover{background:rgba(158,210,238,.12);color:#dceefb}
 .btn svg{display:block}
 .btn.icon{width:30px;padding:0;justify-content:center}
@@ -177,25 +167,25 @@ body{
   font-size:10px;font-weight:400;color:var(--text-light);margin-left:4px;letter-spacing:.5px;
 }
 /* ---------- 谱书竖排（古法）：世代成行、名字竖书（右→左读）、行左标世数 ---------- */
-:is(#stage,.ps).v .node-label{
+#stage.v .node-label,.ps.v .node-label{
   writing-mode:vertical-rl;text-orientation:upright;
   padding:13px 8px 9px;min-height:52px;position:relative;
   width:max-content;   /* 精确包住所有列（名/女/嗣/字号/配偶），否则配偶小牌溢出左缘、名字列视觉偏右 */
   max-width:none;
 }
-:is(#stage,.ps).v .node.g0>.node-label{padding:12px 10px}
-:is(#stage,.ps).v .node-label .gen{display:none}          /* 行左统一标世数，卡片不带角标 */
-:is(#stage,.ps).v .node-label .meta{display:none}         /* 生卒备注进 tooltip，卡面从简 */
-:is(#stage,.ps).v .rank{display:none}                     /* 排行/年份角标：古法版面不画 */
-:is(#stage,.ps).v .node-label .fold{
+#stage.v .node.g0>.node-label,.ps.v .node.g0>.node-label{padding:12px 10px}
+#stage.v .node-label .gen,.ps.v .node-label .gen{display:none}          /* 行左统一标世数，卡片不带角标 */
+#stage.v .node-label .meta,.ps.v .node-label .meta{display:none}         /* 生卒备注进 tooltip，卡面从简 */
+#stage.v .rank,.ps.v .rank{display:none}                     /* 排行/年份角标：古法版面不画 */
+#stage.v .node-label .fold,.ps.v .node-label .fold{
   writing-mode:horizontal-tb;position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);
 }
-:is(#stage,.ps).v .node-label .gx,:is(#stage,.ps).v .node-label .heir{margin-left:0;margin-top:6px}
-:is(#stage,.ps).v .node-label .xh{margin-left:0;margin-top:6px;color:#9aa9bb;font-size:11px}
-:is(#stage,.ps).v .node-label .sp{margin-left:0;margin-top:2px;opacity:.9}
-:is(#stage,.ps).v .node-label .sp .role{margin-right:0;margin-bottom:3px}
-:is(#stage,.ps).v .node-label .fold{top:-16px;bottom:auto;margin-left:0}   /* 折叠钮挂卡片上缘，避让下方「＋」 */
-:is(#stage,.ps).v #__dropMarker{height:130px}                /* 竖排卡片较高，插行线加长 */
+#stage.v .node-label .gx,.ps.v .node-label .gx,#stage.v .node-label .heir,.ps.v .node-label .heir{margin-left:0;margin-top:6px}
+#stage.v .node-label .xh,.ps.v .node-label .xh{margin-left:0;margin-top:6px;color:#9aa9bb;font-size:11px}
+#stage.v .node-label .sp,.ps.v .node-label .sp{margin-left:0;margin-top:2px;opacity:.9}
+#stage.v .node-label .sp .role,.ps.v .node-label .sp .role{margin-right:0;margin-bottom:3px}
+#stage.v .node-label .fold,.ps.v .node-label .fold{top:-16px;bottom:auto;margin-left:0}   /* 折叠钮挂卡片上缘，避让下方「＋」 */
+#stage.v #__dropMarker,.ps.v #__dropMarker{height:130px}                /* 竖排卡片较高，插行线加长 */
 .vrow{
   position:absolute;left:8px;transform:translateY(-50%);
   writing-mode:vertical-rl;text-orientation:upright;
@@ -203,32 +193,33 @@ body{
   color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
 }
 /* 谱书竖排·纸面化（v15.24）：框退后、墨字当主角——hover/选中才现淡框 */
-:is(#stage,.ps).v .node-label{
+#stage.v .node-label,.ps.v .node-label{
   background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
   color:#29231c;font-size:17px;border-radius:6px;
 }
-:is(#stage,.ps).v .node.g1>.node-label,:is(#stage,.ps).v .node.g2>.node-label,
-:is(#stage,.ps).v .node.g3>.node-label,:is(#stage,.ps).v .node.g4>.node-label,
-:is(#stage,.ps).v .node.g5>.node-label{color:#29231c;border-color:transparent;background:transparent}
-:is(#stage,.ps).v .node.g0>.node-label{   /* 始祖：纸色底 + 细墨线框 */
+#stage.v .node.g1>.node-label,.ps.v .node.g1>.node-label,#stage.v .node.g2>.node-label,.ps.v .node.g2>.node-label,
+#stage.v .node.g3>.node-label,.ps.v .node.g3>.node-label,#stage.v .node.g4>.node-label,.ps.v .node.g4>.node-label,
+#stage.v .node.g5>.node-label,.ps.v .node.g5>.node-label{color:#29231c;border-color:transparent;background:transparent}
+#stage.v .node.g0>.node-label,.ps.v .node.g0>.node-label{   /* 始祖：纸色底 + 细墨线框 */
   background:#fffdf8;border:1px solid rgba(93,80,60,.4);color:#16324f;
   font-size:18px;padding:13px 11px;border-radius:3px;box-shadow:none;
 }
-:is(#stage,.ps).v .node.meta-note>.node-label{color:#8a94a0;border-color:transparent;background:transparent}
-:is(#stage,.ps).v .node-label:hover{background:rgba(63,167,221,.07);border-color:rgba(63,167,221,.55);box-shadow:none;transform:none}
-:is(#stage,.ps).v .node.selected>.node-label{border-color:var(--accent-strong);background:#f2f8fd;box-shadow:0 0 0 2px rgba(33,150,211,.15)}
-:is(#stage,.ps).v .node.hit>.node-label{border-color:rgba(239,143,63,.55);background:rgba(239,143,63,.06);box-shadow:none}
-:is(#stage,.ps).v .node.hit-active>.node-label{border-color:rgba(199,126,40,.8);background:#fdf6ea;box-shadow:0 0 0 2px rgba(199,126,40,.25)}
-:is(#stage,.ps).v .node-label .sp{background:transparent;padding:0;color:#9aa0a8}
-:is(#stage,.ps).v .node-label .sp .role{background:transparent;padding:0;color:#b6bcc4}
-:is(#stage,.ps).v .node-label .gx{background:transparent;border-color:rgba(176,74,114,.4);color:#b04a72}
-:is(#stage,.ps).v .node-label .heir{background:transparent;border-color:rgba(140,110,60,.5);color:#8a6a2a}
-:is(#stage,.ps).v .node-label .heir.out{color:#b08a4a}
-:is(#stage,.ps).v .node-label .zhi{background:transparent;border-color:rgba(60,74,87,.55);color:#3c4a57}
-:is(#stage,.ps).v .node-label .xh{color:#a7adb5}
+#stage.v .node.meta-note>.node-label,.ps.v .node.meta-note>.node-label{color:#8a94a0;border-color:transparent;background:transparent}
+#stage.v .node-label:hover,.ps.v .node-label:hover{background:rgba(63,167,221,.07);border-color:rgba(63,167,221,.55);box-shadow:none;transform:none}
+#stage.v .node.selected>.node-label,.ps.v .node.selected>.node-label{border-color:var(--accent-strong);background:#f2f8fd;box-shadow:0 0 0 2px rgba(33,150,211,.15)}
+#stage.v .node.hit>.node-label,.ps.v .node.hit>.node-label{border-color:rgba(239,143,63,.55);background:rgba(239,143,63,.06);box-shadow:none}
+#stage.v .node.hit-active>.node-label,.ps.v .node.hit-active>.node-label{border-color:rgba(199,126,40,.8);background:#fdf6ea;box-shadow:0 0 0 2px rgba(199,126,40,.25)}
+#stage.v .node-label .sp,.ps.v .node-label .sp{background:transparent;padding:0;color:#9aa0a8}
+#stage.v .node-label .sp .role,.ps.v .node-label .sp .role{background:transparent;padding:0;color:#b6bcc4}
+#stage.v .node-label .gx,.ps.v .node-label .gx{background:transparent;border-color:rgba(176,74,114,.4);color:#b04a72}
+#stage.v .node-label .heir,.ps.v .node-label .heir{background:transparent;border-color:rgba(140,110,60,.5);color:#8a6a2a}
+#stage.v .node-label .heir.out,.ps.v .node-label .heir.out{color:#b08a4a}
+#stage.v .node-label .zhi,.ps.v .node-label .zhi{background:transparent;border-color:rgba(60,74,87,.55);color:#3c4a57}
+#stage.v .node-label .xh,.ps.v .node-label .xh{color:#a7adb5}
 
 /* 欢迎向导（首次运行三选一） */
-.wiz-actions{display:flex;gap:10px;margin:4px 0 12px}
+.wiz-actions{display:flex;margin:4px 0 12px;}
+.wiz-actions>*+*{margin-left:10px}
 .wiz-actions button{
   flex:1;padding:14px 8px;border-radius:10px;border:1px solid #c3ccd8;background:#fff;
   cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--text-light);
@@ -274,7 +265,7 @@ body{
   z-index:5;
   box-shadow:0 1px 4px rgba(63,167,221,.35);
 }
-.quick-add::after{content:'';position:absolute;inset:-6px;border-radius:12px}
+.quick-add::after{content:'';position:absolute;top:-6px;right:-6px;bottom:-6px;left:-6px;border-radius:12px}
 .node:hover .quick-add,.node.selected .quick-add,.node.menu-open .quick-add{opacity:1}
 .node .quick-add:hover{background:var(--accent-strong)}
 /* 搜索命中高亮 */
@@ -287,17 +278,14 @@ body{
   box-shadow:0 10px 34px rgba(0,0,0,.28);
   padding:5px;min-width:132px;
 }
-#__ctxMenu .mi{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 10px;border-radius:7px;
-  font-size:13px;color:var(--text);cursor:pointer;
-  white-space:nowrap;user-select:none;
-}
+#__ctxMenu .mi{display:flex;align-items:center;padding:7px 10px;border-radius:7px;font-size:13px;color:var(--text);cursor:pointer;white-space:nowrap;user-select:none;}
+#__ctxMenu .mi>*+*{margin-left:8px}
 #__ctxMenu .mi:hover{background:#eef4fb}
 #__ctxMenu .mi.danger{color:var(--danger)}
 #__ctxMenu .mi.danger:hover{background:#fdeeee}
 #__ctxMenu .mi .k{font-size:10px;color:#9aa4b2;margin-left:auto;padding-left:14px}
-#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;gap:7px}
+#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;}
+#__ctxMenu .mi .lbl>*+*{margin-left:7px}
 #__ctxMenu .mi .mi-ic{flex:none;opacity:.7;display:block}
 /* 拖拽中（被拖子树不拦截悬停命中） */
 .node.dragging{z-index:6;pointer-events:none}
@@ -317,13 +305,9 @@ body{
   display:none;pointer-events:none;
 }
 /* 搜索面板（悬浮于画布容器上，不随内容滚动） */
-#searchBox{
-  position:absolute;top:12px;right:12px;z-index:60;
-  display:none;align-items:center;gap:6px;
-  background:#fff;border:1px solid #d5dce6;border-radius:9px;
-  box-shadow:0 6px 22px rgba(0,0,0,.22);
-  padding:6px 8px;
-}
+#searchBox{position:absolute;top:12px;right:12px;z-index:60;display:none;align-items:center;background:#fff;border:1px solid #d5dce6;border-radius:9px;box-shadow:0 6px 22px rgba(0,0,0,.22);padding:6px 8px;}
+/* 搜索面板（悬浮于画布容器上，不随内容滚动） */
+#searchBox>*+*{margin-left:6px}
 #searchBox.open{display:flex}
 #searchBox input{
   width:180px;border:1px solid #c9d3de;border-radius:6px;
@@ -337,7 +321,8 @@ body{
   box-shadow:0 8px 26px rgba(0,0,0,.24);z-index:70;display:none;padding:4px;
 }
 #sbList.open{display:block}
-.sb-item{padding:6px 9px;font-size:12px;cursor:pointer;display:flex;gap:8px;align-items:center;border-radius:6px}
+.sb-item{padding:6px 9px;font-size:12px;cursor:pointer;display:flex;align-items:center;border-radius:6px;}
+.sb-item>*+*{margin-left:8px}
 .sb-item:hover,.sb-item.sel{background:#eef4fb}
 .sb-item .g{color:#2f6390;font-size:10px;background:#e8f1fa;border:1px solid #b9d6ee;border-radius:4px;padding:0 4px;flex:none}
 .sb-item .nm{color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -349,12 +334,11 @@ body{
 }
 #searchBox button:hover{background:#e0e8f0;color:var(--text)}
 /* 图例 / 提示条 */
-.legend{
-  display:flex;gap:12px;flex-wrap:wrap;align-items:center;
-  font-size:10.5px;color:#7f93aa;margin-top:7px;
-  min-height:20px;
-}
-.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend{display:flex;flex-wrap:wrap;align-items:center;font-size:10.5px;color:#7f93aa;margin-top:7px;min-height:20px;}
+/* 图例 / 提示条 */
+.legend>*+*{margin-left:12px}
+.legend span{display:inline-flex;align-items:center;}
+.legend span>*+*{margin-left:5px}
 .legend i{width:13px;height:8px;border-radius:2px;display:inline-block}
 .tips{
   font-size:10.5px;color:#8fa0b5;margin-top:6px;
@@ -363,9 +347,9 @@ body{
 .tips b{color:#5cc3f2;font-weight:600}
 /* 档案弹窗（class 控制显隐；hidden 属性会被自定义 display 覆盖——历史教训） */
 .modal-mask{
-  position:fixed;inset:0;background:rgba(10,14,25,.6);
+  position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);
   display:none;align-items:center;justify-content:center;z-index:100;
-  backdrop-filter:blur(3px);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
 }
 .modal-mask.open{display:flex}
 .modal{
@@ -382,12 +366,15 @@ body{
   font-size:13px;font-family:inherit;color:var(--text);background:#fff;
 }
 .modal input:focus,.modal textarea:focus,.modal select:focus{outline:none;border-color:var(--accent)}
-.modal .row{display:flex;gap:10px}
+.modal .row{display:flex;}
+.modal .row>*+*{margin-left:10px}
 .modal .row label{flex:1}
 /* 设置弹窗里的行内勾选框：不占满行 */
-.modal label.checkline{display:flex;align-items:center;gap:8px;cursor:pointer}
+.modal label.checkline{display:flex;align-items:center;cursor:pointer;}
+.modal label.checkline>*+*{margin-left:8px}
 .modal label.checkline input{width:auto;margin:0}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.modal-btns{display:flex;justify-content:flex-end;margin-top:6px;}
+.modal-btns>*+*{margin-left:8px}
 .modal-btns button{
   padding:7px 18px;border-radius:6px;border:1px solid #c3ccd8;
   background:#fff;color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
@@ -409,7 +396,7 @@ body{
 .help-note{font-size:12px;color:var(--text-light);line-height:1.7;margin:4px 0 0}
 .help-note b{color:var(--save)}
 /* 字辈表网格：蓝框=当前族谱里有人用这个字辈 */
-.zbgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin-top:6px}
+.zbgrid{grid-gap:6px;display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;margin-top:6px}
 .zb{
   text-align:center;padding:4px 0;border:1px solid #dde4ec;border-radius:6px;
   font-size:12px;color:#445;background:#fff;
@@ -451,6 +438,34 @@ body{
 #printArea .psp{color:#666}
 #printArea .pmeta{color:#888;font-size:11px;margin-left:4px}
 @page{size:A4 portrait;margin:12mm}
+#__uipModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__uipModal.open{display:flex}
+#__uipModal .uip-box{width:92vw;max-width:430px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uipModal h3{font-size:14.5px;color:#1c2333;margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
+#__uipInput:focus{border-color:var(--accent)}
+#__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+#__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__textModal.open{display:flex}
+#__textModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__textModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
+#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__textModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
+body{-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation}
+#viewport{touch-action:none}
+#topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
+@media (max-width: 860px){
+  .tips,.legend{display:none}
+  #topbar{flex-wrap:wrap;row-gap:6px;padding-left:10px;padding-right:10px}
+  #topbar .btn{padding:8px 10px}
+  #statsChip{display:none}
+  #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
+  .modal{width:92vw;max-height:80vh;overflow:auto}
+  #__ctxMenu{max-height:68vh;overflow:auto}
+  .quick-add{width:26px;height:26px;font-size:15px}
+  .fold{width:24px;height:20px;font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -571,21 +586,21 @@ body{
     <span class="tag" id="__tangTag" style="display:none"></span>
     <span class="tag">伝代ツリー</span>
   </div>
-  <button class="btn icon" id="__undoBtn" onclick="undo()" title="元に戻す（Ctrl+Z）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
-  <button class="btn icon" id="__redoBtn" onclick="redo()" title="やり直す（Ctrl+Y）" disabled=""><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"></path></svg></button>
-  <button class="btn icon" onclick="openSearch()" title="検索（Ctrl+F）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
+  <button class="btn icon" id="__undoBtn" data-act="undo" title="元に戻す（Ctrl+Z）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"></path><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"></path></svg></button>
+  <button class="btn icon" id="__redoBtn" data-act="redo" title="やり直す（Ctrl+Y）" disabled=""><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"></path><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"></path></svg></button>
+  <button class="btn icon" data-act="search" title="検索（Ctrl+F）"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg></button>
   <span class="sep"></span>
   <button class="btn" id="btnView" title="表示">表示<svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 9 7 7 7-7"></path></svg></button>
   <button class="btn" id="btnFile" title="ファイル">ファイル<svg class="chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m5 9 7 7 7-7"></path></svg></button>
   <span class="sep"></span>
-  <button class="btn icon" onclick="zoomBy(-0.15)" title="縮小"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16"></path></svg></button>
+  <button class="btn icon" data-act="zoomout" title="縮小"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12h16"></path></svg></button>
   <span id="zoomLabel">90%</span>
-  <button class="btn icon" onclick="zoomBy(0.15)" title="拡大"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg></button>
-  <button class="btn icon" onclick="fitToScreen()" title="画面に合わせる"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"></path></svg></button>
-  <button class="btn icon" onclick="resetZoom()" title="1:1 に戻す"><span style="font-size:11.5px;font-weight:600">1:1</span></button>
+  <button class="btn icon" data-act="zoomin" title="拡大"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg></button>
+  <button class="btn icon" data-act="fit" title="画面に合わせる"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H4v4M16 3h4v4M8 21H4v-4M16 21h4v-4"></path></svg></button>
+  <button class="btn icon" data-act="reset" title="1:1 に戻す"><span style="font-size:11.5px;font-weight:600">1:1</span></button>
   <span id="statsChip"><b>4</b>人 · 配偶者 <b>2</b> · 4代</span>
   <button class="btn is-saved" id="saveState" title="編集は自動保存されます（このブラウザに保存）"><span class="dot"></span>保存済み</button>
-  <button class="btn icon" onclick="openHelp()" title="ヘルプ / ショートカット"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.6"></path><path d="M12 17h.01"></path></svg></button>
+  <button class="btn icon" data-act="help" title="ヘルプ / ショートカット"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.2"></circle><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2 1c0 1.8-2.6 2.2-2.6 3.6"></path><path d="M12 17h.01"></path></svg></button>
   <input type="file" id="__importFile" accept=".json,.html,.htm,application/json,text/html" style="display:none">
 </header>
 
@@ -616,6 +631,27 @@ body{
 </div>
 
 <div id="__ctxMenu" style="display: none;"></div>
+<div id="__uipModal">
+  <div class="uip-box">
+    <h3 id="__uipTitle">输入</h3>
+    <input id="__uipInput" autocomplete="off">
+    <div class="modal-btns"><button id="__uipCancel">キャンセル</button><button class="primary" id="__uipOk">确定</button></div>
+  </div>
+</div>
+<div id="__textModal">
+  <div class="uip-box">
+    <h3 id="__textTitle">文本</h3>
+    <textarea id="__textArea" readonly></textarea>
+    <div class="modal-btns"><button id="__textSel">全选</button><button class="primary" id="__textOk">关闭</button></div>
+  </div>
+</div>
+<div id="__pasteModal">
+  <div class="uip-box">
+    <h3>粘贴备份 json 导入</h3>
+    <textarea id="__pasteArea" style="-webkit-user-select:text;user-select:text"></textarea>
+    <div class="modal-btns"><button id="__pasteCancel">キャンセル</button><button class="primary" id="__pasteOk">导入</button></div>
+  </div>
+</div>
 <div id="__toast" role="status" style="opacity: 0;">このブラウザに自動保存されました。編集は即保存</div>
 
 <div class="modal-mask" id="__helpModal">
@@ -1052,15 +1088,22 @@ function deepEq(a, b){
   return false;
 }
 
+var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小红书容器环境
 const STORAGE_KEY = 'zupu_data_v4_ja';   // 数据真源：本浏览器（自动保存，无感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
 
 const FALLBACK_TEMPLATE = migrate({ id:'root', name:'家系図', spouses:[], expanded:true, children:[] });
-const INIT_TEMPLATE = (function(){
+function seedRawText(){
   const el = document.getElementById('__treeData');
-  if (el && el.textContent.trim()){
-    try { return migrate(JSON.parse(JSON.stringify(JSON.parse(el.textContent.trim())))); }
+  if (el && el.textContent.trim()) return el.textContent.trim();
+  if (window.__SEED_JSON) return JSON.stringify(window.__SEED_JSON);   // 小红书包：种子进 app.js
+  return '';
+}
+const INIT_TEMPLATE = (function(){
+  const sr = seedRawText();
+  if (sr){
+    try { return migrate(JSON.parse(JSON.stringify(JSON.parse(sr)))); }
     catch(e){ /* 内嵌损坏 → 空白模板，靠导入救回 */ }
   }
   return FALLBACK_TEMPLATE;
@@ -1092,9 +1135,9 @@ function nodeCount(d){
     }
   } catch(e){}
   if (!browserHas){
-    const el = document.getElementById('__treeData');
-    if (el && el.textContent.trim()){
-      try { consider(migrate(JSON.parse(el.textContent.trim())), 'file'); } catch(e){}
+    const sr = seedRawText();
+    if (sr){
+      try { consider(migrate(JSON.parse(sr)), 'file'); } catch(e){}
     }
     try {
       Object.keys(localStorage).forEach(k => {
@@ -1540,9 +1583,74 @@ function editNameInline(labelEl, n){
   labelEl.addEventListener('keydown', onKey);
 }
 
+/* ---------- 页内输入/文本弹窗（容器禁 window.prompt；触屏统一体验） ---------- */
+function uiPrompt(title, def){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__uipModal');
+    document.getElementById('__uipTitle').textContent = title;
+    var inp = document.getElementById('__uipInput');
+    inp.value = def || '';
+    m.classList.add('open');
+    setTimeout(function(){ try { inp.focus(); inp.select(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__uipOk').removeEventListener('click', ok);
+      document.getElementById('__uipCancel').removeEventListener('click', no);
+      inp.removeEventListener('keydown', onKey);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function ok(){ done(inp.value); }
+    function no(){ done(null); }
+    function out(e){ if (e.target.id === '__uipModal') done(null); }
+    function onKey(e){
+      if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); done(inp.value); }
+      if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done(null); }
+    }
+    document.getElementById('__uipOk').addEventListener('click', ok);
+    document.getElementById('__uipCancel').addEventListener('click', no);
+    inp.addEventListener('keydown', onKey);
+    m.addEventListener('mousedown', out);
+  });
+}
+function showTextModal(title, text){
+  var m = document.getElementById('__textModal');
+  document.getElementById('__textTitle').textContent = title;
+  var ta = document.getElementById('__textArea');
+  ta.value = text;
+  m.classList.add('open');
+  document.getElementById('__textSel').onclick = function(){ ta.focus(); ta.select(); };
+  document.getElementById('__textOk').onclick = function(){ m.classList.remove('open'); };
+  m.onmousedown = function(e){ if (e.target.id === '__textModal') m.classList.remove('open'); };
+}
+function pasteImport(){
+  var m = document.getElementById('__pasteModal');
+  var ta = document.getElementById('__pasteArea');
+  ta.value = '';
+  m.classList.add('open');
+  setTimeout(function(){ try { ta.focus(); } catch(e){} }, 80);
+  document.getElementById('__pasteOk').onclick = function(){
+    var txt = ta.value.trim();
+    if (!txt) return;
+    try {
+      var d = JSON.parse(txt);
+      if (!validTree(d)) throw new Error('構造が不正です：{id,name,children[]} ツリーが必要');
+      if ((!Array.isArray(d.zibei) || !d.zibei.length) && Array.isArray(treeData.zibei)) d.zibei = treeData.zibei;
+      pushHistory('import');
+      treeData = migrate(d);
+      selectedId = null;
+      m.classList.remove('open');
+      render(); fitToScreen();
+      toast('已导入粘贴的备份数据，已自动保存');
+    } catch(e){ alert('読み込み失敗：有効な家系図 JSON ファイルではありません\n' + e.message); }
+  };
+  document.getElementById('__pasteCancel').onclick = function(){ m.classList.remove('open'); };
+}
+
 function editName(n){
-  const t = prompt('名前を変更：', n.name);
-  if (t !== null && t.trim()){ pushHistory('rename:' + n.id); n.name = t.trim(); render(); }
+  uiPrompt('修改姓名：', n.name).then(function(t){
+    if (t !== null && t.trim()){ pushHistory('rename:' + n.id); n.name = t.trim(); render(); }
+  });
 }
 
 /* ---------- ⑥ 档案弹窗 ---------- */
@@ -1744,13 +1852,20 @@ document.getElementById('btnFile').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnFile');
   openDropdown(btn, m => {
-    m.appendChild(mi(ic('download') + 'バックアップ保存（json）', '', '', backupToFile));
-    m.appendChild(mi(ic('folder') + 'バックアップ復元（json / 旧 html）', '', '', () => document.getElementById('__importFile').click()));
-    m.appendChild(mi(ic('image') + '画像を出力（png）', '', '', exportPNG));
-    m.appendChild(mi(ic('pdf') + 'PDF を出力（図）', '', '', exportPDF));
-    m.appendChild(mi(ic('filetext') + '世系録（五世一表）', '', '', exportShixilu));
-    m.appendChild(mi(ic('filetext') + 'MD を出力', '', '', exportMarkdown));
-    m.appendChild(mi(ic('print') + '印刷（紙）', '', '', () => window.print()));
+    m.appendChild(mi(ic('image') + (IS_XHS ? '保存图片到相册' : '画像を出力（png）'), '', '', exportPNG));
+  if (IS_XHS){
+      m.appendChild(mi(ic('download') + '复制备份文本', '', '', function(){
+      showTextModal('备份文本：点击「全选」后手动复制', JSON.stringify(sanitize(treeData), null, 2));
+    }));
+      m.appendChild(mi(ic('folder') + '粘贴导入 json', '', '', pasteImport));
+  } else {
+      m.appendChild(mi(ic('download') + 'バックアップ保存（json）', '', '', backupToFile));
+      m.appendChild(mi(ic('folder') + 'バックアップ復元（json / 旧 html）', '', '', () => document.getElementById('__importFile').click()));
+      m.appendChild(mi(ic('pdf') + 'PDF を出力（図）', '', '', exportPDF));
+      m.appendChild(mi(ic('filetext') + '世系録（五世一表）', '', '', exportShixilu));
+      m.appendChild(mi(ic('filetext') + 'MD を出力', '', '', exportMarkdown));
+      m.appendChild(mi(ic('print') + '印刷（紙）', '', '', () => window.print()));
+  }
     m.appendChild(mi(ic('sort') + '生年で並べ替え', '', '', actSortByBirth));
     m.appendChild(mi(ic('reset') + 'データをリセット', 'danger', '', resetData));
   });
@@ -1886,6 +2001,16 @@ document.getElementById('__clanModal').addEventListener('keydown', e => {
 });
 document.getElementById('__brand').addEventListener('click', openClan);
 
+/* 顶栏按钮绑定（CSP 兼容：容器禁止行内 onclick） */
+var ACT_MAP = { undo: function(){ undo(); }, redo: function(){ redo(); },
+  search: function(){ openSearch(); },
+  zoomout: function(){ zoomBy(-0.15); }, zoomin: function(){ zoomBy(0.15); },
+  fit: function(){ fitToScreen(); }, reset: function(){ resetZoom(); },
+  help: function(){ openHelp(); } };
+document.querySelectorAll('[data-act]').forEach(function(b){
+  b.addEventListener('click', function(){ ACT_MAP[b.getAttribute('data-act')](); });
+});
+
 /* ---------- 首次运行向导（内嵌种子带 demo 标记时弹出，三选一） ---------- */
 function wmIsOpen(){ return document.getElementById('__wizModal').classList.contains('open'); }
 function openWizard(){ document.getElementById('__wizModal').classList.add('open'); }
@@ -1932,7 +2057,7 @@ document.getElementById('__setModal').addEventListener('keydown', e => {
 function addSpouse(n){
   if (!n.spouses) n.spouses = [];
   const nth = n.spouses.length + 1;
-  const t = prompt('「' + n.name + '」の第 ' + nth + ' 配偶者の名前を追加：\n（配偶者の名前変更・削除は、カード上の名前をダブルクリック）');
+  uiPrompt('为「' + n.name + '」添加第 ' + nth + ' 位配偶姓名：\n（如需改名/移除某位配偶，直接双击图上该配偶的名字）').then(function(t){
   if (t === null) return;
   const v = t.trim();
   if (!v) return;
@@ -1941,12 +2066,13 @@ function addSpouse(n){
   n.spouses.push(v);
   render();
   toast(n.name + ' に配偶者「' + v + '」を追加しました。「＋配偶者」で追加できます');
+  });
 }
 
 function editSpouseAt(n, i){
   if (!n.spouses || i < 0 || i >= n.spouses.length) return;
   const cur = n.spouses[i];
-  const t = prompt('「' + n.name + '」の第 ' + (i + 1) + ' 配偶者を変更：\n（空にして決定 = この配偶者を削除）', cur);
+  uiPrompt('修改「' + n.name + '」的第 ' + (i + 1) + ' 位配偶：\n（清空并确定 = 移除这位配偶）', cur).then(function(t){
   if (t === null) return;
   const v = t.trim();
   if (!v){
@@ -1960,14 +2086,15 @@ function editSpouseAt(n, i){
     n.spouses[i] = v;
   }
   render();
+  });
 }
 
 function addChild(n){
-  const t = prompt(
+  uiPrompt(
     n.id === 'root'
       ? '「家系図」の下に第一世代のメンバーを追加（新しい祖 先ブランチ）：'
       : '「' + displayName(n) + '」に子の名前を追加：'
-  );
+  ).then(function(t){
   if (t === null || !t.trim()) return;
   pushHistory('addChild:' + n.id);
   if (!n.children) n.children = [];
@@ -1978,6 +2105,7 @@ function addChild(n){
   toast(n.id === 'root'
     ? '第一世代のメンバー「' + t.trim() + '」を追加しました（初期は最右=最年少。ドラッグで順序変更可）'
     : n.name + ' に子「' + t.trim() + '」を追加しました');
+  });
 }
 
 function deleteNode(n){
@@ -1997,7 +2125,7 @@ function deleteNode(n){
 
 function addSibling(n){
   const p = findParent(n.id); if (!p) return;
-  const t = prompt('「' + n.name + '」と同世代のメンバーを追加（' + (p.id === 'root' ? '第一世代' : '同じ親') + '）：');
+  uiPrompt('添加一位与「' + n.name + '」同辈的成员（' + (p.id === 'root' ? '第一代' : '同父母') + '）：').then(function(t){
   if (t === null || !t.trim()) return;
   pushHistory('addSibling:' + n.id);
   const nb = { id: genId('s'), name: t.trim(), spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
@@ -2005,6 +2133,7 @@ function addSibling(n){
   render();
   selectNode(nb.id);
   toast('「' + t.trim() + '」を追加しました（初期は最右=最年少。左へドラッグで年長に）');
+  });
 }
 
 function toggleExpand(n){
@@ -2078,8 +2207,8 @@ function reparentNode(n, newParent){
     }, 400);
   }
 
-  document.addEventListener('mousedown', e => {
-    if (e.button !== 0) return;
+  document.addEventListener('pointerdown', e => {
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     /* 菜单内按下：绝不触发关闭逻辑（mousedown 先于 click，先销毁菜单则 click 落空） */
     if (e.target.closest && (e.target.closest('#__ctxMenu') || e.target.closest('#searchBox'))) return;
     closeMenu();
@@ -2103,7 +2232,7 @@ function reparentNode(n, newParent){
     (function collect(x){ drag.ids.push(x.id); if (x.children) x.children.forEach(collect); })(n);
   });
 
-  document.addEventListener('mousemove', e => {
+  document.addEventListener('pointermove', e => {
     if (!drag) return;
     const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
     if (!drag.moved){
@@ -2163,7 +2292,17 @@ function reparentNode(n, newParent){
     m.style.display = 'block';
   });
 
-  document.addEventListener('mouseup', () => {
+  document.addEventListener('pointercancel', () => {
+    if (!drag) return;
+    drag = null;
+    if (dwellT){ clearTimeout(dwellT); dwellT = null; }
+    const m2 = document.getElementById('__dropMarker');
+    if (m2) m2.style.display = 'none';
+    clearHoverMarks();
+    document.querySelectorAll('.node.dragging').forEach(w => w.classList.remove('dragging'));
+    render();   // 系统打断手势：回弹到拖动前
+  });
+  document.addEventListener('pointerup', () => {
     if (!drag) return;
     const d = drag; drag = null;
     if (dwellT){ clearTimeout(dwellT); dwellT = null; }
@@ -2277,19 +2416,78 @@ function setTargetScale(ns){
 (function(){
   const vp = document.getElementById('viewport');
   let down = false, sx = 0, sy = 0, sl = 0, st = 0;
-  vp.addEventListener('mousedown', e => {
-    if (e.button !== 0) return;
+  vp.addEventListener('pointerdown', e => {
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
     down = true; sx = e.clientX; sy = e.clientY;
     sl = vp.scrollLeft; st = vp.scrollTop;
     vp.classList.add('panning');
   });
-  window.addEventListener('mousemove', e => {
+  window.addEventListener('pointermove', e => {
     if (!down) return;
     vp.scrollLeft = sl - (e.clientX - sx);
     vp.scrollTop  = st - (e.clientY - sy);
   });
-  window.addEventListener('mouseup', () => { down = false; vp.classList.remove('panning'); });
+  window.addEventListener('pointerup', () => { down = false; vp.classList.remove('panning'); });
+  window.addEventListener('pointercancel', () => { down = false; vp.classList.remove('panning'); });
+})();
+
+/* ---------- 触屏：长按=菜单 / 双击=改名 / 双指=缩放（容器与移动端） ---------- */
+(function(){
+  const vp = document.getElementById('viewport');
+  let lpTimer = null, lpX = 0, lpY = 0;
+  let lastTapT = 0, lastTapId = '';
+  let pinch = null;
+  function clearLP(){ if (lpTimer){ clearTimeout(lpTimer); lpTimer = null; } }
+  function tdist(ts){
+    const dx = ts[0].clientX - ts[1].clientX, dy = ts[0].clientY - ts[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy) || 1;
+  }
+  vp.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch' || !e.isPrimary) return;
+    const label = e.target.closest ? e.target.closest('.node-label') : null;
+    if (!label) return;
+    const wrap = label.closest('.node');
+    const n = wrap ? findNode(wrap.getAttribute('data-id')) : null;
+    if (!n || n.id === 'root') return;
+    lpX = e.clientX; lpY = e.clientY;
+    clearLP();
+    lpTimer = setTimeout(() => {
+      lpTimer = null;
+      const w = wrapOf(n.id);
+      if (w){ selectNode(n.id); openMenu(w, n); }
+    }, 480);
+  }, true);
+  document.addEventListener('pointermove', e => {
+    if (lpTimer && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)) clearLP();
+  }, true);
+  document.addEventListener('pointerup', e => {
+    clearLP();
+    if (e.pointerType !== 'touch') return;
+    const label = e.target.closest ? e.target.closest('.node-label') : null;
+    const id = label ? (label.closest('.node') ? label.closest('.node').getAttribute('data-id') : '') : '';
+    const now = Date.now();
+    if (id && id === lastTapId && now - lastTapT < 320){
+      lastTapT = 0; lastTapId = '';
+      const n = findNode(id);
+      if (n){ selectNode(id); editName(n); }
+      return;
+    }
+    lastTapT = now; lastTapId = id;
+  }, true);
+  vp.addEventListener('touchstart', e => {
+    if (e.touches.length === 2){
+      clearLP();
+      pinch = { d0: tdist(e.touches), s0: scale };
+    }
+  }, { passive: true });
+  vp.addEventListener('touchmove', e => {
+    if (pinch && e.touches.length === 2){
+      e.preventDefault();
+      setTargetScale(pinch.s0 * tdist(e.touches) / pinch.d0);
+    }
+  }, { passive: false });
+  vp.addEventListener('touchend', () => { pinch = null; }, { passive: true });
 })();
 
 /* ---------- ⑪ 搜索（Ctrl+F / 顶栏放大镜；仅搜当前可见分支） ---------- */
@@ -2560,6 +2758,7 @@ function exportShixilu(){
 }
 
 function download(name, content, type){
+  if (IS_XHS){ toast('小工具内不支持下载文件：请使用电脑网页版导出'); return; }
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -2932,9 +3131,21 @@ function stampName(ext){
   return (clanOf().ming || '家系図') + '-図-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
        + '-' + pad(d.getHours()) + pad(d.getMinutes()) + ext;
 }
+function savePngToAlbum(cv){
+  try {
+    var mt = window.xhs.miniTool;
+    if (!(mt && mt.writeTempFile && mt.saveImageToPhotosAlbum)){ toast('当前环境不支持保存到相册'); return; }
+    toast('正在保存图片…');
+    mt.writeTempFile({ data: cv.toDataURL('image/png') }).then(function(r){
+      return mt.saveImageToPhotosAlbum({ filePath: r.filePath });
+    }).then(function(){ toast('图片已保存到相册'); })
+      .catch(function(e){ toast('保存失败：' + ((e && e.errMsg) || e)); });
+  } catch(e){ toast('保存失败：' + e.message); }
+}
 function exportPNG(){
   try {
     const cv = exportTreeCanvas();
+    if (IS_XHS){ savePngToAlbum(cv); return; }
     cv.toBlob(bl => {
       download(stampName('.png'), bl, 'image/png');
       toast('画像をダウンロードしました（' + cv.width + '×' + cv.height + '）');

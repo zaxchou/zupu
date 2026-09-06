@@ -49,9 +49,10 @@ def t_i18n_en_smoke(b):
     check("Gen 4" in chip4, "EN: 4th gen chip", chip4)
     # 添加第一代成员
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "Adam Miller")
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="First generation").click()
+    page.fill("#__uipInput", "Adam Miller")
+    page.click("#__uipOk")
     page.wait_for_timeout(250)
     check(page.evaluate('window.__ZP.data.children.length') == 2, "EN: adding a first-gen member works")
     # 顶栏 / 图例不得残留中文
@@ -86,9 +87,10 @@ def t_i18n_ja_smoke(b):
     check("4" in chip4, "JA: 第4世代バッジ", chip4)
     # 兄弟姉妹メニューで追加
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "林花子")
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="第一世代").click()
+    page.fill("#__uipInput", "林花子")
+    page.click("#__uipOk")
     page.wait_for_timeout(250)
     check(page.evaluate('window.__ZP.data.children.length') == 2, "JA: メンバー追加が動く")
     check(not page.evaluate("window.__ZP.data.demo"), "JA: 選択後に demo フラグ解除")
@@ -114,9 +116,10 @@ def t_i18n_zh_hant_smoke(b):
     check(page.evaluate("window.__ZP.data.name") == "家族族譜", "繁：示例譜已轉繁體",
           page.evaluate("window.__ZP.data.name"))
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "趙傳心")
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="第一代").click()
+    page.fill("#__uipInput", "趙傳心")
+    page.click("#__uipOk")
     page.wait_for_timeout(250)
     check(page.evaluate("window.__ZP.data.children.length") == 2, "繁：可正常添加成員")
     check(page.evaluate("localStorage.getItem('zupu_data_v4') === null"), "繁：獨立儲存（不寫簡體鍵）")

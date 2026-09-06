@@ -41,9 +41,10 @@ def t_add_child_via_menu(b):
     ctx, page, errs, cons = fresh_page(b)
     goto(page)
     dlg = DialogRecorder(page)
-    dlg.queue("prompt", "测试子")
     page.locator('.node[data-id="b1a1"] .quick-add').click()
     page.locator('#__ctxMenu .mi', has_text="子女").click()
+    page.fill("#__uipInput", "测试子")
+    page.click("#__uipOk")
     page.wait_for_timeout(200)
     kids = page.evaluate('window.__ZP.findNode("b1a1").children.map(c=>c.name)')
     check("测试子" in kids, "菜单纯点击添加子女成功", str(kids))
@@ -53,7 +54,7 @@ def t_add_child_via_menu(b):
     check(ulen >= 1, "添加动作入撤销栈")
     rlen2 = page.evaluate("window.__ZP.historyLens()[1]")
     check(rlen2 == 0, "新操作清空重做栈")
-    check(dlg.count() == 1, "恰好一次 prompt", str(dlg.records))
+    check(dlg.count() == 0, "零原生弹窗（页内输入弹窗替代）", str(dlg.records))
     ctx.close()
 
 
@@ -108,32 +109,38 @@ def t_spouse_add_edit_remove(b):
     dlg = DialogRecorder(page)
     page.locator('.node[data-id="b1a1"] .node-label').click()
     # Ctrl+Shift+S 加配偶
-    dlg.queue("prompt", "王秀兰")
     page.keyboard.press("Control+Shift+s")
+    page.fill("#__uipInput", "王秀兰")
+    page.click("#__uipOk")
     page.wait_for_timeout(150)
     sps = page.evaluate('window.__ZP.findNode("b1a1").spouses')
     check(sps == ["王秀兰"], "快捷键添加配偶", str(sps))
     # 第二位
-    dlg.clear(); dlg.queue("prompt", "刘二妮")
-    dlg.queue("prompt", "王改嫁")     # 紧接的双击修改预填
     page.keyboard.press("Control+Shift+s")
+    page.fill("#__uipInput", "刘二妮")
+    page.click("#__uipOk")
     page.wait_for_timeout(120)
-    # 双击第二位配偶文字 → 预填 prompt 改名
+    # 双击第二位配偶文字 → 弹窗预填改名
     sp_el = page.locator('.node[data-id="b1a1"] .sp[data-sp="1"]')
     sp_el.dblclick()
+    page.fill("#__uipInput", "王改嫁")
+    page.click("#__uipOk")
     page.wait_for_timeout(120)
     sps2 = page.evaluate('window.__ZP.findNode("b1a1").spouses')
     check(sps2 == ["王秀兰", "王改嫁"], "双击配偶改名", str(sps2))
     # 双击清空 + confirm → 移除
-    dlg.clear(); dlg.queue("prompt", ""); dlg.queue("confirm", True)
+    dlg.queue("confirm", True)      # 清空提交后的确认框
     page.locator('.node[data-id="b1a1"] .sp[data-sp="1"]').dblclick()
+    page.fill("#__uipInput", "")
+    page.click("#__uipOk")
     page.wait_for_timeout(150)
     sps3 = page.evaluate('window.__ZP.findNode("b1a1").spouses')
     check(sps3 == ["王秀兰"], "清空确认后移除配偶", str(sps3))
     # 重复添加拒绝
     before = page.evaluate("window.__ZP.historyLens()")
-    dlg.clear(); dlg.queue("prompt", "王秀兰")
     page.keyboard.press("Control+Shift+s")
+    page.fill("#__uipInput", "王秀兰")
+    page.click("#__uipOk")
     page.wait_for_timeout(120)
     n = page.evaluate('window.__ZP.findNode("b1a1").spouses.length')
     check(n == 1, "重复配偶被拒", f"count={n}")
