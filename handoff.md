@@ -317,4 +317,8 @@ with sync_playwright() as p:
 | v15.34 | **小红书小工具适配（2026-09-07）**：①全局安装 skill ~/.agents/skills/minitool-zip-builder（官方 1.6.0，含 references+审计脚本）；②触摸：拖拽/平移改 pointer 事件（isPrimary 守卫+pointercancel 回弹）、长按480ms=菜单、双击=改名弹窗、双指捏合缩放、#viewport touch-action:none；③响应式 ≤860px：隐 tips/legend/stats、topbar 换行、弹窗 92vw、快捷钮放大、safe-area 顶栏；④Chrome61 兼容：:is()32处→显式（注意正确形态 #stage.v REST,.ps.v REST）、flex gap→兄弟 margin（grid 用 grid-gap）、inset→四边、backdrop-filter 前缀；⑤prompt()5处→uiPrompt 页内弹窗（容器禁 window.prompt），onclick8处→data-act 绑定；⑥XHS 门控 IS_XHS：导出图片→writeTempFile+saveImageToPhotosAlbum 相册、备份→复制文本弹窗、导入→粘贴弹窗、PDF/MD/世系录/打印隐藏；⑦seed 回退 window.__SEED_JSON（build 时 JSON 块转注入 app.js）；⑧tools/build_xhs.py：抽 app.js+合规扫描（fetch/prompt/onclick/外链等）+zip（index.html 根）→dist-xhs/zupu-minitool.zip 51KB，官方 audit PASS；⑨测试迁移 12 处 prompt 队列→弹窗 fill/OK，12/12 模块 53 用例绿（当前版本）。坑：heredoc/bash 转义丢写（脚本必须每步落盘+幂等）、:is 替换正则首版丢 .ps.v 后代尾部 |
 ---
 
+25. **GitHub Release 的标题与正文用英文（全球下载用户第一眼看到的页面）**：标题形如 `vX.Y.Z · 简短英文描述`；正文先英文（下载表 + What's new），中文说明放分隔线下方保留。2026-09-07 已把 v15.31–v15.35 五个 release 按此格式重写（旧正文备份在 tests/_out/releases_backup.json）。
+
+| v15.35 | **菜单信息架构整理（2026-09-07）**：①文件/视图/右键菜单去图标（删 IC 表/ic()/.mi-ic CSS），修掉 if/else 后残留旧 ic 菜单项导致的重复项；②msep 分组分隔线、快捷键右对齐、mi() 加第 5 参 title 悬停提示；谱书显示设置→显示设置、按生年重排→按出生年重排、导出项去括号后缀；③build_i18n EN/JA 菜单对子全量重写对齐新源码，补齐弹窗/手势提示/配偶与同辈 prompt/XHS 提示翻译，EN 非注释 CJK 残留 19→3（仅剩姓氏领域数据）；④t_bookfmt 定位子串更新；⑤封面事故与修复：build_covers.py 旧 v1 模板把 29df868 的 v4 封面顶掉（双管线漂移）——重写为只服务 _cover*-v4.html（VERSION 单点+内置渲染），v4 模板换用新 preview-tree*.png 截图，删 v1/v2/v3 死管线；⑥README 截图四语言重做（_shot_readme.py，演示数据/居中/无 toast）；README 对齐（徽章 51、向导新按钮名、EN 菜单新名、补触摸条）；⑦五个 Release 重写为英文优先；⑧12/12 模块 51 用例绿，移动端 22 面 0 溢出 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
