@@ -10,7 +10,7 @@ import os, re
 
 @testcase
 def t_zoom_anchor_and_controls(b):
-    ctx, page, errs, cons = fresh_page(b, width=760, height=540)
+    ctx, page, errs, cons = fresh_page(b, width=1100, height=700)   # >860px：桌面布局（缩放锚点数学按桌面几何校验）
     goto(page)
     page.locator('button[title="恢复 1:1"]').click()
     s0 = page.evaluate("window.__ZP.scale")
@@ -20,8 +20,10 @@ def t_zoom_anchor_and_controls(b):
       const vp = document.getElementById('viewport');
       const box = document.querySelector('.node[data-id=\\"b2a\\"] .node-label').getBoundingClientRect();
       const vr = vp.getBoundingClientRect();
+      const stEl = document.getElementById('stage');
+      const oxx = stEl.offsetLeft, oyy = stEl.offsetTop;
       return { sl: vp.scrollLeft, st: vp.scrollTop, s: __ZP.scale,
-               mx: box.x + box.width/2 - vr.left, my: box.y + box.height/2 - vr.top };
+               ox: oxx, oy: oyy, mx: box.x + box.width/2 - vr.left, my: box.y + box.height/2 - vr.top };
     }""")
     check(info["mx"] > 40 and info["my"] > 40, "光标点不在钳制边界", str(info))
 
@@ -39,6 +41,8 @@ def t_zoom_anchor_and_controls(b):
     res = page.evaluate("""(o) => {
       const vp = document.getElementById('viewport');
       const s2 = __ZP.scale;
+      const stEl = document.getElementById('stage');
+      const oxx = stEl.offsetLeft, oyy = stEl.offsetTop;
       return { sl: vp.scrollLeft, st: vp.scrollTop, s2 };
     }""", info)
     # v15.6 滚轮为倍速缩放：单次 deltaY=-240 → ×e^(240*0.0016)
@@ -47,13 +51,13 @@ def t_zoom_anchor_and_controls(b):
           f"s2={res['s2']} expect~{s0 * expected_mult}")
     check(abs(res["s2"] - s0) > 0.05, "确有放大")
     # 期望值按完整钳制公式：max(0, min(需求量, 最大可滚动量))
-    expL_raw = (info["sl"] + info["mx"]) / info["s"] * res["s2"] - info["mx"]
-    expT_raw = (info["st"] + info["my"]) / info["s"] * res["s2"] - info["my"]
+    expL_raw = info["ox"] + (info["sl"] + info["mx"] - info["ox"]) / info["s"] * res["s2"] - info["mx"]
+    expT_raw = info["oy"] + (info["st"] + info["my"] - info["oy"]) / info["s"] * res["s2"] - info["my"]
     lims = page.evaluate("""() => {
       const vp = document.getElementById('viewport');
       const st = document.getElementById('stage');
-      return { h: Math.max(0, st.offsetWidth*__ZP.scale - vp.clientWidth),
-               v: Math.max(0, st.offsetHeight*__ZP.scale - vp.clientHeight) };
+      return { h: Math.max(0, st.offsetLeft + st.offsetWidth*__ZP.scale - vp.clientWidth),
+               v: Math.max(0, st.offsetTop + st.offsetHeight*__ZP.scale - vp.clientHeight) };
     }""")
     expL = max(0.0, min(expL_raw, lims["h"]))
     expT = max(0.0, min(expT_raw, lims["v"]))
@@ -104,8 +108,8 @@ def t_native_wheel_and_blank_drag_pan(b):
     }""")
     lim0 = page.evaluate("""() => {
       const vp=document.getElementById('viewport'), st=document.getElementById('stage');
-      return { h: Math.max(0, st.offsetWidth*__ZP.scale - vp.clientWidth),
-               v: Math.max(0, st.offsetHeight*__ZP.scale - vp.clientHeight) };
+      return { h: Math.max(0, st.offsetLeft + st.offsetWidth*__ZP.scale - vp.clientWidth),
+               v: Math.max(0, st.offsetTop + st.offsetHeight*__ZP.scale - vp.clientHeight) };
     }""")
     # 确认该点确实是空白（elementFromPoint 不落在卡片/按钮上）
     tag = page.evaluate("""(pt) => {

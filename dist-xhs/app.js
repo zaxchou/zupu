@@ -1591,11 +1591,13 @@ function animateZoom(){
 }
 function zoomAtAnchor(){
   const vp = document.getElementById('viewport');
+  const stEl = document.getElementById('stage');
+  const ox = stEl.offsetLeft, oy = stEl.offsetTop;   // 移动端悬浮工具栏会让 stage 下移，锚点数学须含此偏移
   const rect = vp.getBoundingClientRect();
   const mx = zoomAnchor.cx - rect.left, my = zoomAnchor.cy - rect.top;
-  const wx = (zoomAnchor.sl + mx) / zoomAnchor.s, wy = (zoomAnchor.st + my) / zoomAnchor.s;
-  vp.scrollLeft = Math.max(0, wx * scale - mx);
-  vp.scrollTop  = Math.max(0, wy * scale - my);
+  const wx = (zoomAnchor.sl + mx - ox) / zoomAnchor.s, wy = (zoomAnchor.st + my - oy) / zoomAnchor.s;
+  vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
+  vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
 function zoomBy(d){
   scale = Math.min(2.5, Math.max(0.12, scale + d));
