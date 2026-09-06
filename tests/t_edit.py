@@ -22,7 +22,7 @@ def t_menu_open_items_and_bounds(b):
     vw = page.evaluate("window.innerWidth")
     check(m["x"] >= 0 and m["x"] + m["width"] <= vw, "菜单未横向越界", str(m))
     # 右键同样打开
-    page.mouse.click(60, 620)   # 关闭
+    page.keyboard.press("Escape")   # 关闭菜单（新布局下固定坐标会误触菜单项）
     lb = page.locator('.node[data-id="b2a"] .node-label')
     lb.click(button="right")
     check(page.locator("#__ctxMenu").is_visible(), "右键打开菜单")
