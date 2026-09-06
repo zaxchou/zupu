@@ -463,7 +463,20 @@ html{touch-action:manipulation}
 .topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
 @media (max-width: 860px){
   .tips,.legend{display:none}
-  .topbar{flex-wrap:wrap;height:auto;min-height:46px;row-gap:6px;padding:8px 10px;padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
+  /* 全屏画布 + 悬浮工具栏：画布铺满整屏，工具层浮在画布之上 */
+  .topbar{
+    position:fixed;top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));
+    left:8px;right:8px;z-index:70;
+    flex-wrap:wrap;height:auto;min-height:0;row-gap:6px;padding:8px 12px;
+    border-radius:14px;
+    background:rgba(14,22,38,.78);
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 10px 30px rgba(0,0,0,.38);
+  }
+  .canvas-wrap{height:100vh}
+  .viewport{border-radius:0;box-shadow:none;padding-top:120px;box-sizing:border-box}
+  #stage{top:120px}   /* 绝对定位不受容器 padding 影响：整棵树下移避开悬浮工具栏 */
   .topbar .btn{padding:8px 10px}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}

@@ -2599,7 +2599,7 @@ refreshUndoButtons();
 updateClanTags();
 if (treeData.demo) openWizard();   /* 首次使用：示例数据 + 三选一向导 */
 if (IS_TOUCH && !localStorage.getItem('zupu_gesture_hint')){
-  localStorage.setItem('zupu_gesture_hint', '1');
+  try { localStorage.setItem('zupu_gesture_hint', '1'); } catch(e){}   // 存储禁用时不该抛错
   var gh = document.getElementById('__gestureHint');
   gh.classList.add('show');
   setTimeout(function(){ gh.classList.remove('show'); }, 4500);
