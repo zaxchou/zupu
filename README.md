@@ -9,7 +9,7 @@
 **双击就能用的电子族谱：录入家人、自动算辈分、打印装订成册**
 
 [![Version](https://img.shields.io/badge/version-v15.35-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
+[![Tests](https://img.shields.io/badge/tests-51%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -27,6 +27,8 @@
 
 - **像填表格一样录家人** — 点「＋」加人、双击改名字、拖动卡片调长幼次序，
   拖到别人名下就是过继；做错了 Ctrl+Z 随时撤销
+- **手机 / iPad 也顺手** — 触摸拖动调长幼、长按卡片呼出菜单、双击改名、
+  双指捏合缩放；屏幕变窄自动精简界面
 - **名字写上，辈分自动算** — 把你家的字辈贴进去（如“德承传世泽”），每个人是第几代自动标出来；
   还能对齐老谱：老谱记“廿三世”，这里也显示“廿三世”
 - **打印出来是一本老谱的样子** — 竖排文字、世代成行、五代一张表，导出 PDF 直接送打印店装订成册；
@@ -54,7 +56,7 @@
 
 - **先看看示例** — 用内置的赵钱孙李演示谱熟悉操作
 - **从空白开始** — 填上你的谱名（如「李氏族谱」）和堂号，从第一代建起
-- **导入备份** — 已有本工具导出的 json，直接恢复
+- **导入之前的备份** — 已有本工具导出的 json，直接恢复
 
 **方式二**：`git clone` 本仓库后双击 `index.html`。
 

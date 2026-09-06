@@ -9,7 +9,7 @@
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
 [![Version](https://img.shields.io/badge/version-v15.35-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
+[![Tests](https://img.shields.io/badge/tests-51%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![線上試用](https://img.shields.io/badge/線上試用-點擊演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -35,6 +35,8 @@
 
 - **像填表格一樣錄家人** — 點「＋」加人、雙擊改名、拖動卡片調長幼次序，
   拖到別人名下就是過繼；做錯了 Ctrl+Z 隨時復原
+- **手機 / iPad 也順手** — 觸控拖動調長幼、長按卡片呼出選單、雙擊改名、
+  雙指捏合縮放；螢幕變窄自動精簡介面
 - **名字寫上，輩分自動算** — 把你家的字輩貼進去（如「德承傳世澤」），每個人是第幾代自動標出來；
   還能對齊老譜：老譜記「廿三世」，這裡也顯示「廿三世」
 - **列印出來是一本老譜的樣子** — 豎排文字、世代成行、五代一張表，匯出 PDF 直接送印刷廠裝訂成冊；
@@ -56,7 +58,7 @@
 
 - **先看看示例** — 用內建的演示譜熟悉操作
 - **從空白開始** — 填上你的譜名（如「陳氏族譜」）和堂號，從第一代建起
-- **匯入備份** — 已有本工具匯出的 json，直接還原
+- **匯入之前的備份** — 已有本工具匯出的 json，直接還原
 
 **方式二**：`git clone` 本倉庫後雙擊 `index-zh-Hant.html`。
 
