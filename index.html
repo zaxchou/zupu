@@ -289,9 +289,10 @@ body{
 #__ctxMenu .mi.danger{color:var(--danger)}
 #__ctxMenu .mi.danger:hover{background:#fdeeee}
 #__ctxMenu .mi .k{font-size:10px;color:#9aa4b2;margin-left:auto;padding-left:14px}
-#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;}
+#__ctxMenu .mi{display:flex;align-items:center}
+#__ctxMenu .mi .k{margin-left:auto}
+#__ctxMenu .msep{height:1px;background:rgba(127,147,170,.28);margin:5px 10px}
 #__ctxMenu .mi .lbl>*+*{margin-left:7px}
-#__ctxMenu .mi .mi-ic{flex:none;opacity:.7;display:block}
 /* 拖拽中（被拖子树不拦截悬停命中） */
 .node.dragging{z-index:6;pointer-events:none}
 .node.dragging .node-label{opacity:.72;border-color:var(--rank-bg);box-shadow:0 4px 16px rgba(239,143,63,.4)}
@@ -733,7 +734,7 @@ html{touch-action:manipulation}
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>
       <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
       <tr><td>视图 ▾ 谱书竖排（古法）</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
-      <tr><td>视图 ▾ 谱书显示设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td>视图 ▾ 显示设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
     </tbody></table>
     <h4 id="__zbTitle">字辈表（蓝框 = 族谱中已出现）</h4>
@@ -744,7 +745,7 @@ html{touch-action:manipulation}
 
 <div class="modal-mask" id="__setModal">
   <div class="modal">
-    <h3>谱书显示设置</h3>
+    <h3>显示设置</h3>
     <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
@@ -1009,7 +1010,7 @@ function sortSiblings(p){
 /* ---------- ② 数据层：唯一真源 = 本文件内嵌 JSON ----------
  * JS 里不再复制一份初始数据（v12 的双份手工同步必然漂移）。
  * 「初始模板」即本文件内嵌内容的克隆；若内嵌缺失/损坏则退化为空白根，
- * 可通过「恢复备份（json / 旧版 html）」救回数据。 */
+ * 可通过「恢复备份」救回数据（json / 旧版 HTML 均支持）。 */
 function migrate(d){
   if (!d || typeof d !== 'object') return d;
   Object.keys(d).forEach(k => { if (k[0] === '_') delete d[k]; });
@@ -1805,11 +1806,17 @@ document.getElementById('__detailModal').addEventListener('keydown', e => {
 
 /* ---------- ⑦ 气泡菜单（点击式，不随鼠标消失；右键同样打开） ---------- */
 const ctxMenu = document.getElementById('__ctxMenu');
-function mi(label, cls, hint, fn){
+function mi(label, cls, hint, fn, title){
   const d = document.createElement('div');
   d.className = 'mi' + (cls ? ' ' + cls : '');
   d.innerHTML = '<span class="lbl">' + label + '</span>' + (hint ? '<span class="k">' + hint + '</span>' : '');
+  if (title) d.title = title;
   d.onclick = e => { e.stopPropagation(); closeMenu(); fn(); };
+  return d;
+}
+function msep(){
+  const d = document.createElement('div');
+  d.className = 'msep';
   return d;
 }
 function buildMenuItems(n){
@@ -1820,12 +1827,18 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi('＋ 配偶', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子女', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 同辈', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('改名', '', 'F2', () => editName(n)));
+    ctxMenu.appendChild(mi('档案', '', 'Ctrl+I', () => editDetails(n)));
   }
-  ctxMenu.appendChild(mi(ic('pencil') + '改名', '', 'F2', () => editName(n)));
-  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('card') + '档案', '', 'Ctrl+I', () => editDetails(n)));
-  if (n.children && n.children.length)
-    ctxMenu.appendChild(mi(n.expanded ? ic('fold') + '折叠此支' : ic('unfold') + '展开此支', '', '', () => toggleExpand(n)));
-  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('trash') + '删除', 'danger', '', () => deleteNode(n)));
+  if (n.children && n.children.length){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi(n.expanded ? '折叠此支' : '展开此支', '', '', () => toggleExpand(n)));
+  }
+  if (n.id !== 'root'){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('删除', 'danger', '', () => deleteNode(n)));
+  }
 }
 function openMenu(wrap, n){
   document.querySelectorAll('.node').forEach(w => w.classList.remove('menu-open'));
@@ -1850,27 +1863,6 @@ function closeMenu(){
 /* 点击任何空白区域关闭菜单（菜单项与「＋」都 stopPropagation，不会误关） */
 document.addEventListener('click', () => closeMenu());
 
-/* 菜单图标（SVG 线性，替代 emoji） */
-const IC = {
-  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
-  folder:   '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-  filetext: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>',
-  print:    '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
-  sort:     '<path d="M4 6h9"/><path d="M4 12h7"/><path d="M4 18h5"/><path d="m17 8 3-3 3 3"/><path d="M20 5v13"/>',
-  reset:    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
-  unfold:   '<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
-  fold:     '<path d="m7 9 5-5 5 5"/><path d="m7 15 5 5 5-5"/>',
-  pencil:   '<path d="M17 3l4 4L7 21H3v-4z"/>',
-  card:     '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M14 9h4"/><path d="M14 13h4"/><path d="M6 16c1-1.5 3-1.5 4 0"/>',
-  trash:    '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
-  image:    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
-  pdf:      '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><text x="12" y="16.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">PDF</text>',
-  gear:     '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"'
-};
-function ic(n){
-  return '<svg class="mi-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + IC[n] + '</svg>';
-}
-
 /* ---------- 顶栏下拉菜单：复用同一气泡面板（视图 / 文件） ---------- */
 function openDropdown(btn, build){
   const wasOpen = btn.classList.contains('menu-open') && ctxMenu.style.display === 'block';
@@ -1892,34 +1884,39 @@ document.getElementById('btnView').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnView');
   openDropdown(btn, m => {
-    m.appendChild(mi(ic('unfold') + '全展开', '', '', () => expandAll(true)));
-    m.appendChild(mi(ic('fold') + '全折叠', '', '', () => expandAll(false)));
-    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + ic('filetext') + '谱书竖排（古法）', '', '', toggleVertical));
-    m.appendChild(mi(ic('card') + '谱序（堂号·源流）…', '', '', openClan));
-    m.appendChild(mi(ic('gear') + '谱书显示设置…', '', '', openSettings));
-  if (IS_TOUCH || window.innerWidth <= 860) m.appendChild(mi('❓ 帮助 / 快捷键', '', '', openHelp));
+    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + '谱书竖排（古法）', '', '', toggleVertical));
+    m.appendChild(msep());
+    m.appendChild(mi('全展开', '', '', () => expandAll(true)));
+    m.appendChild(mi('全折叠', '', '', () => expandAll(false)));
+    m.appendChild(msep());
+    m.appendChild(mi('谱序…', '', '', openClan, '谱名 / 堂号 / 源流 / 字辈表 / 始祖记'));
+    m.appendChild(mi('显示设置…', '', '', openSettings, '字辈基准 / 配偶谱式 / 姓氏显示'));
+    if (IS_TOUCH || window.innerWidth <= 860) m.appendChild(mi('帮助 / 快捷键', '', '', openHelp));
   });
 });
 document.getElementById('btnFile').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnFile');
   openDropdown(btn, m => {
-    m.appendChild(mi(ic('image') + (IS_XHS ? '保存图片到相册' : '导出图片（png）'), '', '', exportPNG));
+  m.appendChild(mi(IS_XHS ? '保存图片到相册' : '导出图片', '', 'png', exportPNG));
   if (IS_XHS){
-      m.appendChild(mi(ic('download') + '复制备份文本', '', '', function(){
+      m.appendChild(mi('复制备份', '', '', function(){
       showTextModal('备份文本：点击「全选」后手动复制', JSON.stringify(sanitize(treeData), null, 2));
     }));
-      m.appendChild(mi(ic('folder') + '粘贴导入 json', '', '', pasteImport));
+      m.appendChild(mi('粘贴导入备份', '', '', pasteImport));
   } else {
-      m.appendChild(mi(ic('download') + '备份到文件（json）', '', '', backupToFile));
-      m.appendChild(mi(ic('folder') + '恢复备份（json / 旧版 html）', '', '', () => document.getElementById('__importFile').click()));
-      m.appendChild(mi(ic('pdf') + '导出 PDF（图谱）', '', '', exportPDF));
-      m.appendChild(mi(ic('filetext') + '世系录（五世一表）', '', '', exportShixilu));
-      m.appendChild(mi(ic('filetext') + '导出 MD', '', '', exportMarkdown));
-      m.appendChild(mi(ic('print') + '打印（纸质）', '', '', () => window.print()));
+      m.appendChild(mi('备份到文件', '', 'json', backupToFile, '导出 json 备份：换电脑 / 防清缓存'));
+      m.appendChild(mi('恢复备份', '', 'json', () => document.getElementById('__importFile').click(), '导入 json 备份（也支持旧版 HTML）'));
+      m.appendChild(msep());
+      m.appendChild(mi('导出 PDF', '', '', exportPDF, '图谱排版，单页'));
+      m.appendChild(mi('导出世系录', '', '五世一表', exportShixilu, '欧式表格：浏览器打开即可打印'));
+      m.appendChild(mi('导出 Markdown', '', 'md', exportMarkdown));
+      m.appendChild(msep());
+      m.appendChild(mi('打印', '', '', () => window.print(), '跟随当前视图排版'));
+      m.appendChild(mi('按出生年重排', '', '', actSortByBirth));
+      m.appendChild(msep());
+      m.appendChild(mi('重置数据', 'danger', '', resetData, '清空并恢复为示例谱'));
   }
-    m.appendChild(mi(ic('sort') + '按生年重排', '', '', actSortByBirth));
-    m.appendChild(mi(ic('reset') + '重置数据', 'danger', '', resetData));
   });
 });
 
@@ -1955,7 +1952,7 @@ document.getElementById('__helpModal').addEventListener('mousedown', e => {
   if (e.target.id === '__helpModal') closeHelp();
 });
 
-/* ---------- 谱书显示设置弹窗（世代基准 / 配偶谱式） ---------- */
+/* ---------- 显示设置弹窗（世代基准 / 配偶谱式） ---------- */
 function smIsOpen(){ return document.getElementById('__setModal').classList.contains('open'); }
 function openSettings(){
   document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自动识别）';

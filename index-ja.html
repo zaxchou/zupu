@@ -31,14 +31,18 @@
 html,body{margin:0;padding:0;height:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
-  padding:14px 18px 10px;
+  padding:0;
   background:linear-gradient(160deg,#10192b 0%,#1a2942 60%,#182338 100%);
   color:#e2e8f0;
   min-height:100vh;
   overflow:hidden;
 }
 /* ---------- 顶栏：品牌 + 高频图标 + 下拉菜单，单行不放平铺按钮堆 ---------- */
-.topbar{display:flex;align-items:center;height:46px;padding:0 10px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:11px;margin-bottom:10px;}
+.topbar{position:fixed;top:calc(12px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));left:14px;right:14px;z-index:70;
+  display:flex;align-items:center;min-height:52px;padding:6px 14px;row-gap:6px;flex-wrap:wrap;
+  background:rgba(14,22,38,.72);border:1px solid rgba(255,255,255,.16);border-radius:14px;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);}
 /* ---------- 顶栏：品牌 + 高频图标 + 下拉菜单，单行不放平铺按钮堆 ---------- */
 .topbar>*+*{margin-left:6px}
 .brand{display:flex;align-items:center;margin-right:8px;user-select:none;cursor:pointer;}
@@ -78,7 +82,7 @@ body{
 /* 下拉菜单与节点气泡菜单共用面板样式（#__ctxMenu） */
 .tb-trigger.menu-open{background:rgba(158,210,238,.14);color:#dceefb}
 /* ---------- 画布视口：overflow:auto 让滚轮可平移，滚动条隐藏 ---------- */
-.canvas-wrap{position:relative;height:calc(100vh - 130px)}
+.canvas-wrap{position:relative;height:100vh}
 .viewport{
   position:relative;
   width:100%;height:100%;
@@ -93,7 +97,8 @@ body{
 }
 .viewport::-webkit-scrollbar{display:none}
 .viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+#stage{position:absolute;top:76px;left:0}
+#scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
 #stage.v #lines path,.ps #lines path{stroke:#d5dde6}
@@ -284,9 +289,10 @@ body{
 #__ctxMenu .mi.danger{color:var(--danger)}
 #__ctxMenu .mi.danger:hover{background:#fdeeee}
 #__ctxMenu .mi .k{font-size:10px;color:#9aa4b2;margin-left:auto;padding-left:14px}
-#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;}
+#__ctxMenu .mi{display:flex;align-items:center}
+#__ctxMenu .mi .k{margin-left:auto}
+#__ctxMenu .msep{height:1px;background:rgba(127,147,170,.28);margin:5px 10px}
 #__ctxMenu .mi .lbl>*+*{margin-left:7px}
-#__ctxMenu .mi .mi-ic{flex:none;opacity:.7;display:block}
 /* 拖拽中（被拖子树不拦截悬停命中） */
 .node.dragging{z-index:6;pointer-events:none}
 .node.dragging .node-label{opacity:.72;border-color:var(--rank-bg);box-shadow:0 4px 16px rgba(239,143,63,.4)}
@@ -334,15 +340,23 @@ body{
 }
 #searchBox button:hover{background:#e0e8f0;color:var(--text)}
 /* 图例 / 提示条 */
-.legend{display:flex;flex-wrap:wrap;align-items:center;font-size:10.5px;color:#7f93aa;margin-top:7px;min-height:20px;}
+.legend{position:fixed;bottom:calc(12px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));left:14px;z-index:40;
+  display:flex;flex-wrap:wrap;align-items:center;font-size:10.5px;color:#c9d4e4;margin-top:0;min-height:0;row-gap:4px;
+  max-width:44vw;background:rgba(14,22,38,.72);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:8px 12px;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 8px 24px rgba(0,0,0,.3);}
 /* 图例 / 提示条 */
 .legend>*+*{margin-left:12px}
 .legend span{display:inline-flex;align-items:center;}
 .legend span>*+*{margin-left:5px}
 .legend i{width:13px;height:8px;border-radius:2px;display:inline-block}
 .tips{
-  font-size:10.5px;color:#8fa0b5;margin-top:6px;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  position:fixed;bottom:calc(12px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));right:14px;z-index:40;
+  font-size:11.5px;color:#c9d4e4;margin-top:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(720px,48vw);
+  background:rgba(14,22,38,.72);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:7px 16px;
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
 }
 .tips b{color:#5cc3f2;font-weight:600}
 /* 档案弹窗（class 控制显隐；hidden 属性会被自定义 display 覆盖——历史教训） */
@@ -406,7 +420,7 @@ body{
 .zb.on small{color:#5a8ab5}
 /* toast 常驻静态元素（运行期动态 append 会污染保存的文件快照） */
 #__toast{
-  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  position:fixed;top:76px;left:50%;transform:translateX(-50%);
   background:rgba(12,20,34,.92);color:#fff;
   padding:10px 18px;border-radius:8px;font-size:13px;
   z-index:9999;opacity:0;transition:opacity .25s;pointer-events:none;
@@ -451,21 +465,47 @@ body{
 #__textModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
 #__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
 #__textModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
+#__pasteModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__pasteModal.open{display:flex}
+#__pasteModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__pasteModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
+#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
 #viewport{touch-action:none}
-#topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
+.topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
 @media (max-width: 860px){
   .tips,.legend{display:none}
-  #topbar{flex-wrap:wrap;row-gap:6px;padding-left:10px;padding-right:10px}
-  #topbar .btn{padding:8px 10px}
+  /* 全屏画布 + 悬浮工具栏：画布铺满整屏，工具层浮在画布之上 */
+  .topbar{top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));left:8px;right:8px;min-height:0;padding:6px 10px}
+  #stage{top:120px}   /* 移动端工具栏三行更高：整棵树再下移 */
+  .topbar .btn{padding:8px 10px}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
   .modal{width:92vw;max-height:80vh;overflow:auto}
+  .topbar [data-act="help"]{display:none}
+  .topbar [data-act="reset"]{display:none}
+  #saveState{margin-left:auto}
   #__ctxMenu{max-height:68vh;overflow:auto}
   .quick-add{width:26px;height:26px;font-size:15px}
   .fold{width:24px;height:20px;font-size:12px}
+  #searchBox{left:8px;right:8px;width:auto}
+  #searchBox input{width:auto;flex:1;min-width:0}
+  #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
+  #__uipModal{align-items:flex-start;padding-top:9vh}
+  #__pasteModal{align-items:flex-start;padding-top:5vh}
+  .wiz-actions{flex-direction:column}
+  .wiz-actions [data-wiz]{width:100%}
+  .modal .row{display:block}
+  .modal .row>*+*{margin-left:0}
+  .modal .row label{margin-bottom:10px}
 }
+#__gestureHint{position:fixed;left:50%;bottom:calc(64px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));
+  transform:translateX(-50%);background:rgba(12,20,34,.92);color:#fff;font-size:13px;letter-spacing:1px;
+  padding:10px 18px;border-radius:20px;z-index:95;opacity:0;transition:opacity .5s;pointer-events:none;
+  max-width:92vw;text-align:center}
+#__gestureHint.show{opacity:1}
 </style>
 </head>
 <body>
@@ -631,23 +671,24 @@ html{touch-action:manipulation}
 </div>
 
 <div id="__ctxMenu" style="display: none;"></div>
+<div id="__gestureHint">1 本指でドラッグ移動 · ピンチで拡大縮小 · カード長押しでメニュー</div>
 <div id="__uipModal">
   <div class="uip-box">
-    <h3 id="__uipTitle">输入</h3>
+    <h3 id="__uipTitle">入力</h3>
     <input id="__uipInput" autocomplete="off">
     <div class="modal-btns"><button id="__uipCancel">キャンセル</button><button class="primary" id="__uipOk">确定</button></div>
   </div>
 </div>
 <div id="__textModal">
   <div class="uip-box">
-    <h3 id="__textTitle">文本</h3>
+    <h3 id="__textTitle">テキスト</h3>
     <textarea id="__textArea" readonly></textarea>
-    <div class="modal-btns"><button id="__textSel">全选</button><button class="primary" id="__textOk">关闭</button></div>
+    <div class="modal-btns"><button id="__textSel">すべて選択</button><button class="primary" id="__textOk">閉じる</button></div>
   </div>
 </div>
 <div id="__pasteModal">
   <div class="uip-box">
-    <h3>粘贴备份 json 导入</h3>
+    <h3>バックアップ json を貼り付けて復元</h3>
     <textarea id="__pasteArea" style="-webkit-user-select:text;user-select:text"></textarea>
     <div class="modal-btns"><button id="__pasteCancel">キャンセル</button><button class="primary" id="__pasteOk">导入</button></div>
   </div>
@@ -686,7 +727,7 @@ html{touch-action:manipulation}
       <tr><td><kbd>Ctrl+S</kbd></td><td>自動保存済み（ブラウザの保存ダイアログは出ません）</td></tr>
       <tr><td>青色バッジ / オレンジ色バッジ</td><td>生年（自動並び）/ 誕生順（手動並び）</td></tr>
       <tr><td>表示 ▾ 譜書縦書き（古法）</td><td>世代を行でまとめ、名を縦書き（右→左）、行左に世代を表示。出力も同じ体裁</td></tr>
-      <tr><td>表示 ▾ 譜書表示設定</td><td>世代基準（譜書の世代数に合わせる）/ 配偶者の譜式 / 姓氏の表示 / 世代数の漢数字</td></tr>
+      <tr><td>表示 ▾ 表示設定</td><td>世代基準（譜書の世代数に合わせる）/ 配偶者の譜式 / 姓氏の表示 / 世代数の漢数字</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>この支は N 人の子孫ごと折りたたまれています。クリックで展開</td></tr>
     </tbody></table>
     <h4 id="__zbTitle">字輩表（青枠 = 譜に現れる字）</h4>
@@ -697,7 +738,7 @@ html{touch-action:manipulation}
 
 <div class="modal-mask" id="__setModal">
   <div class="modal">
-    <h3>譜書表示設定</h3>
+    <h3>表示設定</h3>
     <label>世代基準 —— 字輩の 1 字目が譜書で何世に当たるか<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       伝統的な譜書の「世」は<b>始祖を一世</b>として数えますが、字輩は後世に定められることも少なくありません。例：譜書で「勤」の字輩が<b>廿三世</b>、「勤」は字輩の 11 字目なら、字輩 1 字目「多」は第 <b>13</b> 世。ここに <b>13</b> と入れるとカードは「23世・勤」と表示され、1 と入れるとアプリ計算の「11代」になります。表示のみの変更で、データには影響しません。
@@ -741,7 +782,7 @@ html{touch-action:manipulation}
     </p>
     <div class="wiz-actions">
       <button type="button" data-wiz="demo"><b>まずデモを見る</b>サンプル家系図。自由にいじってOK</button>
-      <button type="button" data-wiz="import"><b>バックアップから復元</b>自分の json データを読み込む</button>
+      <button type="button" data-wiz="import"><b>以前のバックアップから復元</b>以前書き出した json ファイルを読み込む</button>
     </div>
     <div class="row">
       <label>譜名（白紙から始めるときに使用）<input id="__wizMing" placeholder="例：○○家系図"></label>
@@ -755,9 +796,11 @@ html{touch-action:manipulation}
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
-    <div id="stage" style="width: 234px; height: 540px; transform: scale(0.9);">
-      <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
-      <div id="nodes"><div id="__dropMarker"></div></div>
+    <div id="stage" style="width: 234px; height: 540px;">
+      <div id="scaler">
+        <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
+        <div id="nodes"><div id="__dropMarker"></div></div>
+      </div>
     </div>
   </div>
   <div id="searchBox">
@@ -960,7 +1003,7 @@ function sortSiblings(p){
 /* ---------- ② 数据层：唯一真源 = 本文件内嵌 JSON ----------
  * JS 里不再复制一份初始数据（v12 的双份手工同步必然漂移）。
  * 「初始模板」即本文件内嵌内容的克隆；若内嵌缺失/损坏则退化为空白根，
- * 可通过「恢复备份（json / 旧版 html）」救回数据。 */
+ * 可通过「恢复备份」救回数据（json / 旧版 HTML 均支持）。 */
 function migrate(d){
   if (!d || typeof d !== 'object') return d;
   Object.keys(d).forEach(k => { if (k[0] === '_') delete d[k]; });
@@ -1089,6 +1132,7 @@ function deepEq(a, b){
 }
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小红书容器环境
+var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const STORAGE_KEY = 'zupu_data_v4_ja';   // 数据真源：本浏览器（自动保存，无感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
@@ -1386,6 +1430,7 @@ function render(){
 
   stage.style.width  = treeW + 'px';
   stage.style.height = treeH + 'px';
+  stage._baseW = treeW; stage._baseH = treeH;   // 未缩放基准：缩放时按此扩大滚动范围
   svg.setAttribute('width', treeW);
   svg.setAttribute('height', treeH);
   svg.setAttribute('viewBox', '0 0 ' + treeW + ' ' + treeH);
@@ -1641,14 +1686,14 @@ function pasteImport(){
       selectedId = null;
       m.classList.remove('open');
       render(); fitToScreen();
-      toast('已导入粘贴的备份数据，已自动保存');
+      toast('貼り付けたバックアップを読み込み、自動保存しました');
     } catch(e){ alert('読み込み失敗：有効な家系図 JSON ファイルではありません\n' + e.message); }
   };
   document.getElementById('__pasteCancel').onclick = function(){ m.classList.remove('open'); };
 }
 
 function editName(n){
-  uiPrompt('修改姓名：', n.name).then(function(t){
+  uiPrompt('名前を変更：', n.name).then(function(t){
     if (t !== null && t.trim()){ pushHistory('rename:' + n.id); n.name = t.trim(); render(); }
   });
 }
@@ -1754,11 +1799,17 @@ document.getElementById('__detailModal').addEventListener('keydown', e => {
 
 /* ---------- ⑦ 气泡菜单（点击式，不随鼠标消失；右键同样打开） ---------- */
 const ctxMenu = document.getElementById('__ctxMenu');
-function mi(label, cls, hint, fn){
+function mi(label, cls, hint, fn, title){
   const d = document.createElement('div');
   d.className = 'mi' + (cls ? ' ' + cls : '');
   d.innerHTML = '<span class="lbl">' + label + '</span>' + (hint ? '<span class="k">' + hint + '</span>' : '');
+  if (title) d.title = title;
   d.onclick = e => { e.stopPropagation(); closeMenu(); fn(); };
+  return d;
+}
+function msep(){
+  const d = document.createElement('div');
+  d.className = 'msep';
   return d;
 }
 function buildMenuItems(n){
@@ -1769,12 +1820,18 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi('＋ 配偶者', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 兄弟姉妹', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('名前変更', '', 'F2', () => editName(n)));
+    ctxMenu.appendChild(mi('人物情報', '', 'Ctrl+I', () => editDetails(n)));
   }
-  ctxMenu.appendChild(mi(ic('pencil') + '名前変更', '', 'F2', () => editName(n)));
-  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('card') + '人物情報', '', 'Ctrl+I', () => editDetails(n)));
-  if (n.children && n.children.length)
-    ctxMenu.appendChild(mi(n.expanded ? ic('fold') + 'この支を折りたたむ' : ic('unfold') + 'この支を展開', '', '', () => toggleExpand(n)));
-  if (n.id !== 'root') ctxMenu.appendChild(mi(ic('trash') + '削除', 'danger', '', () => deleteNode(n)));
+  if (n.children && n.children.length){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi(n.expanded ? 'この支を折りたたむ' : 'この支を展開', '', '', () => toggleExpand(n)));
+  }
+  if (n.id !== 'root'){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('削除', 'danger', '', () => deleteNode(n)));
+  }
 }
 function openMenu(wrap, n){
   document.querySelectorAll('.node').forEach(w => w.classList.remove('menu-open'));
@@ -1799,27 +1856,6 @@ function closeMenu(){
 /* 点击任何空白区域关闭菜单（菜单项与「＋」都 stopPropagation，不会误关） */
 document.addEventListener('click', () => closeMenu());
 
-/* 菜单图标（SVG 线性，替代 emoji） */
-const IC = {
-  download: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>',
-  folder:   '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-  filetext: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/>',
-  print:    '<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
-  sort:     '<path d="M4 6h9"/><path d="M4 12h7"/><path d="M4 18h5"/><path d="m17 8 3-3 3 3"/><path d="M20 5v13"/>',
-  reset:    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
-  unfold:   '<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
-  fold:     '<path d="m7 9 5-5 5 5"/><path d="m7 15 5 5 5-5"/>',
-  pencil:   '<path d="M17 3l4 4L7 21H3v-4z"/>',
-  card:     '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M14 9h4"/><path d="M14 13h4"/><path d="M6 16c1-1.5 3-1.5 4 0"/>',
-  trash:    '<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
-  image:    '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>',
-  pdf:      '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><text x="12" y="16.5" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none" font-family="sans-serif">PDF</text>',
-  gear:     '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.09a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.09a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"'
-};
-function ic(n){
-  return '<svg class="mi-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + IC[n] + '</svg>';
-}
-
 /* ---------- 顶栏下拉菜单：复用同一气泡面板（视图 / 文件） ---------- */
 function openDropdown(btn, build){
   const wasOpen = btn.classList.contains('menu-open') && ctxMenu.style.display === 'block';
@@ -1841,33 +1877,39 @@ document.getElementById('btnView').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnView');
   openDropdown(btn, m => {
-    m.appendChild(mi(ic('unfold') + 'すべて展開', '', '', () => expandAll(true)));
-    m.appendChild(mi(ic('fold') + 'すべて折りたたむ', '', '', () => expandAll(false)));
-    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + ic('filetext') + '譜書縦書き（古法）', '', '', toggleVertical));
-    m.appendChild(mi(ic('card') + '譜序（堂号・源流）…', '', '', openClan));
-    m.appendChild(mi(ic('gear') + '譜書表示設定…', '', '', openSettings));
+    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + '譜書縦書き（古法）', '', '', toggleVertical));
+    m.appendChild(msep());
+    m.appendChild(mi('すべて展開', '', '', () => expandAll(true)));
+    m.appendChild(mi('すべて折りたたむ', '', '', () => expandAll(false)));
+    m.appendChild(msep());
+    m.appendChild(mi('譜序…', '', '', openClan, '譜名 / 堂号 / 由来 / 字輩表 / 始祖記'));
+    m.appendChild(mi('表示設定…', '', '', openSettings, '字輩基準 / 配偶者表記 / 姓氏表示'));
+    if (IS_TOUCH || window.innerWidth <= 860) m.appendChild(mi('ヘルプ / ショートカット', '', '', openHelp));
   });
 });
 document.getElementById('btnFile').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnFile');
   openDropdown(btn, m => {
-    m.appendChild(mi(ic('image') + (IS_XHS ? '保存图片到相册' : '画像を出力（png）'), '', '', exportPNG));
+  m.appendChild(mi(IS_XHS ? 'アルバムに保存' : '画像を出力', '', 'png', exportPNG));
   if (IS_XHS){
-      m.appendChild(mi(ic('download') + '复制备份文本', '', '', function(){
-      showTextModal('备份文本：点击「全选」后手动复制', JSON.stringify(sanitize(treeData), null, 2));
+      m.appendChild(mi('バックアップをコピー', '', '', function(){
+      showTextModal('バックアップテキスト：「すべて選択」から手動コピー', JSON.stringify(sanitize(treeData), null, 2));
     }));
-      m.appendChild(mi(ic('folder') + '粘贴导入 json', '', '', pasteImport));
+      m.appendChild(mi('貼り付けで復元', '', '', pasteImport));
   } else {
-      m.appendChild(mi(ic('download') + 'バックアップ保存（json）', '', '', backupToFile));
-      m.appendChild(mi(ic('folder') + 'バックアップ復元（json / 旧 html）', '', '', () => document.getElementById('__importFile').click()));
-      m.appendChild(mi(ic('pdf') + 'PDF を出力（図）', '', '', exportPDF));
-      m.appendChild(mi(ic('filetext') + '世系録（五世一表）', '', '', exportShixilu));
-      m.appendChild(mi(ic('filetext') + 'MD を出力', '', '', exportMarkdown));
-      m.appendChild(mi(ic('print') + '印刷（紙）', '', '', () => window.print()));
+      m.appendChild(mi('バックアップ保存', '', 'json', backupToFile, 'json バックアップを書き出す（機種変更 / キャッシュ消去対策）'));
+      m.appendChild(mi('バックアップ復元', '', 'json', () => document.getElementById('__importFile').click(), 'json バックアップを読み込む（旧 HTML も対応）'));
+      m.appendChild(msep());
+      m.appendChild(mi('PDF を出力', '', '', exportPDF, '図表レイアウト、1 ページ'));
+      m.appendChild(mi('世系録を出力', '', '五世一表', exportShixilu, '欧式表：ブラウザで開いてそのまま印刷'));
+      m.appendChild(mi('Markdown を出力', '', 'md', exportMarkdown));
+      m.appendChild(msep());
+      m.appendChild(mi('印刷', '', '', () => window.print(), '現在のビューのレイアウトで印刷'));
+      m.appendChild(mi('生年で並べ替え', '', '', actSortByBirth));
+      m.appendChild(msep());
+      m.appendChild(mi('データをリセット', 'danger', '', resetData, '消去してサンプル譜に戻す'));
   }
-    m.appendChild(mi(ic('sort') + '生年で並べ替え', '', '', actSortByBirth));
-    m.appendChild(mi(ic('reset') + 'データをリセット', 'danger', '', resetData));
   });
 });
 
@@ -1903,7 +1945,7 @@ document.getElementById('__helpModal').addEventListener('mousedown', e => {
   if (e.target.id === '__helpModal') closeHelp();
 });
 
-/* ---------- 谱书显示设置弹窗（世代基准 / 配偶谱式） ---------- */
+/* ---------- 显示设置弹窗（世代基准 / 配偶谱式） ---------- */
 function smIsOpen(){ return document.getElementById('__setModal').classList.contains('open'); }
 function openSettings(){
   document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自動判定）';
@@ -2029,7 +2071,11 @@ function wizardBlank(){
   closeWizard(); render(); fitToScreen();
   toast('白紙の家系図「' + ming + '」を作成しました：最初の「＋」で第一世代を追加');
 }
-function wizardImport(){ closeWizard(); document.getElementById('__importFile').click(); }
+function wizardImport(){
+  closeWizard();
+  if (IS_XHS){ pasteImport(); }   // 容器的文件选择器只能选图片，走粘贴导入
+  else { document.getElementById('__importFile').click(); }
+}
 document.querySelectorAll('#__wizModal [data-wiz]').forEach(b => {
   b.addEventListener('click', () => { b.dataset.wiz === 'demo' ? wizardDemo() : wizardImport(); });
 });
@@ -2057,7 +2103,7 @@ document.getElementById('__setModal').addEventListener('keydown', e => {
 function addSpouse(n){
   if (!n.spouses) n.spouses = [];
   const nth = n.spouses.length + 1;
-  uiPrompt('为「' + n.name + '」添加第 ' + nth + ' 位配偶姓名：\n（如需改名/移除某位配偶，直接双击图上该配偶的名字）').then(function(t){
+  uiPrompt('「' + n.name + '」の第 ' + nth + ' 配偶者を追加：\n（改名・削除はカード上の配偶者名をダブルクリック）').then(function(t){
   if (t === null) return;
   const v = t.trim();
   if (!v) return;
@@ -2072,7 +2118,7 @@ function addSpouse(n){
 function editSpouseAt(n, i){
   if (!n.spouses || i < 0 || i >= n.spouses.length) return;
   const cur = n.spouses[i];
-  uiPrompt('修改「' + n.name + '」的第 ' + (i + 1) + ' 位配偶：\n（清空并确定 = 移除这位配偶）', cur).then(function(t){
+  uiPrompt('「' + n.name + '」の第 ' + (i + 1) + ' 配偶者を編集：\n（空にして決定 = この配偶者を削除）', cur).then(function(t){
   if (t === null) return;
   const v = t.trim();
   if (!v){
@@ -2125,7 +2171,7 @@ function deleteNode(n){
 
 function addSibling(n){
   const p = findParent(n.id); if (!p) return;
-  uiPrompt('添加一位与「' + n.name + '」同辈的成员（' + (p.id === 'root' ? '第一代' : '同父母') + '）：').then(function(t){
+  uiPrompt('「' + n.name + '」と同世代のメンバーを追加（' + (p.id === 'root' ? '第一世代' : '同じ両親') + '）：').then(function(t){
   if (t === null || !t.trim()) return;
   pushHistory('addSibling:' + n.id);
   const nb = { id: genId('s'), name: t.trim(), spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
@@ -2349,8 +2395,13 @@ function reparentNode(n, newParent){
 
 /* ---------- ⑩ 缩放 / 平移 ---------- */
 let scale = 1;
-function applyZoom(){
-  document.getElementById('stage').style.transform = 'scale(' + scale + ')';
+function applyZoom(recenter){
+  const stEl = document.getElementById('stage');
+  const scEl = document.getElementById('scaler');
+  scEl.style.transform = 'scale(' + scale + ')';
+  /* stage 盒子 = 基准×缩放：滚动范围随之正确（transform 不产生滚动范围） */
+  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (recenter) centerStage();   /* 锚点缩放（滚轮）期间不重居中：会和锚点补偿打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
 /* 滚轮缩放：倍速（触控板小增量也顺滑）+ rAF 插值动画，光标锚点全程保持 */
@@ -2361,13 +2412,13 @@ function animateZoom(){
     const diff = targetScale - scale;
     if (Math.abs(diff) < 0.0015){
       scale = targetScale;
-      applyZoom();
+      applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
       zoomRaf = null;
       return;
     }
     scale += diff * 0.35;
-    applyZoom();
+    applyZoom(!zoomAnchor && !window.__pinchActive);
     if (zoomAnchor) zoomAtAnchor();
     zoomRaf = requestAnimationFrame(step);
   };
@@ -2375,11 +2426,13 @@ function animateZoom(){
 }
 function zoomAtAnchor(){
   const vp = document.getElementById('viewport');
+  const stEl = document.getElementById('stage');
+  const ox = stEl.offsetLeft, oy = stEl.offsetTop;   // 移动端悬浮工具栏会让 stage 下移，锚点数学须含此偏移
   const rect = vp.getBoundingClientRect();
   const mx = zoomAnchor.cx - rect.left, my = zoomAnchor.cy - rect.top;
-  const wx = (zoomAnchor.sl + mx) / zoomAnchor.s, wy = (zoomAnchor.st + my) / zoomAnchor.s;
-  vp.scrollLeft = Math.max(0, wx * scale - mx);
-  vp.scrollTop  = Math.max(0, wy * scale - my);
+  const wx = (zoomAnchor.sl + mx - ox) / zoomAnchor.s, wy = (zoomAnchor.st + my - oy) / zoomAnchor.s;
+  vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
+  vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
 function zoomBy(d){
   scale = Math.min(2.5, Math.max(0.12, scale + d));
@@ -2388,6 +2441,14 @@ function zoomBy(d){
   return scale;
 }
 function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function centerStage(){
+  /* 按当前缩放把舞台在视口内居中：水平居中解决“靠左”，垂直居中让画布上下都有余量 */
+  const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
+  if (!stEl._baseW) return;
+  const barTop = window.innerWidth <= 860 ? 120 : 76;
+  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
+  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+}
 function fitToScreen(){
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
@@ -2396,7 +2457,7 @@ function fitToScreen(){
   scale = Math.max(0.12, Math.min((vp.clientWidth - 30) / w, (vp.clientHeight - 30) / h, 1.2));
   targetScale = scale;
   applyZoom();
-  vp.scrollTo(0, 0);
+  centerStage();
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
   if (e.ctrlKey){
@@ -2454,8 +2515,8 @@ function setTargetScale(ns){
     clearLP();
     lpTimer = setTimeout(() => {
       lpTimer = null;
-      const w = wrapOf(n.id);
-      if (w){ selectNode(n.id); openMenu(w, n); }
+      selectNode(n.id);
+      openMenu(wrap, n);
     }, 480);
   }, true);
   document.addEventListener('pointermove', e => {
@@ -2478,6 +2539,7 @@ function setTargetScale(ns){
   vp.addEventListener('touchstart', e => {
     if (e.touches.length === 2){
       clearLP();
+      window.__pinchActive = true;
       pinch = { d0: tdist(e.touches), s0: scale };
     }
   }, { passive: true });
@@ -2487,7 +2549,8 @@ function setTargetScale(ns){
       setTargetScale(pinch.s0 * tdist(e.touches) / pinch.d0);
     }
   }, { passive: false });
-  vp.addEventListener('touchend', () => { pinch = null; }, { passive: true });
+  vp.addEventListener('touchend', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
+  vp.addEventListener('touchcancel', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
 })();
 
 /* ---------- ⑪ 搜索（Ctrl+F / 顶栏放大镜；仅搜当前可见分支） ---------- */
@@ -2758,7 +2821,7 @@ function exportShixilu(){
 }
 
 function download(name, content, type){
-  if (IS_XHS){ toast('小工具内不支持下载文件：请使用电脑网页版导出'); return; }
+  if (IS_XHS){ toast('ミニツール内ではダウンロードできません：PC 版ウェブで書き出してください'); return; }
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -3134,13 +3197,13 @@ function stampName(ext){
 function savePngToAlbum(cv){
   try {
     var mt = window.xhs.miniTool;
-    if (!(mt && mt.writeTempFile && mt.saveImageToPhotosAlbum)){ toast('当前环境不支持保存到相册'); return; }
-    toast('正在保存图片…');
+    if (!(mt && mt.writeTempFile && mt.saveImageToPhotosAlbum)){ toast('この環境ではアルバム保存に対応していません'); return; }
+    toast('画像を保存中…');
     mt.writeTempFile({ data: cv.toDataURL('image/png') }).then(function(r){
       return mt.saveImageToPhotosAlbum({ filePath: r.filePath });
-    }).then(function(){ toast('图片已保存到相册'); })
-      .catch(function(e){ toast('保存失败：' + ((e && e.errMsg) || e)); });
-  } catch(e){ toast('保存失败：' + e.message); }
+    }).then(function(){ toast('画像をアルバムに保存しました'); })
+      .catch(function(e){ toast('保存に失敗しました：' + ((e && e.errMsg) || e)); });
+  } catch(e){ toast('保存に失敗しました：' + e.message); }
 }
 function exportPNG(){
   try {
@@ -3382,6 +3445,12 @@ fitToScreen();
 refreshUndoButtons();
 updateClanTags();
 if (treeData.demo) openWizard();   /* 首次使用：示例数据 + 三选一向导 */
+if (IS_TOUCH && !localStorage.getItem('zupu_gesture_hint')){
+  try { localStorage.setItem('zupu_gesture_hint', '1'); } catch(e){}   // 存储禁用时不该抛错
+  var gh = document.getElementById('__gestureHint');
+  gh.classList.add('show');
+  setTimeout(function(){ gh.classList.remove('show'); }, 4500);
+}
 if (_seededFrom === 'legacy-draft') toast('このブラウザの履歴データから家系図を復元しました');
 else if (_seededFrom === 'file') toast('自動保存の準備完了：編集は即保存されます');
 </script>

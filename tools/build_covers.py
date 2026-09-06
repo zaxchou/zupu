@@ -112,8 +112,8 @@ def build_hant_cover():
 if __name__ == '__main__':
     # 版本与用例数只维护在中文源里，其余语言继承
     src = io.open(SRC, encoding='utf-8').read()
-    if 'v15.33' not in src:   # 幂等：已升级则跳过
-        for old, new in [('v15.32', 'v15.33'), ('52 测试用例', '53 测试用例')]:
+    if 'v15.35' not in src:   # 幂等：已升级则跳过
+        for old, new in [('v15.33', 'v15.35'), ('53 测试用例', '51 测试用例')]:
             assert src.count(old) == 1, old
             src = src.replace(old, new)
         io.open(SRC, 'w', encoding='utf-8', newline='').write(src)

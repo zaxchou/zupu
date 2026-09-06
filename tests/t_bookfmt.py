@@ -61,7 +61,7 @@ def goto_book(page):
 
 def open_settings(page, base=None, spouse=None):
     page.locator("#btnView").click()
-    page.locator("#__ctxMenu .mi", has_text="谱书显示设置").click()
+    page.locator("#__ctxMenu .mi", has_text="显示设置").click()
     if base is not None:
         page.fill("#__cfgBase", str(base))
     if spouse is not None:

@@ -8,7 +8,7 @@
 
 **ダブルクリックで使える電子家系図：家族を記録し、世代を自動判定、印刷して製本**
 
-[![Version](https://img.shields.io/badge/version-v15.34-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.35-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)

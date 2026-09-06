@@ -289,9 +289,10 @@ body{
 #__ctxMenu .mi.danger{color:var(--danger)}
 #__ctxMenu .mi.danger:hover{background:#fdeeee}
 #__ctxMenu .mi .k{font-size:10px;color:#9aa4b2;margin-left:auto;padding-left:14px}
-#__ctxMenu .mi .lbl{display:inline-flex;align-items:center;}
+#__ctxMenu .mi{display:flex;align-items:center}
+#__ctxMenu .mi .k{margin-left:auto}
+#__ctxMenu .msep{height:1px;background:rgba(127,147,170,.28);margin:5px 10px}
 #__ctxMenu .mi .lbl>*+*{margin-left:7px}
-#__ctxMenu .mi .mi-ic{flex:none;opacity:.7;display:block}
 /* 拖拽中（被拖子树不拦截悬停命中） */
 .node.dragging{z-index:6;pointer-events:none}
 .node.dragging .node-label{opacity:.72;border-color:var(--rank-bg);box-shadow:0 4px 16px rgba(239,143,63,.4)}
@@ -631,7 +632,7 @@ html{touch-action:manipulation}
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>
       <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
       <tr><td>视图 ▾ 谱书竖排（古法）</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
-      <tr><td>视图 ▾ 谱书显示设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td>视图 ▾ 显示设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
     </tbody></table>
     <h4 id="__zbTitle">字辈表（蓝框 = 族谱中已出现）</h4>
@@ -642,7 +643,7 @@ html{touch-action:manipulation}
 
 <div class="modal-mask" id="__setModal">
   <div class="modal">
-    <h3>谱书显示设置</h3>
+    <h3>显示设置</h3>
     <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
