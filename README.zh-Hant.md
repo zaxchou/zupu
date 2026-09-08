@@ -2,13 +2,13 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.36" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.37" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.36-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
@@ -37,7 +37,7 @@
   拖到別人名下就是過繼；做錯了 Ctrl+Z 隨時復原
 - **手機 / iPad 也順手** — 觸控拖動調長幼、長按卡片呼出選單、雙擊改名、
   雙指捏合縮放；螢幕變窄自動精簡介面
-- **名字寫上，輩分自動算** — 把你家的字輩貼進去（如「德承傳世澤」），每個人是第幾代自動標出來；
+- **名字寫上，輩分自動算** — 把你家的字輩貼進去（如明朝皇室字輩詩「高瞻祁見祐」），每個人是第幾代自動標出來；
   還能對齊老譜：老譜記「廿三世」，這裡也顯示「廿三世」
 - **列印出來是一本老譜的樣子** — 豎排文字、世代成行、五代一張表，匯出 PDF 直接送印刷廠裝訂成冊；
   譜名、堂號、源流、始祖記都自動印在譜前
@@ -56,7 +56,7 @@
 繁體 `index-zh-Hant.html` / 簡體 `index.html` / English `index-en.html` / 日本語 `index-ja.html`，
 一個檔案就是全部，下載雙擊即用。首次使用會彈出精靈：
 
-- **先看看示例** — 用內建的演示譜熟悉操作
+- **先看看示例** — 內建明朝皇室世系演示譜（朱元璋家族，真實歷史，字輩詩自動定代）
 - **從空白開始** — 填上你的譜名（如「陳氏族譜」）和堂號，從第一代建起
 - **匯入之前的備份** — 已有本工具匯出的 json，直接還原
 

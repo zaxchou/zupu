@@ -2,13 +2,13 @@
 
 **中文（简体）** | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover.jpg?v=15.36" alt="家族族谱 · 传代树" width="100%">
+<img src="docs/cover.jpg?v=15.37" alt="家族族谱 · 传代树" width="100%">
 
 # 家族族谱 · 传代树 (Zupu)
 
 **双击就能用的电子族谱：录入家人、自动算辈分、打印装订成册**
 
-[![Version](https://img.shields.io/badge/version-v15.36-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
@@ -29,7 +29,7 @@
   拖到别人名下就是过继；做错了 Ctrl+Z 随时撤销
 - **手机 / iPad 也顺手** — 触摸拖动调长幼、长按卡片呼出菜单、双击改名、
   双指捏合缩放；屏幕变窄自动精简界面
-- **名字写上，辈分自动算** — 把你家的字辈贴进去（如“德承传世泽”），每个人是第几代自动标出来；
+- **名字写上，辈分自动算** — 把你家的字辈贴进去（如明朝皇室字辈诗“高瞻祁见祐”），每个人是第几代自动标出来；
   还能对齐老谱：老谱记“廿三世”，这里也显示“廿三世”
 - **打印出来是一本老谱的样子** — 竖排文字、世代成行、五代一张表，导出 PDF 直接送打印店装订成册；
   谱名、堂号、源流、始祖记都自动印在谱前
@@ -54,7 +54,7 @@
 简体 `index.html` / 繁體 `index-zh-Hant.html` / English `index-en.html` / 日本語 `index-ja.html`，
 一个文件就是全部，下载双击即用。首次使用会弹出向导：
 
-- **先看看示例** — 用内置的赵钱孙李演示谱熟悉操作
+- **先看看示例** — 内置明朝皇室世系演示谱（朱元璋家族，真实历史，字辈诗自动定代）
 - **从空白开始** — 填上你的谱名（如「李氏族谱」）和堂号，从第一代建起
 - **导入之前的备份** — 已有本工具导出的 json，直接恢复
 

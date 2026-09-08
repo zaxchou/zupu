@@ -42,11 +42,13 @@ def t_i18n_en_smoke(b):
     check("View" in page.locator("#btnView").inner_text(), "EN: View menu is English")
     stats = page.locator("#statsChip").inner_text()
     check("members" in stats and "gens" in stats, "EN: stats chip is English", stats)
-    # 字辈（世代名）定代：d1 = James Arthur Miller → Gen 1
+    # 字辈定代：d1 = Zhu Yuanzhang → Gen 1（回退标注本代字 Xing）
     chip = page.locator('.node[data-id="d1"] .gen').inner_text().replace("\n", "")
     check("Gen 1" in chip, "EN: generation chip via generational name", chip)
-    chip4 = page.locator('.node[data-id="d4"] .gen').inner_text().replace("\n", "")
-    check("Gen 4" in chip4, "EN: 4th gen chip", chip4)
+    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text().replace("\n", "")
+    check("Gen 4" in chip4, "EN: 4th gen chip (Zhu Zhanji)", chip4)
+    chip5 = page.locator('.node[data-id="d5"] .gen').inner_text().replace("\n", "")
+    check("Gen 3" in chip5 and "Gao" in chip5, "EN: zibei match via pinyin name (Zhu Gaochi)", chip5)
     # 添加第一代成员
     dlg = DialogRecorder(page)
     page.locator('.node .quick-add').first.click()
@@ -80,11 +82,11 @@ def t_i18n_ja_smoke(b):
     check("表示" in page.locator("#btnView").inner_text(), "JA: 表示メニューが日本語")
     stats = page.locator("#statsChip").inner_text()
     check("人" in stats and "代" in stats, "JA: 統計チップが日本語", stats)
-    # 字輩定代：林義郎 → 第1代
+    # 字輩定代：朱元璋 → 第1世代
     chip = page.locator('.node[data-id="d1"] .gen').inner_text().replace("\n", "")
     check("1" in chip, "JA: 世代バッジ（字輩一致）", chip)
-    chip4 = page.locator('.node[data-id="d4"] .gen').inner_text().replace("\n", "")
-    check("4" in chip4, "JA: 第4世代バッジ", chip4)
+    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text().replace("\n", "")
+    check("4" in chip4, "JA: 第4世代バッジ（朱瞻基）", chip4)
     # 兄弟姉妹メニューで追加
     dlg = DialogRecorder(page)
     page.locator('.node .quick-add').first.click()
@@ -113,8 +115,10 @@ def t_i18n_zh_hant_smoke(b):
     check("檔案" in page.locator("#btnFile").inner_text(), "繁：檔案選單為台灣用語")
     stats = page.locator("#statsChip").inner_text()
     check("位成員" in stats, "繁：統計條為繁體", stats)
-    check(page.evaluate("window.__ZP.data.name") == "家族族譜", "繁：示例譜已轉繁體",
+    check(page.evaluate("window.__ZP.data.name") == "明朝帝系", "繁：示例譜為明帝系",
           page.evaluate("window.__ZP.data.name"))
+    check(page.evaluate("window.__ZP.findNode('d5').name") == "朱高熾", "繁：種子已 OpenCC 轉繁（炽→熾）",
+          page.evaluate("window.__ZP.findNode('d5').name"))
     dlg = DialogRecorder(page)
     page.locator('.node .quick-add').first.click()
     page.locator("#__ctxMenu .mi", has_text="第一代").click()

@@ -2,13 +2,13 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.36" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.37" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
 **A double-click electronic genealogy: record your family, auto-number generations, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.36-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
@@ -24,13 +24,14 @@
 works for them too. No network, no account, nothing to install; your data lives in your own
 browser, and every change is saved automatically.
 
-| Standard tree | Vertical book layout (traditional) |
+| Standard tree | In-page profile editor |
 | --- | --- |
-| ![Standard tree](docs/preview-tree-en.png) | ![Vertical book](docs/preview-vertical-en.png) |
+| ![Standard tree](docs/preview-tree-en.png) | ![Profile editor](docs/preview-vertical-en.png) |
 
-The **vertical book layout** follows the conventions of traditional Chinese genealogy
-books: generations as rows, names written top-to-bottom (right to left), generation
-labels in the left margin — print it / export it to PDF and **bind it into a book**.
+Every member has an **in-page profile editor** (name, dates, sex, adoption, courtesy /
+art names, spouse terms, notes). A **vertical book layout** following the conventions
+of traditional Chinese genealogy books is also built in: generations as rows, names
+top-to-bottom (right to left) — print it / export it to PDF and **bind it into a book**.
 
 ## ✨ What it does for you
 
@@ -38,7 +39,7 @@ labels in the left margin — print it / export it to PDF and **bind it into a b
   to reorder siblings; drop one onto another to adopt. Ctrl+Z undoes anything
 - **Made for phones & tablets too** — drag to reorder, long-press for menus,
   double-tap to rename, pinch to zoom; the UI trims itself on small screens
-- **Names in, generations out** — paste your generation-char list (e.g. “德承传世泽”) and
+- **Names in, generations out** — paste your generation-char list (e.g. the real Ming imperial poem “高瞻祁见祐”) and
   everyone's generation is numbered automatically; align it with your old book, so “the 23rd
   generation” there reads “the 23rd generation” here
 - **Print a real genealogy book** — vertical text, generations as rows, five generations per
@@ -62,7 +63,7 @@ download the single file for your language — English: `index-en.html`
 One file is everything —
 double-click it; a first-run wizard appears:
 
-- **Explore the demo** — a sample tree you can play with freely
+- **Explore the demo** — the real Ming imperial line (Zhu Yuanzhang’s family), auto-numbered by the generation poem
 - **Start from scratch** — enter your family name and start with generation one
 - **Import a previous backup** — restore json exported by this tool
 

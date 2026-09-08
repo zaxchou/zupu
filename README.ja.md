@@ -2,13 +2,13 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | **日本語**
 
-<img src="docs/cover-ja.jpg?v=15.36" alt="家系図・伝代ツリー" width="100%">
+<img src="docs/cover-ja.jpg?v=15.37" alt="家系図・伝代ツリー" width="100%">
 
 # 家系図・伝代ツリー (Zupu)
 
 **ダブルクリックで使える電子家系図：家族を記録し、世代を自動判定、印刷して製本**
 
-[![Version](https://img.shields.io/badge/version-v15.36-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
@@ -37,7 +37,7 @@
   ドラッグして兄弟の順序を変更。別のカードに重ねれば養縁。Ctrl+Z でいつでも元に戻る
 - **スマホ / タブレットも快適** — ドラッグで順序変更、長押しでメニュー、
   ダブルタップで改名、ピンチで拡大縮小。画面が狭いと表示を自動調整
-- **名前を書けば世代を自動判定** — 字輩表（例：「德承传世泽」）を貼れば、各メンバーの
+- **名前を書けば世代を自動判定** — 字輩表（例：明皇室の字輩詩「高瞻祁见祐」）を貼れば、各メンバーの
   世代を自動表示。譜書の世代数（廿三世など）とも基準合わせできます
 - **印刷すれば本物の譜書の体裁** — 縦書き、世代ごとの行、五世一表。PDF で書き出して
   そのまま印刷店へ製本。譜名・堂号・始祖記も自動で前に印刷
@@ -55,7 +55,7 @@
 言語に合ったファイル 1 つをダウンロード（日本語：`index-ja.html`。中文 `index.html` /
 繁體中文 `index-zh-Hant.html` / English `index-en.html` も可）、ダブルクリック。初回はウィザードが出ます：
 
-- **まずデモを見る** — 自由にいじれるサンプル家系図
+- **まずデモを見る** — 明皇室の実在系譜（朱元璋家、字輩詩で自動世代判定）
 - **白紙から始める** — 譜名を入れて第一世代から作成
 - **以前のバックアップから復元** — このツールが書き出した json を読み込む
 

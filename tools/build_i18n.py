@@ -103,8 +103,8 @@ EN = [
   ('<label>堂号<input id="__clTang" placeholder="可选，如 四知堂 / 陇西堂"></label>', '<label>Hall name<input id="__clTang" placeholder="optional, e.g. “Hall of Four Knows”"></label>'),
   ('<label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="始祖 — 二世 — 三世……"></label>',
    '<label>Lineage (remote → recent ancestors, joined with —)<input id="__clChain" placeholder="Founder — 2nd gen — 3rd gen..."></label>'),
-  ('<label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：德 承 传 世 泽 诗 礼 继 家 声"></textarea></label>',
-   '<label>Zibei table (generation chars, space/comma separated, in generation order; drives automatic generation numbering)<textarea id="__clZibei" rows="2" placeholder="e.g. Arthur James Robert Michael"></textarea></label>'),
+  ('<label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>',
+   '<label>Zibei table (generation chars, space/comma separated, in generation order; drives automatic generation numbering)<textarea id="__clZibei" rows="2" placeholder="e.g. Gao Zhan Qi Jian You"></textarea></label>'),
   ('<label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>', '<label>Forebears<input id="__clYuan" placeholder="e.g. John Miller (b. 1820, Yorkshire)"></label>'),
   ('<label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>',
    '<label>Founder record<textarea id="__clShi" rows="3" placeholder="1st gen: ...  2nd gen: ..."></textarea></label>'),
@@ -116,8 +116,8 @@ EN = [
   ('这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。',
    'This is a <b>local-first</b> single-file app: data stays in <b>your browser</b> — no network, no account, edits save automatically.'),
   ('当前载入的是示例数据，三选一：', 'Demo data is loaded. Pick one to start:'),
-  ('<button type="button" data-wiz="demo"><b>先看看示例</b>赵钱孙李演示谱，可随意折腾</button>',
-   '<button type="button" data-wiz="demo"><b>Explore the demo</b>A sample family tree you can play with freely</button>'),
+  ('<button type="button" data-wiz="demo"><b>先看看示例</b>明朝皇室世系，真实历史</button>',
+   '<button type="button" data-wiz="demo"><b>Explore the demo</b>The real Ming imperial line — play with it freely</button>'),
   ('<button type="button" data-wiz="import"><b>导入之前的备份</b>老用户专用：恢复你以前导出的 json 文件</button>',
    '<button type="button" data-wiz="import"><b>Import a previous backup</b>For returning users: restore a json file you exported before</button>'),
   ('<label>谱名（从空白开始时使用）<input id="__wizMing" placeholder="如 赵氏族谱 / 李氏家谱"></label>',
@@ -501,8 +501,8 @@ JA = [
   ('<label>堂号<input id="__clTang" placeholder="可选，如 四知堂 / 陇西堂"></label>', '<label>堂号<input id="__clTang" placeholder="任意（例：陇西堂）"></label>'),
   ('<label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="始祖 — 二世 — 三世……"></label>',
    '<label>系統（遠祖 → 近祖を — でつなぐ）<input id="__clChain" placeholder="始祖 — 二世 — 三世…"></label>'),
-  ('<label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：德 承 传 世 泽 诗 礼 继 家 声"></textarea></label>',
-   '<label>字輩表（空白/読点/カンマ区切り、世代順。自動世代判定に使用）<textarea id="__clZibei" rows="2" placeholder="例：義 正 健 雄"></textarea></label>'),
+  ('<label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>',
+   '<label>字輩表（空白/読点/カンマ区切り、世代順。自動世代判定に使用）<textarea id="__clZibei" rows="2" placeholder="例：高 瞻 祁 見 祐"></textarea></label>'),
   ('<label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>', '<label>先祖<input id="__clYuan" placeholder="例：遠祖の氏名・略伝"></label>'),
   ('<label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>',
    '<label>始祖記<textarea id="__clShi" rows="3" placeholder="一世祖：…  二世祖：…"></textarea></label>'),
@@ -515,8 +515,8 @@ JA = [
   ('这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。',
    'これは<b>ローカルファースト</b>のシングルファイルアプリです。データは<b>あなたのブラウザ</b>にのみ保存され、ネット接続もアカウントも不要、編集は自動保存されます。'),
   ('当前载入的是示例数据，三选一：', '現在はデモデータが読み込まれています。三つから選んでください：'),
-  ('<button type="button" data-wiz="demo"><b>先看看示例</b>赵钱孙李演示谱，可随意折腾</button>',
-   '<button type="button" data-wiz="demo"><b>まずデモを見る</b>サンプル家系図。自由にいじってOK</button>'),
+  ('<button type="button" data-wiz="demo"><b>先看看示例</b>明朝皇室世系，真实历史</button>',
+   '<button type="button" data-wiz="demo"><b>まずデモを見る</b>明皇室の実在系譜。自由にいじってOK</button>'),
   ('<button type="button" data-wiz="import"><b>导入之前的备份</b>老用户专用：恢复你以前导出的 json 文件</button>',
    '<button type="button" data-wiz="import"><b>以前のバックアップから復元</b>以前書き出した json ファイルを読み込む</button>'),
   ('<label>谱名（从空白开始时使用）<input id="__wizMing" placeholder="如 赵氏族谱 / 李氏家谱"></label>',
@@ -779,60 +779,48 @@ JA = [t for t in JA if t[1] is not None]
 
 # ============================================================ 种子数据
 SEED_EN = {
-  "id": "root", "name": "Family Tree", "spouses": [], "expanded": True, "demo": True,
+  "id": "root", "name": "Ming Imperial Line", "spouses": [], "expanded": True, "demo": True,
   "clan": {
-    "ming": "Demo Family Tree", "tang": "", "chain": "", "yuanzu": "", "shizu": "", "qianzu": "",
-    "origin": "This is demo data. Double-click a name to rename it, click “＋” to add members; “View ▾ → Pedigree preface” edits the tree name, hall name, zibei table and lineage; “File ▾ → Restore backup” imports your own genealogy json."
+    "ming": "Ming Imperial Line (Demo)", "tang": "", "chain": "", "yuanzu": "Zhu Zhongba (5th ancestor)", "shizu": "", "qianzu": "",
+    "origin": "The real imperial line of the Ming dynasty (excerpt). The Zhu family were farmers — ancestors used rank numbers for names: Zhong-ba, Bai-liu, Si-jiu, Chu-yi, Wu-si. Zhu Yuanzhang was first named Chong-ba, later Xing-zong, courtesy name Guo-rui. He gave each son's branch a twenty-character generation poem; the imperial line comes from prince Zhu Di: \u201cGao Zhan Qi Jian You, Hou Zai Yi Chang You\u201d — the dynasty ended exactly at the \u201cYou\u201d generation. The crown-prince Zhu Biao branch had its own poem, so Jianwen Emperor Yun-wen is not in the Yan branch poem. Double-click a name to rename, click \u201c\uff0b\u201d to add members; \u201cView \u25fe \u2192 Preface\u201d makes it your own family tree."
   },
-  "zibei": ["Arthur", "James", "Robert", "Michael"],
+  "zibei": ["Xing", "Mu", "Gao", "Zhan", "Qi", "Jian", "You", "Hou", "Zai", "Yi", "Chang"],
   "children": [
-    {
-      "id": "d1", "name": "James Arthur Miller", "spouses": ["Mary Wilson"], "birth": "1948", "death": "", "note": "", "expanded": True,
-      "children": [
-        {
-          "id": "d2", "name": "Robert James Miller", "spouses": ["Elizabeth Brown"], "birth": "1972", "death": "", "note": "", "expanded": True,
-          "children": [
-            {
-              "id": "d3", "name": "Michael Robert Miller", "spouses": [], "birth": "1998", "death": "", "note": "", "expanded": True,
-              "children": [
-                { "id": "d4", "name": "Daniel Michael Miller", "spouses": [], "birth": "2024", "death": "", "note": "", "expanded": True, "children": [] }
-              ]
-            },
-            { "id": "d5", "name": "Sarah Miller", "spouses": [], "gender": "f", "birth": "2002", "death": "", "note": "", "expanded": True, "children": [] }
-          ]
-        },
-        { "id": "d6", "name": "Thomas Reed", "spouses": [], "birth": "1975", "death": "", "note": "", "heir": "in", "expanded": True, "children": [] }
-      ]
-    }
+    { "id": "d1", "name": "Zhu Yuanzhang", "spouses": ["Empress Ma"], "birth": "1328", "death": "1398", "note": "Hongwu Emperor", "zi": "Guo-rui", "expanded": True, "children": [
+      { "id": "d2", "name": "Zhu Biao", "spouses": [], "birth": "1355", "death": "1392", "note": "Crown Prince Yiwen", "expanded": True, "children": [
+        { "id": "d3", "name": "Zhu Yunwen", "spouses": [], "birth": "1377", "death": "", "note": "Jianwen Emperor (fate unknown)", "expanded": True, "children": [] } ] },
+      { "id": "d4", "name": "Zhu Di", "spouses": ["Empress Xu"], "birth": "1360", "death": "1424", "note": "Yongle Emperor", "expanded": True, "children": [
+        { "id": "d5", "name": "Zhu Gaochi", "spouses": ["Empress Zhang"], "birth": "1378", "death": "1425", "note": "Hongxi Emperor", "expanded": True, "children": [
+          { "id": "d6", "name": "Zhu Zhanji", "spouses": [], "birth": "1399", "death": "1435", "note": "Xuande Emperor", "expanded": True, "children": [
+            { "id": "d7", "name": "Zhu Qizhen", "spouses": [], "birth": "1427", "death": "1464", "note": "Yingzong (Zhengtong / Tianshun)", "expanded": True, "children": [
+              { "id": "d9", "name": "Zhu Jianshen", "spouses": [], "birth": "1447", "death": "1487", "note": "Chenghua Emperor", "expanded": True, "children": [
+                { "id": "d10", "name": "Zhu Youtang", "spouses": [], "birth": "1470", "death": "1505", "note": "Hongzhi Emperor", "expanded": True, "children": [] } ] } ] },
+            { "id": "d8", "name": "Zhu Qiyu", "spouses": [], "birth": "1428", "death": "1457", "note": "Jingtai Emperor", "expanded": True, "children": [] } ] } ] } ] },
+      { "id": "d11", "name": "Princess Ningguo", "spouses": ["Prince Consort Mei"], "gender": "f", "birth": "1364", "death": "", "note": "Eldest daughter", "expanded": True, "children": [] }
+    ] }
   ]
 }
 
 SEED_JA = {
-  "id": "root", "name": "家系図", "spouses": [], "expanded": True, "demo": True,
+  "id": "root", "name": "明朝帝系", "spouses": [], "expanded": True, "demo": True,
   "clan": {
-    "ming": "家系図（デモ）", "tang": "", "chain": "", "yuanzu": "", "shizu": "", "qianzu": "",
-    "origin": "これはデモデータです。名前をダブルクリックで変更、「＋」でメンバーを追加できます。「表示 ▾ → 譜序」で譜名・堂号・字輩表・系統を編集、「ファイル ▾ → バックアップ復元」で自分の json を読み込めます。"
+    "ming": "明朝帝系（デモ）", "tang": "", "chain": "", "yuanzu": "朱仲八（五世祖）", "shizu": "", "qianzu": "",
+    "origin": "明皇室の実際の系譜（抜粋）。朱家は代々農民で、先祖は排行の数字を名に用いました：仲八、百六、四九、初一、五四——朱元璋の原名は重八、後に興宗、字は国瑞。二十六人の息子の各支に二十字の字輩詩を定めました。帝系は燕王・朱棣の一支から：「高瞻祁見祐、厚載翊常由」——明はまさに「由」の世代で幕を下ろしました。太子・朱標の一支は「允文遵祖訓」なので、建文帝・允炆は燕王の字輩に含まれません。名前をダブルクリックで変更、「＋」でメンバー追加；「表示 ▾ → 譜序」で自分の家の譜にできます。"
   },
-  "zibei": ["義", "正", "健", "雄"],
+  "zibei": ["興", "木", "高", "瞻", "祁", "見", "祐", "厚", "載", "翊", "常", "由"],
   "children": [
-    {
-      "id": "d1", "name": "林義郎", "spouses": ["山田千代"], "birth": "1948", "death": "", "note": "", "expanded": True,
-      "children": [
-        {
-          "id": "d2", "name": "林正雄", "spouses": ["佐藤和子"], "birth": "1972", "death": "", "note": "", "expanded": True,
-          "children": [
-            {
-              "id": "d3", "name": "林健太", "spouses": [], "birth": "1998", "death": "", "note": "", "expanded": True,
-              "children": [
-                { "id": "d4", "name": "林雄介", "spouses": [], "birth": "2024", "death": "", "note": "", "expanded": True, "children": [] }
-              ]
-            },
-            { "id": "d5", "name": "林さくら", "spouses": [], "gender": "f", "birth": "2002", "death": "", "note": "", "expanded": True, "children": [] }
-          ]
-        },
-        { "id": "d6", "name": "森誠一", "spouses": [], "birth": "1975", "death": "", "note": "", "heir": "in", "expanded": True, "children": [] }
-      ]
-    }
+    { "id": "d1", "name": "朱元璋", "spouses": ["馬氏"], "birth": "1328", "death": "1398", "note": "明太祖（洪武）", "zi": "国瑞", "expanded": True, "children": [
+      { "id": "d2", "name": "朱標", "spouses": [], "birth": "1355", "death": "1392", "note": "懿文太子", "expanded": True, "children": [
+        { "id": "d3", "name": "朱允炆", "spouses": [], "birth": "1377", "death": "", "note": "建文帝（行方不明）", "expanded": True, "children": [] } ] },
+      { "id": "d4", "name": "朱棣", "spouses": ["徐氏"], "birth": "1360", "death": "1424", "note": "明成祖（永楽）", "expanded": True, "children": [
+        { "id": "d5", "name": "朱高熾", "spouses": ["張氏"], "birth": "1378", "death": "1425", "note": "明仁宗（洪熙）", "expanded": True, "children": [
+          { "id": "d6", "name": "朱瞻基", "spouses": [], "birth": "1399", "death": "1435", "note": "明宣宗（宣徳）", "expanded": True, "children": [
+            { "id": "d7", "name": "朱祁鎮", "spouses": [], "birth": "1427", "death": "1464", "note": "明英宗（正統・天順）", "expanded": True, "children": [
+              { "id": "d9", "name": "朱見深", "spouses": [], "birth": "1447", "death": "1487", "note": "明憲宗（成化）", "expanded": True, "children": [
+                { "id": "d10", "name": "朱祐樘", "spouses": [], "birth": "1470", "death": "1505", "note": "明孝宗（弘治）", "expanded": True, "children": [] } ] } ] },
+            { "id": "d8", "name": "朱祁鈺", "spouses": [], "birth": "1428", "death": "1457", "note": "明代宗（景泰）", "expanded": True, "children": [] } ] } ] } ] },
+      { "id": "d11", "name": "寧国公主", "spouses": ["梅殷"], "gender": "f", "birth": "1364", "death": "", "note": "明太祖の長女", "expanded": True, "children": [] }
+    ] }
   ]
 }
 
