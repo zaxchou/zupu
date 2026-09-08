@@ -26,7 +26,7 @@
 
 | 常規傳代樹 | 譜書豎排（古法） |
 | --- | --- |
-| ![常規傳代樹](docs/preview-tree-zh-Hant.png) | ![譜書豎排](docs/preview-vertical-zh-Hant.png) |
+| ![常規傳代樹](docs/preview-tree-zh-Hant.png?v=15.37) | ![譜書豎排](docs/preview-vertical-zh-Hant.png?v=15.37) |
 
 **譜書豎排**按傳統修譜版式還原：世代成行、名字豎書（右→左）、行左標世數、墨字吊線——
 列印 / 匯出 PDF 即可**裝訂成冊**。

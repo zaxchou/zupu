@@ -26,7 +26,7 @@ browser, and every change is saved automatically.
 
 | Standard tree | In-page profile editor |
 | --- | --- |
-| ![Standard tree](docs/preview-tree-en.png) | ![Profile editor](docs/preview-vertical-en.png) |
+| ![Standard tree](docs/preview-tree-en.png?v=15.37) | ![Profile editor](docs/preview-vertical-en.png?v=15.37) |
 
 Every member has an **in-page profile editor** (name, dates, sex, adoption, courtesy /
 art names, spouse terms, notes). A **vertical book layout** following the conventions

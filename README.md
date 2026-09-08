@@ -41,7 +41,7 @@
 
 | 常规传代树 | 谱书竖排（古法） |
 | --- | --- |
-| ![常规传代树](docs/preview-tree.png) | ![谱书竖排](docs/preview-vertical.png) |
+| ![常规传代树](docs/preview-tree.png?v=15.37) | ![谱书竖排](docs/preview-vertical.png?v=15.37) |
 
 **谱书竖排**按传统修谱版式还原：世代成行、名字竖书（右→左）、行左标世数、墨字吊线——
 打印 / 导出 PDF 即可**装订成册**。
