@@ -496,6 +496,7 @@ html{touch-action:manipulation}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   .wiz-actions{flex-direction:column}
+  .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
   .modal .row{display:block}
   .modal .row>*+*{margin-left:0}

@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.35" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.36" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.35-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-51%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.36-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![線上試用](https://img.shields.io/badge/線上試用-點擊演示-b03a2e)](https://zaxchou.github.io/zupu/)
