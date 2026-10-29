@@ -1,5 +1,5 @@
 window.__SEED_JSON = {"id": "root", "name": "明朝帝系", "spouses": [], "expanded": true, "demo": true, "clan": {"ming": "明朝帝系（示例）", "tang": "", "chain": "", "yuanzu": "朱仲八（五世祖）", "shizu": "", "qianzu": "", "origin": "明皇室真实世系（节选）。朱家世代务农，先祖按排行数字取名：仲八、百六、四九、初一、五四——朱元璋原名重八，后名兴宗、字国瑞。他为二十六个儿子各定二十字字辈诗：帝系出自燕王棣一脉「高瞻祁见祐，厚载翊常由」，明朝恰在「由」字辈落幕；太子标一脉为「允文遵祖训」，故建文帝允炆不在燕王字辈中。双击名字可改名，点「＋」添加成员；「视图 ▾ → 谱序」可改成你自己家的谱。"}, "zibei": ["兴", "木", "高", "瞻", "祁", "见", "祐", "厚", "载", "翊", "常", "由"], "children": [{"id": "d1", "name": "朱元璋", "spouses": ["马氏"], "birth": "1328", "death": "1398", "note": "明太祖（洪武）", "zi": "国瑞", "expanded": true, "children": [{"id": "d2", "name": "朱标", "spouses": [], "birth": "1355", "death": "1392", "note": "懿文太子", "expanded": true, "children": [{"id": "d3", "name": "朱允炆", "spouses": [], "birth": "1377", "death": "", "note": "建文帝（下落不明）", "expanded": true, "children": []}]}, {"id": "d4", "name": "朱棣", "spouses": ["徐氏"], "birth": "1360", "death": "1424", "note": "明成祖（永乐）", "expanded": true, "children": [{"id": "d5", "name": "朱高炽", "spouses": ["张氏"], "birth": "1378", "death": "1425", "note": "明仁宗（洪熙）", "expanded": true, "children": [{"id": "d6", "name": "朱瞻基", "spouses": [], "birth": "1399", "death": "1435", "note": "明宣宗（宣德）", "expanded": true, "children": [{"id": "d7", "name": "朱祁镇", "spouses": [], "birth": "1427", "death": "1464", "note": "明英宗（正统·天顺）", "expanded": true, "children": [{"id": "d9", "name": "朱见深", "spouses": [], "birth": "1447", "death": "1487", "note": "明宪宗（成化）", "expanded": true, "children": [{"id": "d10", "name": "朱祐樘", "spouses": [], "birth": "1470", "death": "1505", "note": "明孝宗（弘治）", "expanded": true, "children": []}]}]}, {"id": "d8", "name": "朱祁钰", "spouses": [], "birth": "1428", "death": "1457", "note": "明代宗（景泰）", "expanded": true, "children": []}]}]}]}, {"id": "d11", "name": "宁国公主", "spouses": ["梅殷"], "gender": "f", "birth": "1364", "death": "", "note": "明太祖长女", "expanded": true, "children": []}]}]};
-/* =========================================================
+/* =
  * 家族族谱 v13 架构分区：
  *   ①工具 ②数据层(migrate/sanitize/加载优先级) ③历史栈(撤销/重做)
  *   ④渲染三遍法 ⑤选择与行内编辑 ⑥档案弹窗 ⑦气泡菜单(+右键)
@@ -63,9 +63,10 @@ function heirTitle(n){
  * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
- * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数） */
+ * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
+ * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面 */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
+let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -74,8 +75,13 @@ let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, verti
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
+function applyTheme(){
+  document.body.dataset.theme = (cfg.theme === 'sky' || cfg.theme === 'dark') ? cfg.theme : 'parchment';
+}
+applyTheme();
 function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
 function genOffset(){ return Math.max(0, cfg.genBase - 1); }
 function genUnit(){ return genOffset() ? '世' : '代'; }
@@ -1120,8 +1126,9 @@ function openSettings(){
   document.getElementById('__cfgBase').value = cfg.genBase;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
-  document.getElementById('__cfgCn').checked = !!cfg.cnNum;
-  document.getElementById('__setModal').classList.add('open');
+    document.getElementById('__cfgCn').checked = !!cfg.cnNum;
+  document.getElementById('__cfgTheme').value = cfg.theme;
+    document.getElementById('__setModal').classList.add('open');
   document.getElementById('__cfgBase').focus();
 }
 function closeSettings(){ document.getElementById('__setModal').classList.remove('open'); }
@@ -1131,6 +1138,8 @@ function applySettings(){
   cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   cfg.cnNum = document.getElementById('__cfgCn').checked;
+  cfg.theme = document.getElementById('__cfgTheme').value;
+  applyTheme();
   saveCfg();
   closeSettings();
   render();

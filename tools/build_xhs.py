@@ -30,10 +30,12 @@ def main():
     seed = json.loads(m.group(1))
     s = s.replace(m.group(0), '', 1)
 
-    # 2) 提取可执行脚本 → app.js（源码只有一个无 type 的内联 script）
-    m = re.search(r'<script>\n?([\s\S]*?)</script>', s)
-    assert m, '可执行脚本未找到'
-    app_js = m.group(1)
+    # 2) 提取可执行脚本 → app.js（锚定主脚本：以「/* ====」架构分区注释开头；
+    #    <body> 开头还有一段内联主题预设小脚本，不能抓错）
+    m = re.search(r'<script>\n/\* =+([\s\S]*?)</script>', s)
+    assert m, '主脚本未找到（锚点：架构分区注释）'
+    app_js = '/* =' + m.group(1)
+    assert len(app_js) > 50000, 'app.js 体积异常（%d B）——可能抓错脚本块' % len(app_js)
     assert 'import ' not in app_js[:200] and 'export ' not in app_js[:200]
     s = s.replace(m.group(0), '<script src="./app.js"></script>', 1)
     app_js = 'window.__SEED_JSON = ' + json.dumps(seed, ensure_ascii=False) + ';\n' + app_js

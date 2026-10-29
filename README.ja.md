@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | **日本語**
 
-<img src="docs/cover-ja.jpg?v=15.37" alt="家系図・伝代ツリー" width="100%">
+<img src="docs/cover-ja.jpg?v=15.38" alt="家系図・伝代ツリー" width="100%">
 
 # 家系図・伝代ツリー (Zupu)
 
 **ダブルクリックで使える電子家系図：家族を記録し、世代を自動判定、印刷して製本**
 
-[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.38-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![オンラインで試す](https://img.shields.io/badge/オンライン-デモ-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -26,7 +26,7 @@
 
 | 通常ツリー | 譜書縦書き（古法） |
 | --- | --- |
-| ![通常ツリー](docs/preview-tree-ja.png?v=15.37) | ![縦書き](docs/preview-vertical-ja.png?v=15.37) |
+| ![通常ツリー](docs/preview-tree-ja.png?v=15.38) | ![縦書き](docs/preview-vertical-ja.png?v=15.38) |
 
 **譜書縦書き（古法）**は伝統的な族譜の体裁を再現：世代ごとに行をまとめ、名を縦書き
 （右→左）、行の左に世代を表示——印刷 / PDF 出力すればそのまま**製本できます**。

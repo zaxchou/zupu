@@ -10,22 +10,23 @@
  * 设计令牌：改配色只动这里
  * ========================================================= */
 :root{
-  --canvas-bg:#f6f8fb;
-  --grid-dot:rgba(21,50,86,.06);
-  --line:#a9b6c6;
-  --node-bg:#ffffff;
-  --node-border:#ccd6e0;
-  --accent:#3fa7dd;
-  --accent-strong:#2196d3;
-  --save:#c77e28;
-  --text:#1c2333;
-  --text-light:#69758a;
-  --danger:#d64545;
-  --rank-bg:#ef8f3f;
-  --birth-bg:#3b6ea5;
-  --root-bg:#16324f;
-  --root-fg:#ffffff;
-  --g1:#35618f; --g2:#46875c; --g3:#a3742f; --g4:#7d5382; --g5:#4f7086;
+  /* 羊皮纸（默认主题）。晴空（经典蓝）与暗色见文末 body[data-theme] 覆盖块。 */
+  --canvas-bg:#ece1c8;
+  --grid-dot:rgba(122,90,40,.12);
+  --line:#b4a382;
+  --node-bg:#f9f1de;
+  --node-border:#cdbb96;
+  --accent:#a8442e;
+  --accent-strong:#8f3524;
+  --save:#9a7428;
+  --text:#3b2f1e;
+  --text-light:#8a7a5c;
+  --danger:#a83a2e;
+  --rank-bg:#b0742f;
+  --birth-bg:#6b5a36;
+  --root-bg:#54402a;
+  --root-fg:#f7ecd7;
+  --g1:#7a6234; --g2:#6f7a44; --g3:#9c6a2f; --g4:#7d5560; --g5:#5f6f6a;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
@@ -507,6 +508,86 @@ html{touch-action:manipulation}
   padding:10px 18px;border-radius:20px;z-index:95;opacity:0;transition:opacity .5s;pointer-events:none;
   max-width:92vw;text-align:center}
 #__gestureHint.show{opacity:1}
+
+/* ---------- 配色主题（v15.38）：羊皮纸=默认（:root 即羊皮纸） / 晴空=经典蓝 / 暗色 ----------
+/* 导出图片 / PDF / 世系录 / 打印不跟随主题，永远保持纸面。羊皮纸无需属性即可生效，
+   因此零脚本、零闪烁，也不受内联脚本限制（小红书容器 CSP）。 */
+body{background:#ece1c8}
+body .node.g0>.node-label{background:linear-gradient(160deg,#6a5136,#463321);border-color:#8a6f47;box-shadow:0 3px 12px rgba(60,40,15,.35)}
+body .topbar .tag.o{background:#f2e7cd;border-color:#cdbb96;color:#6b5230}
+body .modal{background:#f7efdc}
+body .modal input,body .modal textarea,body .modal select{background:#fffdf5;border-color:#cdbb96;color:#3b2f1e}
+body #__ctxMenu{background:#faf3e1;border-color:#cdbb96}
+body #searchBox{background:#faf3e1;border-color:#cdbb96}
+body #searchBox input{background:#fffdf5;color:#3b2f1e}
+body #searchBox button{background:#efe5cd;color:#8a7a5c}
+body #searchBox button:hover{background:#e6d9ba;color:#3b2f1e}
+body .wiz-actions button{background:#faf3e1;border-color:#cdbb96;color:#6b5a36}
+body .wiz-actions button b{color:#8f3524}
+body .fold{background:#f7efdc;border-color:#8a7a5c;color:#3b2f1e}
+body .node-label .heir.out{background:transparent}
+body .topbar,body .legend,body .tips,body #__toast{background:rgba(43,33,20,.82);border-color:rgba(255,236,200,.14)}
+body .tips b{color:#e8c882}
+
+body[data-theme="sky"]{
+  --canvas-bg:#f6f8fb; --grid-dot:rgba(21,50,86,.06); --line:#a9b6c6;
+  --node-bg:#ffffff; --node-border:#ccd6e0;
+  --accent:#3fa7dd; --accent-strong:#2196d3;
+  --save:#c77e28; --text:#1c2333; --text-light:#69758a;
+  --danger:#d64545; --rank-bg:#ef8f3f; --birth-bg:#3b6ea5;
+  --root-bg:#16324f; --root-fg:#ffffff;
+  --g1:#35618f; --g2:#46875c; --g3:#a3742f; --g4:#7d5382; --g5:#4f7086;
+  background:#fff;
+}
+body[data-theme="sky"] .node.g0>.node-label{background:linear-gradient(160deg,#1d4266,#122741);border-color:#28486b;box-shadow:0 3px 12px rgba(10,25,45,.45)}
+body[data-theme="sky"] .topbar .tag.o{background:#fffdf8;border-color:rgba(93,80,60,.4);color:#16324f}
+body[data-theme="sky"] .modal{background:#f6f8fb}
+body[data-theme="sky"] .modal input,body[data-theme="sky"] .modal textarea,body[data-theme="sky"] .modal select{background:#fff;border-color:#c3ccd8;color:var(--text)}
+body[data-theme="sky"] #__ctxMenu{background:#fff;border-color:#d5dce6}
+body[data-theme="sky"] #searchBox{background:#fff;border-color:#d5dce6}
+body[data-theme="sky"] #searchBox input{background:#fff;color:var(--text)}
+body[data-theme="sky"] #searchBox button{background:#eef2f7;color:var(--text-light)}
+body[data-theme="sky"] #searchBox button:hover{background:#e0e8f0;color:var(--text)}
+body[data-theme="sky"] .wiz-actions button{background:#fff;border-color:#c3ccd8;color:var(--text-light)}
+body[data-theme="sky"] .wiz-actions button b{color:var(--root-bg)}
+body[data-theme="sky"] .fold{background:#fff;border-color:#52616f;color:var(--text)}
+body[data-theme="sky"] .node-label .heir.out{background:#fff}
+body[data-theme="sky"] .topbar,body[data-theme="sky"] .legend,body[data-theme="sky"] .tips,body[data-theme="sky"] #__toast{background:rgba(14,22,38,.72);border-color:rgba(255,255,255,.16)}
+body[data-theme="sky"] .tips b{color:#5cc3f2}
+body[data-theme="dark"]{
+  --canvas-bg:#12161f; --grid-dot:rgba(130,170,220,.08); --line:#3d4a5e;
+  --node-bg:#1b2334; --node-border:#33405a;
+  --accent:#4db3e8; --accent-strong:#78c8f2;
+  --save:#d9a04a; --text:#dde4ee; --text-light:#93a0b5;
+  --danger:#e06c6c; --rank-bg:#d98440; --birth-bg:#4a7fb5;
+  --root-bg:#243349; --root-fg:#f2f6fb;
+  --g1:#6f9cc9; --g2:#5f9b74; --g3:#c29a52; --g4:#a078ab; --g5:#6f93ad;
+  background:#12161f;
+}
+body[data-theme="dark"] .node.g0>.node-label{background:linear-gradient(160deg,#2a3c58,#1a2740);border-color:#3d5074;box-shadow:0 3px 12px rgba(0,0,0,.5)}
+body[data-theme="dark"] .topbar .tag.o{background:#243149;border-color:#3d5074;color:#9fc3e8}
+body[data-theme="dark"] .modal{background:#1a2130}
+body[data-theme="dark"] .modal input,body[data-theme="dark"] .modal textarea,body[data-theme="dark"] .modal select{background:#222b3d;border-color:#3d4a5e;color:#dde4ee}
+body[data-theme="dark"] #__ctxMenu{background:#1a2130;border-color:#33405a}
+body[data-theme="dark"] #searchBox{background:#1a2130;border-color:#33405a}
+body[data-theme="dark"] #searchBox input{background:#222b3d;color:#dde4ee}
+body[data-theme="dark"] #searchBox button{background:#222b3d;color:#93a0b5}
+body[data-theme="dark"] #searchBox button:hover{background:#2a3450;color:#dde4ee}
+body[data-theme="dark"] .wiz-actions button{background:#1a2130;border-color:#33405a;color:#c6d0e0}
+body[data-theme="dark"] .wiz-actions button b{color:#78c8f2}
+body[data-theme="dark"] .fold{background:#1a2130;border-color:#4a5a75;color:#dde4ee}
+body[data-theme="dark"] .node-label .heir.out{background:transparent}
+body[data-theme="dark"] .topbar,body[data-theme="dark"] .legend,body[data-theme="dark"] .tips,body[data-theme="dark"] #__toast{background:rgba(10,15,26,.82);border-color:rgba(255,255,255,.10)}
+body[data-theme="dark"] .tips b{color:#78c8f2}
+body[data-theme="dark"] #stage.v #lines path{stroke:#3d4a5e}
+body[data-theme="dark"] #stage.v .node-label,body[data-theme="dark"] .ps.v .node-label{background:rgba(27,35,52,.55);border-color:rgba(130,160,200,.18);color:#c9d3e2}
+body[data-theme="dark"] #stage.v .node.g1>.node-label,body[data-theme="dark"] .ps.v .node.g1>.node-label,body[data-theme="dark"] #stage.v .node.g2>.node-label,body[data-theme="dark"] .ps.v .node.g2>.node-label,body[data-theme="dark"] #stage.v .node.g3>.node-label,body[data-theme="dark"] .ps.v .node.g3>.node-label,body[data-theme="dark"] #stage.v .node.g4>.node-label,body[data-theme="dark"] .ps.v .node.g4>.node-label,body[data-theme="dark"] #stage.v .node.g5>.node-label,body[data-theme="dark"] .ps.v .node.g5>.node-label{color:#c9d3e2;border-color:transparent;background:transparent}
+body[data-theme="dark"] #stage.v .node.g0>.node-label,body[data-theme="dark"] .ps.v .node.g0>.node-label{background:#243349;border-color:rgba(130,160,200,.4);color:#dce6f4}
+body[data-theme="dark"] #stage.v .node-label .sp,body[data-theme="dark"] .ps.v .node-label .sp{color:#8b97ab}
+body[data-theme="dark"] #stage.v .node-label .sp .role,body[data-theme="dark"] .ps.v .node-label .sp .role{color:#71809a}
+body[data-theme="dark"] #stage.v .node-label .xh,body[data-theme="dark"] .ps.v .node-label .xh{color:#71809a}
+body[data-theme="dark"] #stage.v .node.meta-note>.node-label,body[data-theme="dark"] .ps.v .node.meta-note>.node-label{color:#71809a}
+body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v .node-label:hover{background:rgba(77,179,232,.10);border-color:rgba(77,179,232,.55)}
 </style>
 </head>
 <body>
@@ -806,6 +887,7 @@ html{touch-action:manipulation}
 <div class="modal-mask" id="__setModal">
   <div class="modal">
     <h3>显示设置</h3>
+    <label>主题 —— 配色（数据与打印永远保持纸面）<select id="__cfgTheme"><option value="parchment">羊皮纸（默认）</option><option value="sky">晴空（经典蓝）</option><option value="dark">暗色</option></select></label>
     <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
@@ -962,9 +1044,10 @@ function heirTitle(n){
  * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
- * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数） */
+ * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
+ * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面 */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
+let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -973,8 +1056,13 @@ let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, verti
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
+function applyTheme(){
+  document.body.dataset.theme = (cfg.theme === 'sky' || cfg.theme === 'dark') ? cfg.theme : 'parchment';
+}
+applyTheme();
 function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
 function genOffset(){ return Math.max(0, cfg.genBase - 1); }
 function genUnit(){ return genOffset() ? '世' : '代'; }
@@ -2019,8 +2107,9 @@ function openSettings(){
   document.getElementById('__cfgBase').value = cfg.genBase;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
-  document.getElementById('__cfgCn').checked = !!cfg.cnNum;
-  document.getElementById('__setModal').classList.add('open');
+    document.getElementById('__cfgCn').checked = !!cfg.cnNum;
+  document.getElementById('__cfgTheme').value = cfg.theme;
+    document.getElementById('__setModal').classList.add('open');
   document.getElementById('__cfgBase').focus();
 }
 function closeSettings(){ document.getElementById('__setModal').classList.remove('open'); }
@@ -2030,6 +2119,8 @@ function applySettings(){
   cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   cfg.cnNum = document.getElementById('__cfgCn').checked;
+  cfg.theme = document.getElementById('__cfgTheme').value;
+  applyTheme();
   saveCfg();
   closeSettings();
   render();

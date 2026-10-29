@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.37" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.38" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.38-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![線上試用](https://img.shields.io/badge/線上試用-點擊演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -26,7 +26,7 @@
 
 | 常規傳代樹 | 譜書豎排（古法） |
 | --- | --- |
-| ![常規傳代樹](docs/preview-tree-zh-Hant.png?v=15.37) | ![譜書豎排](docs/preview-vertical-zh-Hant.png?v=15.37) |
+| ![常規傳代樹](docs/preview-tree-zh-Hant.png?v=15.38) | ![譜書豎排](docs/preview-vertical-zh-Hant.png?v=15.38) |
 
 **譜書豎排**按傳統修譜版式還原：世代成行、名字豎書（右→左）、行左標世數、墨字吊線——
 列印 / 匯出 PDF 即可**裝訂成冊**。

@@ -2,14 +2,14 @@
 
 **中文（简体）** | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover.jpg?v=15.37" alt="家族族谱 · 传代树" width="100%">
+<img src="docs/cover.jpg?v=15.38" alt="家族族谱 · 传代树" width="100%">
 
 # 家族族谱 · 传代树 (Zupu)
 
 **双击就能用的电子族谱：录入家人、自动算辈分、打印装订成册**
 
-[![Version](https://img.shields.io/badge/version-v15.37-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-52%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.38-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-53%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -41,7 +41,7 @@
 
 | 常规传代树 | 谱书竖排（古法） |
 | --- | --- |
-| ![常规传代树](docs/preview-tree.png?v=15.37) | ![谱书竖排](docs/preview-vertical.png?v=15.37) |
+| ![常规传代树](docs/preview-tree.png?v=15.38) | ![谱书竖排](docs/preview-vertical.png?v=15.38) |
 
 **谱书竖排**按传统修谱版式还原：世代成行、名字竖书（右→左）、行左标世数、墨字吊线——
 打印 / 导出 PDF 即可**装订成册**。

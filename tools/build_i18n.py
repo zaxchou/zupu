@@ -88,6 +88,8 @@ EN = [
   ('>知道了</button>', '>Got it</button>'),
   # ---- 显示设置弹窗 ----
   ('<h3>显示设置</h3>', '<h3>Display settings</h3>'),
+  ('<label>主题 —— 配色（数据与打印永远保持纸面）<select id="__cfgTheme"><option value="parchment">羊皮纸（默认）</option><option value="sky">晴空（经典蓝）</option><option value="dark">暗色</option></select></label>',
+   '<label>Theme &mdash; colours (data &amp; print always stay on paper)<select id="__cfgTheme"><option value="parchment">Parchment (default)</option><option value="sky">Sky (classic blue)</option><option value="dark">Dark</option></select></label>'),
   ('<label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>',
    '<label>Generation base — the book generation number of zibei char #1<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>'),
   ('传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。',
@@ -383,8 +385,8 @@ EN = [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('Tree restored from this browser’s historical data');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('Auto-save is on: every edit is saved, nothing to do');"),
   # ---- 结构默认值 ----
-  ("let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
-   "let cfg = { genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
+  ("let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
+   "let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
   # ---- 触摸手势提示 / 输入弹窗 / 文本弹窗 / 粘贴导入 / XHS 提示 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">One finger: pan · Pinch: zoom · Long-press a card for more</div>'),
@@ -485,6 +487,8 @@ JA = [
   ('>知道了</button>', '>閉じる</button>'),
   # ---- 显示设置弹窗 ----
   ('<h3>显示设置</h3>', '<h3>表示設定</h3>'),
+  ('<label>主题 —— 配色（数据与打印永远保持纸面）<select id="__cfgTheme"><option value="parchment">羊皮纸（默认）</option><option value="sky">晴空（经典蓝）</option><option value="dark">暗色</option></select></label>',
+   '<label>テーマ —— 配色（データと印刷は常に紙面）<select id="__cfgTheme"><option value="parchment">羊皮紙（既定）</option><option value="sky">晴空（青）</option><option value="dark">暗色</option></select></label>'),
   ('<label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>',
    '<label>世代基準 —— 字輩の 1 字目が譜書で何世に当たるか<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>'),
   ('传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。',
@@ -745,8 +749,8 @@ JA += [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('このブラウザの履歴データから家系図を復元しました');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('自動保存の準備完了：編集は即保存されます');"),
   # ---- 结构默认值 ----
-  ("let cfg = { genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
-   "let cfg = { genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
+  ("let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
+   "let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
   # ---- タッチ操作ヒント / 入力モーダル / テキストモーダル / 貼り付け導入 / XHS 用 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">1 本指でドラッグ移動 · ピンチで拡大縮小 · カード長押しでメニュー</div>'),
