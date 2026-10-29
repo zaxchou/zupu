@@ -995,6 +995,7 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi('＋ 配偶', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子女', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 同辈', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(mi('＋ 父辈…', '', '', () => openAddParent(n)));
     ctxMenu.appendChild(mi('批量添加…', '', '', () => openBatchAdd(n)));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('改名', '', 'F2', () => editName(n)));
@@ -1420,6 +1421,51 @@ document.getElementById('__batchOk').onclick = function(){
 };
 document.getElementById('__batchModal').addEventListener('mousedown', function(e){
   if (e.target.id === '__batchModal') closeBatchAdd();
+});
+/* ---------- 往上加一辈（v15.40）：在节点上方插入父辈，节点整体下移一辈 ---------- */
+let _parentNode = null;
+function openAddParent(n){
+  if (n.id === 'root') return;
+  _parentNode = n;
+  const pr = findParent(n.id);
+  const mid = pr && pr.id !== 'root';
+  document.getElementById('__parentTitle').textContent = '为「' + n.name + '」添加父辈';
+  document.getElementById('__parentHint').textContent = mid
+    ? '在「' + n.name + '」与其原父辈之间插入一代，「' + n.name + '」及其后代整体下移一辈。'
+    : '「' + n.name + '」及其后代将整体下移一辈（成为新父辈的子女）。'
+  document.getElementById('__parentSibs').checked = false;
+  document.getElementById('__parentInput').value = '';
+  document.getElementById('__parentModal').classList.add('open');
+  setTimeout(function(){ try { document.getElementById('__parentInput').focus(); } catch(e){} }, 80);
+}
+function closeAddParent(){ document.getElementById('__parentModal').classList.remove('open'); }
+document.getElementById('__parentInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ e.stopPropagation(); closeAddParent(); }
+});
+document.getElementById('__parentCancel').onclick = closeAddParent;
+document.getElementById('__parentOk').onclick = function(){
+  const t = document.getElementById('__parentInput').value.trim();
+  if (!t || !_parentNode) return;
+  const n = _parentNode;
+  const pr = findParent(n.id);
+  if (!pr){ toast('该成员没有上级'); return; }
+  const withSibs = document.getElementById('__parentSibs').checked;
+  pushHistory('addParent:' + n.id);
+  const f = { id: genId('p'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [n] };
+  const idx = pr.children.indexOf(n);
+  pr.children.splice(idx, 1, f);
+  if (withSibs){
+    const others = pr.children.filter(function(c){ return c !== f; });
+    pr.children = [f];
+    f.children = [n].concat(others);
+  }
+  render();
+  selectNode(f.id);
+  closeAddParent();
+  toast('已添加父辈「' + t + '」，「' + n.name + '」' + (withSibs ? '及同辈已' : '已') + '下移一辈');
+};
+document.getElementById('__parentModal').addEventListener('mousedown', function(e){
+  if (e.target.id === '__parentModal') closeAddParent();
 });
 function toggleExpand(n){
   pushHistory('fold:' + n.id);

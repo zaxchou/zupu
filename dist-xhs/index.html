@@ -483,6 +483,13 @@ body{
 #__batchFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
 #__batchHint{font-size:11px;color:var(--text-light)}
 #__batchCount{font-size:12px;color:var(--accent-strong);font-weight:700;white-space:nowrap}
+/* 往上加一辈（v15.40） */
+#__parentModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__parentModal.open{display:flex}
+#__parentModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__parentModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px}
+#__parentInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;color:var(--text);background:var(--node-bg)}
+#__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
@@ -509,6 +516,7 @@ html{touch-action:manipulation}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   #__batchModal{align-items:flex-start;padding-top:9vh}
+  #__parentModal{align-items:flex-start;padding-top:9vh}
   .wiz-actions{flex-direction:column}
   .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
@@ -700,6 +708,15 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <textarea id="__batchInput" rows="4" placeholder="每行一个名字；也可用逗号、顿号分隔"></textarea>
     <div id="__batchFoot"><span id="__batchHint">支持逗号 / 顿号 / 换行分隔 · 先输入=年长</span><span id="__batchCount">将添加 0 人</span></div>
     <div class="modal-btns"><button id="__batchCancel">取消</button><button class="primary" id="__batchOk">添加</button></div>
+  </div>
+</div>
+<div id="__parentModal">
+  <div class="uip-box">
+    <h3 id="__parentTitle">＋ 父辈</h3>
+    <p id="__parentHint" style="font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6"></p>
+    <label class="checkline" style="color:var(--text)"><input type="checkbox" id="__parentSibs"> 同辈一起上移（整辈下移）</label>
+    <input id="__parentInput" autocomplete="off" placeholder="父辈姓名">
+    <div class="modal-btns"><button id="__parentCancel">取消</button><button class="primary" id="__parentOk">添加</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自动保存在本浏览器，编辑即保存</div>

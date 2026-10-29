@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+
+  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('No parent found'); return; }"),# -*- coding: utf-8 -*-
 """从 index.html（中文母本）生成 index-en.html / index-ja.html。
 
 规则：
@@ -49,7 +50,7 @@ EN = [
    '<label>Notes<textarea id="__dmNote" rows="3" placeholder="office / migration / adoption / life notes..."></textarea></label>'),
   ('<button class="primary" id="__dmSave">保存</button>', '<button class="primary" id="__dmSave">Save</button>'),
   ('<button class="primary" id="__setSave">保存</button>', '<button class="primary" id="__setSave">Save</button>'),
-  ('>取消</button>', '>Cancel</button>', 6),
+  ('>取消</button>', '>Cancel</button>', 7),
   # ---- 初始 toast ----
   ('>已自动保存在本浏览器，编辑即保存</div>', '>Saved automatically in this browser as you edit</div>'),
   # ---- 帮助弹窗 ----
@@ -99,7 +100,17 @@ EN = [
   ("\'批量添加 · 为「\' + n.name + \'」添加（先输入=年长）\'", "\'Batch add · for “\' + n.name + \'” (first = eldest)\'"),
   ("const what = asSibling ? (parent.id === \'root\' ? \'第一代成员\' : \'同辈\') : \'子女\';", "const what = asSibling ? (parent.id === \'root\' ? \'first-generation members\' : \'siblings\') : \'children\';"),
   ("toast(\'已为「\' + parent.name + \'」添加 \' + names.length + \' 位\' + what + \'（Ctrl+Z 可整批撤销）\');", "toast(\'Added \' + names.length + \' \' + what + \' for “\' + parent.name + \'” (Ctrl+Z undoes the whole batch)\');"),
-  (">添加</button>", ">Add</button>"),
+  (">添加</button>", ">Add</button>", 2),
+  ("mi('＋ 父辈…', '', '', () => openAddParent(n))", "mi('＋ Parent…', '', '', () => openAddParent(n))", 1),
+  ("<h3 id=\"__parentTitle\">＋ 父辈</h3>", "<h3 id=\"__parentTitle\">＋ Parent</h3>"),
+  ("'为「' + n.name + '」添加父辈'", "'Add a parent to \"' + n.name + \"'\""),
+  ("'在「' + n.name + '」与其原父辈之间插入一代，「' + n.name + '」及其后代整体下移一辈。'", "'Inserts a generation between \"' + n.name + '\" and its current parent — \"' + n.name + '\" and all descendants shift down one level.'"),
+  ("'「' + n.name + '」及其后代将整体下移一辈（成为新父辈的子女）。'", "'\"' + n.name + '\" and all descendants shift down one level (becoming children of the new parent).'"),
+  ("同辈一起上移（整辈下移）", "Move siblings up together (whole generation shifts down)"),
+  ("父辈姓名", "Parent's name"),
+  ("toast('已添加父辈「' + t + '」，「' + n.name + '」' + (withSibs ? '及同辈已' : '已') + '下移一辈');", "toast('Parent \"' + t + '\" added — \"' + n.name + '\"' + (withSibs ? ' and siblings' : '') + ' shifted down one level');"),
+  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('No parent found'); return; }"),
+
   ("<span id=\"__batchCount\">将添加 0 人</span>", "<span id=\"__batchCount\">Will add 0</span>"),
 
   ('<label>主题 —— 配色（数据与打印永远保持纸面）<select id="__cfgTheme"><option value="parchment">羊皮纸（默认）</option><option value="sky">晴空（经典蓝）</option><option value="dark">暗色</option></select></label>',
@@ -512,7 +523,18 @@ JA = [
   ("\'批量添加 · 为「\' + n.name + \'」添加（先输入=年长）\'", "\'一括追加 · 「\' + n.name + \'」に追加（先頭=年長）\'"),
   ("const what = asSibling ? (parent.id === \'root\' ? \'第一代成员\' : \'同辈\') : \'子女\';", "const what = asSibling ? (parent.id === \'root\' ? \'第一世代メンバー\' : \'兄弟姉妹\') : \'子\';"),
   ("toast(\'已为「\' + parent.name + \'」添加 \' + names.length + \' 位\' + what + \'（Ctrl+Z 可整批撤销）\');", "toast(\'「\' + parent.name + \'」に \' + names.length + \' 人（\' + what + \'）を追加しました（Ctrl+Z で一括取り消し）\');"),
-  (">添加</button>", ">追加</button>"),
+  (">添加</button>", ">追加</button>", 2),
+  ("mi('＋ 父辈…', '', '', () => openAddParent(n))", "mi('＋ 親世代…', '', '', () => openAddParent(n))", 1),
+  ("<h3 id=\"__parentTitle\">＋ 父辈</h3>", "<h3 id=\"__parentTitle\">＋ 親世代</h3>"),
+  ("'为「' + n.name + '」添加父辈'", "'「' + n.name + '」に親世代を追加'"),
+  ("'在「' + n.name + '」与其原父辈之间插入一代，「' + n.name + '」及其后代整体下移一辈。'", "'「' + n.name + '」と現在の親の間に一世代を挿入。「' + n.name + '」とその子孫は一世代下がります。'"),
+  ("'「' + n.name + '」及其后代将整体下移一辈（成为新父辈的子女）。'", "'「' + n.name + '」とその子孫は一世代下がります（新しい親世代の子になります）。'"),
+  ("同辈一起上移（整辈下移）", "兄弟姉妹も一緒に上へ（世代ごとに下がる)"),
+  ("父辈姓名", "父世代の氏名"),
+  ("toast('已添加父辈「' + t + '」，「' + n.name + '」' + (withSibs ? '及同辈已' : '已') + '下移一辈');", "toast('父世代「' + t + '」を追加。「' + n.name + '」' + (withSibs ? 'と兄弟姉妹は' : '') + '一世代下がりました');"),
+  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('上位のメンバーが見つかりません'); return; }"),
+  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('上位のメンバーが見つかりません'); return; }"),
+
   ("<span id=\"__batchCount\">将添加 0 人</span>", "<span id=\"__batchCount\">追加する人数：0</span>"),
 
   ('<label>主题 —— 配色（数据与打印永远保持纸面）<select id="__cfgTheme"><option value="parchment">羊皮纸（默认）</option><option value="sky">晴空（经典蓝）</option><option value="dark">暗色</option></select></label>',
@@ -541,7 +563,7 @@ JA = [
   ('<label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>', '<label>始遷祖<input id="__clQian" placeholder="例：江戸初期に○○へ移住"></label>'),
   ('<label>家族来源<textarea id="__clOrigin" rows="5" placeholder="宗支源流叙述……"></textarea></label>', '<label>家族の由緒<textarea id="__clOrigin" rows="5" placeholder="この家支の由緒…"></textarea></label>'),
   ('<button class="primary" id="__clSave">保存</button>', '<button class="primary" id="__clSave">保存</button>'),
-  ('>取消</button>', '>キャンセル</button>', 6),
+  ('>取消</button>', '>キャンセル</button>', 7),
   # ---- 向导 ----
   ('<h3>欢迎使用家族族谱</h3>', '<h3>家系図へようこそ</h3>'),
   ('这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。',

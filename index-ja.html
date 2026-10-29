@@ -483,6 +483,13 @@ body{
 #__batchFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
 #__batchHint{font-size:11px;color:var(--text-light)}
 #__batchCount{font-size:12px;color:var(--accent-strong);font-weight:700;white-space:nowrap}
+/* 往上加一辈（v15.40） */
+#__parentModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__parentModal.open{display:flex}
+#__parentModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__parentModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px}
+#__parentInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;color:var(--text);background:var(--node-bg)}
+#__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
@@ -509,6 +516,7 @@ html{touch-action:manipulation}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   #__batchModal{align-items:flex-start;padding-top:9vh}
+  #__parentModal{align-items:flex-start;padding-top:9vh}
   .wiz-actions{flex-direction:column}
   .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
@@ -861,6 +869,15 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <textarea id="__batchInput" rows="4" placeholder="1 行に 1 名。カンマ・読点区切りも可"></textarea>
     <div id="__batchFoot"><span id="__batchHint">カンマ・読点・改行で区切り · 先に入力した人が年長</span><span id="__batchCount">追加する人数：0</span></div>
     <div class="modal-btns"><button id="__batchCancel">キャンセル</button><button class="primary" id="__batchOk">追加</button></div>
+  </div>
+</div>
+<div id="__parentModal">
+  <div class="uip-box">
+    <h3 id="__parentTitle">＋ 親世代</h3>
+    <p id="__parentHint" style="font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6"></p>
+    <label class="checkline"><input type="checkbox" id="__parentSibs"> 兄弟姉妹も一緒に上へ（世代ごとに下がる)</label>
+    <input id="__parentInput" autocomplete="off" placeholder="父世代の氏名">
+    <div class="modal-btns"><button id="__parentCancel">キャンセル</button><button class="primary" id="__parentOk">追加</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">このブラウザに自動保存されました。編集は即保存</div>
@@ -1998,6 +2015,7 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi('＋ 配偶者', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 兄弟姉妹', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(mi('＋ 親世代…', '', '', () => openAddParent(n)));
     ctxMenu.appendChild(mi('一括追加…', '', '', () => openBatchAdd(n)));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('名前変更', '', 'F2', () => editName(n)));
@@ -2423,6 +2441,51 @@ document.getElementById('__batchOk').onclick = function(){
 };
 document.getElementById('__batchModal').addEventListener('mousedown', function(e){
   if (e.target.id === '__batchModal') closeBatchAdd();
+});
+/* ---------- 往上加一辈（v15.40）：在节点上方插入父辈，节点整体下移一辈 ---------- */
+let _parentNode = null;
+function openAddParent(n){
+  if (n.id === 'root') return;
+  _parentNode = n;
+  const pr = findParent(n.id);
+  const mid = pr && pr.id !== 'root';
+  document.getElementById('__parentTitle').textContent = '「' + n.name + '」に親世代を追加';
+  document.getElementById('__parentHint').textContent = mid
+    ? '「' + n.name + '」と現在の親の間に一世代を挿入。「' + n.name + '」とその子孫は一世代下がります。'
+    : '「' + n.name + '」とその子孫は一世代下がります（新しい親世代の子になります）。'
+  document.getElementById('__parentSibs').checked = false;
+  document.getElementById('__parentInput').value = '';
+  document.getElementById('__parentModal').classList.add('open');
+  setTimeout(function(){ try { document.getElementById('__parentInput').focus(); } catch(e){} }, 80);
+}
+function closeAddParent(){ document.getElementById('__parentModal').classList.remove('open'); }
+document.getElementById('__parentInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ e.stopPropagation(); closeAddParent(); }
+});
+document.getElementById('__parentCancel').onclick = closeAddParent;
+document.getElementById('__parentOk').onclick = function(){
+  const t = document.getElementById('__parentInput').value.trim();
+  if (!t || !_parentNode) return;
+  const n = _parentNode;
+  const pr = findParent(n.id);
+  if (!pr){ toast('该成员没有上级'); return; }
+  const withSibs = document.getElementById('__parentSibs').checked;
+  pushHistory('addParent:' + n.id);
+  const f = { id: genId('p'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [n] };
+  const idx = pr.children.indexOf(n);
+  pr.children.splice(idx, 1, f);
+  if (withSibs){
+    const others = pr.children.filter(function(c){ return c !== f; });
+    pr.children = [f];
+    f.children = [n].concat(others);
+  }
+  render();
+  selectNode(f.id);
+  closeAddParent();
+  toast('父世代「' + t + '」を追加。「' + n.name + '」' + (withSibs ? 'と兄弟姉妹は' : '') + '一世代下がりました');
+};
+document.getElementById('__parentModal').addEventListener('mousedown', function(e){
+  if (e.target.id === '__parentModal') closeAddParent();
 });
 function toggleExpand(n){
   pushHistory('fold:' + n.id);
