@@ -1,4 +1,4 @@
-window.__SEED_JSON = {"id": "root", "name": "明朝帝系", "spouses": [], "expanded": true, "demo": true, "clan": {"ming": "明朝帝系（示例）", "tang": "", "chain": "", "yuanzu": "朱仲八（五世祖）", "shizu": "", "qianzu": "", "origin": "明皇室真实世系（节选）。朱家世代务农，先祖按排行数字取名：仲八、百六、四九、初一、五四——朱元璋原名重八，后名兴宗、字国瑞。他为二十六个儿子各定二十字字辈诗：帝系出自燕王棣一脉「高瞻祁见祐，厚载翊常由」，明朝恰在「由」字辈落幕；太子标一脉为「允文遵祖训」，故建文帝允炆不在燕王字辈中。双击名字可改名，点「＋」添加成员；「视图 ▾ → 谱序」可改成你自己家的谱。"}, "zibei": ["兴", "木", "高", "瞻", "祁", "见", "祐", "厚", "载", "翊", "常", "由"], "children": [{"id": "d1", "name": "朱元璋", "spouses": ["马氏"], "birth": "1328", "death": "1398", "note": "明太祖（洪武）", "zi": "国瑞", "expanded": true, "children": [{"id": "d2", "name": "朱标", "spouses": [], "birth": "1355", "death": "1392", "note": "懿文太子", "expanded": true, "children": [{"id": "d3", "name": "朱允炆", "spouses": [], "birth": "1377", "death": "", "note": "建文帝（下落不明）", "expanded": true, "children": []}]}, {"id": "d4", "name": "朱棣", "spouses": ["徐氏"], "birth": "1360", "death": "1424", "note": "明成祖（永乐）", "expanded": true, "children": [{"id": "d5", "name": "朱高炽", "spouses": ["张氏"], "birth": "1378", "death": "1425", "note": "明仁宗（洪熙）", "expanded": true, "children": [{"id": "d6", "name": "朱瞻基", "spouses": [], "birth": "1399", "death": "1435", "note": "明宣宗（宣德）", "expanded": true, "children": [{"id": "d7", "name": "朱祁镇", "spouses": [], "birth": "1427", "death": "1464", "note": "明英宗（正统·天顺）", "expanded": true, "children": [{"id": "d9", "name": "朱见深", "spouses": [], "birth": "1447", "death": "1487", "note": "明宪宗（成化）", "expanded": true, "children": [{"id": "d10", "name": "朱祐樘", "spouses": [], "birth": "1470", "death": "1505", "note": "明孝宗（弘治）", "expanded": true, "children": []}]}]}, {"id": "d8", "name": "朱祁钰", "spouses": [], "birth": "1428", "death": "1457", "note": "明代宗（景泰）", "expanded": true, "children": []}]}]}]}, {"id": "d11", "name": "宁国公主", "spouses": ["梅殷"], "gender": "f", "birth": "1364", "death": "", "note": "明太祖长女", "expanded": true, "children": []}]}]};
+window.__SEED_JSON = {"id": "root", "name": "明朝帝系", "spouses": [], "expanded": true, "demo": true, "clan": {"ming": "明朝帝系（示例）", "tang": "", "chain": "", "yuanzu": "朱仲八（五世祖）", "shizu": "", "qianzu": "", "origin": "明皇室真实世系（节选）。朱家世代务农，先祖按排行数字取名：仲八、百六、四九、初一、五四——朱元璋原名重八，后名兴宗、字国瑞。他为二十六个儿子各定二十字字辈诗：帝系出自燕王棣一脉「高瞻祁见祐，厚载翊常由」，明朝恰在「由」字辈落幕；太子标一脉为「允文遵祖训」，故建文帝允炆不在燕王字辈中。双击名字可改名，点「＋」添加成员；「文件 ▾ → 谱序」可改成你自己家的谱。"}, "zibei": ["兴", "木", "高", "瞻", "祁", "见", "祐", "厚", "载", "翊", "常", "由"], "children": [{"id": "d1", "name": "朱元璋", "spouses": ["马氏"], "birth": "1328", "death": "1398", "note": "明太祖（洪武）", "zi": "国瑞", "expanded": true, "children": [{"id": "d2", "name": "朱标", "spouses": [], "birth": "1355", "death": "1392", "note": "懿文太子", "expanded": true, "children": [{"id": "d3", "name": "朱允炆", "spouses": [], "birth": "1377", "death": "", "note": "建文帝（下落不明）", "expanded": true, "children": []}]}, {"id": "d4", "name": "朱棣", "spouses": ["徐氏"], "birth": "1360", "death": "1424", "note": "明成祖（永乐）", "expanded": true, "children": [{"id": "d5", "name": "朱高炽", "spouses": ["张氏"], "birth": "1378", "death": "1425", "note": "明仁宗（洪熙）", "expanded": true, "children": [{"id": "d6", "name": "朱瞻基", "spouses": [], "birth": "1399", "death": "1435", "note": "明宣宗（宣德）", "expanded": true, "children": [{"id": "d7", "name": "朱祁镇", "spouses": [], "birth": "1427", "death": "1464", "note": "明英宗（正统·天顺）", "expanded": true, "children": [{"id": "d9", "name": "朱见深", "spouses": [], "birth": "1447", "death": "1487", "note": "明宪宗（成化）", "expanded": true, "children": [{"id": "d10", "name": "朱祐樘", "spouses": [], "birth": "1470", "death": "1505", "note": "明孝宗（弘治）", "expanded": true, "children": []}]}]}, {"id": "d8", "name": "朱祁钰", "spouses": [], "birth": "1428", "death": "1457", "note": "明代宗（景泰）", "expanded": true, "children": []}]}]}]}, {"id": "d11", "name": "宁国公主", "spouses": ["梅殷"], "gender": "f", "birth": "1364", "death": "", "note": "明太祖长女", "expanded": true, "children": []}]}]};
 /* =
  * 家族族谱 v13 架构分区：
  *   ①工具 ②数据层(migrate/sanitize/加载优先级) ③历史栈(撤销/重做)
@@ -59,14 +59,14 @@ function heirTitle(n){
        : n.heir === 'jian' ? '兼祧（兼嗣）：一子兼继两房' : '';
 }
 
-/* ---------- 显示设置（本浏览器配置，与族谱数据分开存） ----------
+/* ---------- 视觉设置（本浏览器配置，与族谱数据分开存） ----------
  * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面 */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
+let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -74,7 +74,9 @@ let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true,
     if (typeof c.bookSpouse === 'boolean') cfg.bookSpouse = c.bookSpouse;
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
+    if (['down', 'up', 'right', 'left'].includes(c.direction)) cfg.direction = c.direction;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (typeof c.wheelZoom === 'boolean') cfg.wheelZoom = c.wheelZoom;
     if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
@@ -82,7 +84,18 @@ function applyTheme(){
   document.body.dataset.theme = (cfg.theme === 'sky' || cfg.theme === 'dark') ? cfg.theme : 'parchment';
 }
 applyTheme();
-function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
+let cfgSaveFailed = false;
+function updateCfgSaveState(){
+  const status = document.getElementById('__cfgSaveStatus');
+  status.hidden = !cfgSaveFailed;
+  document.getElementById('__cfgSavedNote').hidden = cfgSaveFailed;
+}
+function saveCfg(){
+  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); cfgSaveFailed = false; }
+  catch(e){ cfgSaveFailed = true; }
+  updateCfgSaveState();
+  return !cfgSaveFailed;
+}
 function genOffset(){ return Math.max(0, cfg.genBase - 1); }
 function genUnit(){ return genOffset() ? '世' : '代'; }
 /* 阿拉伯数字 → 汉数字（谱书式）：10=十 11=十一 20=廿 23=廿三 30=卅 45=卌五 52=五十二 */
@@ -388,7 +401,7 @@ let _lastOpKey = '', _lastOpT = 0;
 function historySnapshot(){ return JSON.stringify(sanitize(treeData)); }
 function pushHistory(opKey){
   const t = Date.now();
-  if (opKey && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
+  if (opKey && opKey !== 'drag' && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
   /* 一旦发生真实改动就摘掉 demo 标记：向导只打扰「还没动手」的用户（v15.31） */
   if (treeData && treeData.demo) delete treeData.demo;
   _undoStack.push(historySnapshot());
@@ -433,6 +446,26 @@ const ROW_GAP_V = 46;   // 竖排：世代行间距
 /* 所有可见节点的世界坐标矩形（id → {x 中心, y 顶, w 宽, h 高}）。
    拖动过继的悬停命中检测用纯数学（不依赖 elementFromPoint，缩放/拖动中都稳定） */
 const nodeRects = new Map();
+let edgeSegments = [], rowMarkers = [];
+function horizontalLayout(){ return cfg.direction === 'right' || cfg.direction === 'left'; }
+/* 卡片保持原文字方向；只把世代轴和同辈轴映射到真实矩形坐标。 */
+function branchSegments(n){
+  const r = nodeRects.get(n.id);
+  const kids = n.expanded && n.children ? n.children.map(c => nodeRects.get(c.id)).filter(Boolean) : [];
+  if (!r || !kids.length) return [];
+  const horizontal = horizontalLayout(), reverse = cfg.direction === 'up' || cfg.direction === 'left';
+  const sign = reverse ? -1 : 1;
+  const out = horizontal ? r.x + sign * r.w / 2 : r.y + (reverse ? 0 : r.h);
+  const childIn = c => horizontal ? c.x - sign * c.w / 2 : c.y + (reverse ? c.h : 0);
+  const nearest = reverse ? Math.max(...kids.map(childIn)) : Math.min(...kids.map(childIn));
+  const bus = (out + nearest) / 2;
+  const breadth = c => horizontal ? c.y + c.h / 2 : c.x;
+  const parentB = breadth(r), bs = kids.map(breadth);
+  const point = (b, d) => horizontal ? [d, b] : [b, d];
+  const line = (b1, d1, b2, d2) => [...point(b1, d1), ...point(b2, d2)];
+  return [line(parentB, out, parentB, bus), line(Math.min(...bs), bus, Math.max(...bs), bus),
+    ...kids.map(c => line(breadth(c), bus, breadth(c), childIn(c)))];
+}
 
 function render(){
   const nodesEl = document.getElementById('nodes');
@@ -443,6 +476,9 @@ function render(){
   nodesEl.innerHTML = '<div id="__dropMarker"></div>';
   linesG.innerHTML = '';
   nodeRects.clear();
+  /* 始终在 1:1 实测，防止 CSS zoom 的像素取整随镜头改变布局与导出。 */
+  const scaler = document.getElementById('scaler');
+  scaler.style.zoom = '1'; scaler.style.transform = 'none';
   stage.classList.toggle('v', !!cfg.vertical);   // 必须在测量前：竖排 CSS 改变卡片尺寸
 
   /* 第一遍：建 DOM，实测 label 宽高（offsetWidth 不受缩放影响） */
@@ -542,23 +578,19 @@ function render(){
     domMap.set(wrap.dataset.id, { wrap, w: q.label.offsetWidth + 3, lh: q.label.offsetHeight, d: q.depth });
   });
 
-  /* 谱书竖排（古法）：世代行几何 —— 行高 = 该行最高卡片，行首 y 逐行累计 */
-  const V = !!cfg.vertical;
-  let rowTop = null, rowH = null, rowGen = null;
-  if (V){
-    rowH = [];
-    domMap.forEach(info => { rowH[info.d] = Math.max(rowH[info.d] || 0, info.lh); });
-    rowTop = [PAD];
-    for (let d = 1; d < rowH.length; d++) rowTop[d] = rowTop[d - 1] + (rowH[d - 1] || V_SPACE) + ROW_GAP_V;
-    rowGen = [];
-    (function rg(n, d){
-      if (!rowGen[d]){
-        const g = GENS.get(n.id);
-        if (g) rowGen[d] = g.gen;
-      }
-      if (n.expanded && n.children) n.children.forEach(c => rg(c, d + 1));
-    })(treeData, 0);
-  }
+  const V = !!cfg.vertical, horizontal = horizontalLayout();
+  const rowH = [], rowTop = [PAD], rowGen = [];
+  domMap.forEach(info => {
+    rowH[info.d] = Math.max(rowH[info.d] || 0, horizontal ? info.w : info.lh);
+  });
+  const levelGap = horizontal ? 64 : (V ? ROW_GAP_V : 40);
+  for (let d = 1; d < rowH.length; d++)
+    rowTop[d] = rowTop[d - 1] + Math.max(rowH[d - 1] + levelGap, !V && !horizontal ? V_SPACE : 0);
+  (function rg(n, d){
+    const g = GENS.get(n.id);
+    if (!rowGen[d] && g) rowGen[d] = g.gen;
+    if (n.expanded && n.children) n.children.forEach(c => rg(c, d + 1));
+  })(treeData, 0);
 
   /* 第二遍：递归布局（孩子居中时只移动子树，父节点不动） */
   function shiftSubtree(m, dx){
@@ -566,9 +598,9 @@ function render(){
     if (m.children) m.children.forEach(c => shiftSubtree(c, dx));
   }
   function layout(n, depth, xStart){
-    const own = domMap.get(n.id).w;
+    const own = horizontal ? domMap.get(n.id).lh + 24 : domMap.get(n.id).w;
     const kids = (n.expanded && n.children) ? n.children : [];
-    const myTop = V ? rowTop[depth] : depth * V_SPACE + PAD;
+    const myTop = rowTop[depth];
     if (kids.length === 0){
       n._w = Math.max(own, 80);
       n._x = xStart + n._w / 2;
@@ -593,14 +625,28 @@ function render(){
   let maxDepth = 0, minX = Infinity, maxX = -Infinity;
   (function scan(n, d){
     if (d > maxDepth) maxDepth = d;
-    const w = domMap.get(n.id).w;
+    const info = domMap.get(n.id);
+    const w = horizontal ? info.lh + 24 : info.w;
     if (n._x - w / 2 < minX) minX = n._x - w / 2;
     if (n._x + w / 2 > maxX) maxX = n._x + w / 2;
     if (n.expanded && n.children) n.children.forEach(c => scan(c, d + 1));
   })(treeData, 0);
-  const treeW = (maxX - minX) + PAD * 2;
-  const treeH = V ? (rowTop[maxDepth] + (rowH[maxDepth] || V_SPACE) + PAD)
-                  : (maxDepth + 1) * V_SPACE + PAD;
+  const breadthSize = maxX - minX + PAD * 2;
+  const depthSize = rowTop[maxDepth] + rowH[maxDepth] + PAD;
+  const treeW = horizontal ? depthSize : breadthSize;
+  const treeH = horizontal ? breadthSize : depthSize;
+  (function orient(n){
+    const info = domMap.get(n.id), breadth = n._x - minX + PAD, depth = n._y;
+    if (horizontal){
+      n._x = cfg.direction === 'left' ? treeW - depth - info.w / 2 : depth + info.w / 2;
+      n._y = breadth - info.lh / 2;
+    } else {
+      n._x = breadth;
+      n._y = cfg.direction === 'up' ? treeH - depth - info.lh : depth;
+    }
+    if (n.expanded && n.children) n.children.forEach(orient);
+  })(treeData);
+  stage.dataset.direction = cfg.direction;
 
   stage.style.width  = treeW + 'px';
   stage.style.height = treeH + 'px';
@@ -609,68 +655,41 @@ function render(){
   svg.setAttribute('height', treeH);
   svg.setAttribute('viewBox', '0 0 ' + treeW + ' ' + treeH);
 
-  /* 第三遍：摆 DOM + 肘形母线（从父 label 实测底部出发）
-     所有线段合并进一条 path（大族谱时 SVG 元素数从 O(n) 降到 O(1)） */
-  let lineD = '';
-  function addPath(d){ lineD += d; }
+  /* 第三遍：先固定全部矩形，再由同一组线段驱动 SVG 与图片/PDF。 */
   function place(n){
     const info = domMap.get(n.id);
     info.wrap.style.left = n._x + 'px';
-    info.wrap.style.top  = n._y + 'px';
+    info.wrap.style.top = n._y + 'px';
     nodeRects.set(n.id, { x: n._x, y: n._y, w: info.w, h: info.lh });
-
-    if (n.expanded && n.children && n.children.length){
-      if (V){
-        /* 竖排：父卡底 → 行间母线 → 各子卡顶（谱书式垂线） */
-        const yTop = n._y + info.lh;
-        const busY = rowTop[info.d] + (rowH[info.d] || V_SPACE) + ROW_GAP_V / 2;
-        const firstX = n.children[0]._x;
-        const lastX  = n.children[n.children.length - 1]._x;
-        addPath('M ' + n._x + ' ' + yTop + ' L ' + n._x + ' ' + busY);
-        if (n.children.length > 1)
-          addPath('M ' + Math.min(firstX, lastX) + ' ' + busY + ' L ' + Math.max(firstX, lastX) + ' ' + busY);
-        n.children.forEach(c => {
-          addPath('M ' + c._x + ' ' + busY + ' L ' + c._x + ' ' + c._y);
-          place(c);
-        });
-      } else {
-        const yTop   = n._y + info.lh;
-        const yChild = n._y + V_SPACE;
-        const midY   = Math.max(yTop + 26, (yTop + yChild) / 2);
-        const firstX = n.children[0]._x;
-        const lastX  = n.children[n.children.length - 1]._x;
-
-        addPath('M ' + n._x + ' ' + yTop + ' L ' + n._x + ' ' + midY);
-        if (n.children.length > 1)
-          addPath('M ' + Math.min(firstX, lastX) + ' ' + midY + ' L ' + Math.max(firstX, lastX) + ' ' + midY);
-        n.children.forEach(c => {
-          addPath('M ' + c._x + ' ' + midY + ' L ' + c._x + ' ' + yChild);
-          place(c);
-        });
-      }
-    }
+    if (n.expanded && n.children) n.children.forEach(place);
   }
   place(treeData);
-  if (lineD){
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', lineD);
-    linesG.appendChild(p);
+  edgeSegments = [];
+  (function lines(n){
+    edgeSegments.push(...branchSegments(n));
+    if (n.expanded && n.children) n.children.forEach(lines);
+  })(treeData);
+  if (edgeSegments.length){
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', edgeSegments.map(([x1, y1, x2, y2]) => 'M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2).join(' '));
+    linesG.appendChild(path);
   }
-
-  /* 竖排：行左世数标（谱书页边的「廿三世·勤」；固定汉字数字——阿拉伯数字竖排会逐位竖读）
-     字辈字 = 该行首个成员的定代对应的字辈字，第 0 行为总根不标 */
+  rowMarkers = [];
   if (V){
     const zbRows = Array.isArray(treeData.zibei) ? treeData.zibei : [];
     for (let d = 1; d < rowTop.length; d++){
       const g = rowGen[d];
       if (!g) continue;
-      const zi = zbRows[g - 1] || '';
+      const text = numToCn(g + genOffset()) + genUnit() + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');
       const el = document.createElement('div');
-      el.className = 'vrow';
-      el.textContent = numToCn(g + genOffset()) + genUnit() + (zi ? '·' + zi : '');
-      el.title = '本行「' + el.textContent + '」';
-      el.style.top = (rowTop[d] + (rowH[d] || V_SPACE) / 2) + 'px';
+      el.className = 'vrow'; el.textContent = text;
+      let x = 8, y = rowTop[d] + rowH[d] / 2;
+      if (horizontal){ x = cfg.direction === 'left' ? treeW - rowTop[d] - rowH[d] / 2 : rowTop[d] + rowH[d] / 2; y = 8; }
+      else if (cfg.direction === 'up') y = treeH - y;
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      if (horizontal){ el.style.transform = 'translateX(-50%)'; el.style.writingMode = 'horizontal-tb'; }
       nodesEl.appendChild(el);
+      rowMarkers.push({ x, y, text, horizontal });
     }
   }
 
@@ -1054,20 +1073,21 @@ document.getElementById('btnView').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnView');
   openDropdown(btn, m => {
-    m.appendChild(mi((cfg.vertical ? '✓ ' : '') + '谱书竖排（古法）', '', '', toggleVertical));
+    m.appendChild(mi('视觉设置…', '', '', openSettings));
     m.appendChild(msep());
     m.appendChild(mi('全展开', '', '', () => expandAll(true)));
     m.appendChild(mi('全折叠', '', '', () => expandAll(false)));
     m.appendChild(msep());
-    m.appendChild(mi('谱序…', '', '', openClan, '谱名 / 堂号 / 源流 / 字辈表 / 始祖记'));
-    m.appendChild(mi('显示设置…', '', '', openSettings, '字辈基准 / 配偶谱式 / 姓氏显示'));
-    if (IS_TOUCH || window.innerWidth <= 860) m.appendChild(mi('帮助 / 快捷键', '', '', openHelp));
+    m.appendChild(mi('适应屏幕', '', '', fitToScreen));
+    m.appendChild(mi('实际大小', '', '1:1', resetZoom));
   });
 });
 document.getElementById('btnFile').addEventListener('click', e => {
   e.stopPropagation();
   const btn = document.getElementById('btnFile');
   openDropdown(btn, m => {
+  m.appendChild(mi('谱序…', '', '', openClan, '谱名 / 堂号 / 源流 / 字辈表 / 始祖记'));
+  m.appendChild(msep());
   m.appendChild(mi(IS_XHS ? '保存图片到相册' : '导出图片', '', 'png', exportPNG));
   if (IS_XHS){
       m.appendChild(mi('复制备份', '', '', function(){
@@ -1088,6 +1108,11 @@ document.getElementById('btnFile').addEventListener('click', e => {
       m.appendChild(mi('重置数据', 'danger', '', resetData, '清空并恢复为示例谱'));
   }
   });
+});
+
+document.getElementById('btnHelp').addEventListener('click', e => {
+  e.stopPropagation();
+  openDropdown(e.currentTarget, m => m.appendChild(mi('帮助 / 快捷键', '', '', openHelp)));
 });
 
 /* ---------- 帮助弹窗 ---------- */
@@ -1122,42 +1147,56 @@ document.getElementById('__helpModal').addEventListener('mousedown', e => {
   if (e.target.id === '__helpModal') closeHelp();
 });
 
-/* ---------- 显示设置弹窗（世代基准 / 配偶谱式） ---------- */
+/* ---------- 视觉设置弹窗（世代基准 / 配偶谱式） ---------- */
 function smIsOpen(){ return document.getElementById('__setModal').classList.contains('open'); }
+function syncSettings(){
+  document.querySelectorAll('[data-cfg-direction]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cfgDirection === cfg.direction)));
+  document.querySelectorAll('[data-cfg-theme]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cfgTheme === cfg.theme)));
+  document.querySelectorAll('[data-cfg-vertical]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cfgVertical === String(cfg.vertical))));
+}
 function openSettings(){
+  closeMenu();
   document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自动识别）';
   document.getElementById('__cfgBase').value = cfg.genBase;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
-    document.getElementById('__cfgCn').checked = !!cfg.cnNum;
-  document.getElementById('__cfgTheme').value = cfg.theme;
-    document.getElementById('__setModal').classList.add('open');
-  document.getElementById('__cfgBase').focus();
+  const cn = document.getElementById('__cfgCn');
+  if (cn) cn.checked = !!cfg.cnNum;
+  document.getElementById('__cfgWheelZoom').checked = cfg.wheelZoom;
+  syncSettings();
+  document.getElementById('__setModal').classList.add('open');
+  document.querySelector('[data-cfg-direction="' + cfg.direction + '"]').focus({ preventScroll: true });
 }
 function closeSettings(){ document.getElementById('__setModal').classList.remove('open'); }
-function applySettings(){
-  const raw = parseInt(document.getElementById('__cfgBase').value, 10);
-  cfg.genBase = isNaN(raw) ? 1 : Math.max(1, Math.min(99, raw));
-  cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
-  cfg.showSurname = document.getElementById('__cfgSurname').checked;
-  cfg.cnNum = document.getElementById('__cfgCn').checked;
-  cfg.theme = document.getElementById('__cfgTheme').value;
+function previewSettings(){
+  stopZoom();
+  const before = selectedId && nodeRects.get(selectedId);
+  const anchor = before ? { x: before.x, y: before.y + before.h / 2 } : null;
   applyTheme();
   saveCfg();
-  closeSettings();
+  syncSettings();
   render();
-  toast('显示设置已保存：' + (cfg.genBase > 1 ? '字辈第 1 字 = 第 ' + cfg.genBase + ' 世' : '按应用自算代数')
-    + ' · 配偶' + (cfg.bookSpouse ? '谱书式' : '原名')
-    + ' · ' + (cfg.showSurname ? '显示姓氏' : '只报名')
-    + ' · 世数' + (cfg.cnNum ? '用汉字' : '用数字'));
+  const after = selectedId && nodeRects.get(selectedId);
+  if (anchor && after){
+    const vp = document.getElementById('viewport');
+    vp.scrollLeft += (after.x - anchor.x) * scale;
+    vp.scrollTop += (after.y + after.h / 2 - anchor.y) * scale;
+  }
 }
-/* 谱书竖排（古法）开关：视图菜单切换 */
+function applySettings(){
+  const base = document.getElementById('__cfgBase');
+  const raw = parseInt(base.value, 10);
+  if (Number.isFinite(raw)) cfg.genBase = Math.max(1, Math.min(99, raw));
+  cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
+  cfg.showSurname = document.getElementById('__cfgSurname').checked;
+  const cn = document.getElementById('__cfgCn');
+  if (cn) cfg.cnNum = cn.checked;
+  cfg.wheelZoom = document.getElementById('__cfgWheelZoom').checked;
+  previewSettings();
+}
 function toggleVertical(){
   cfg.vertical = !cfg.vertical;
-  saveCfg();
-  render();
-  fitToScreen();
-  toast(cfg.vertical ? '已切换谱书竖排（古法）：世代成行、名字竖书、行左标世数' : '已切回常规视图');
+  previewSettings();
 }
 
 /* ---------- 谱序（堂号 / 源流）：数据存根节点 clan 字段，随备份导出走 ---------- */
@@ -1267,14 +1306,30 @@ document.getElementById('__wizModal').addEventListener('keydown', e => {
   if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); wizardBlank(); }
   if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeWizard(); }
 });
-document.getElementById('__setSave').addEventListener('click', applySettings);
-document.getElementById('__setCancel').addEventListener('click', closeSettings);
+document.getElementById('__setClose').addEventListener('click', closeSettings);
+document.getElementById('__setDone').addEventListener('click', closeSettings);
+document.getElementById('__setModal').addEventListener('input', e => {
+  if (e.target.matches('input')) applySettings();
+});
+document.getElementById('__setModal').addEventListener('change', e => {
+  if (e.target.id === '__cfgBase') e.target.value = cfg.genBase;
+});
+document.getElementById('__setModal').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.cfgDirection) cfg.direction = b.dataset.cfgDirection;
+  else if (b.dataset.cfgTheme) cfg.theme = b.dataset.cfgTheme;
+  else if (b.dataset.cfgVertical) cfg.vertical = b.dataset.cfgVertical === 'true';
+  else return;
+  previewSettings();
+});
 document.getElementById('__setModal').addEventListener('mousedown', e => {
   if (e.target.id === '__setModal') closeSettings();
 });
+document.getElementById('__cfgRetry').addEventListener('click', saveCfg);
 document.getElementById('__setModal').addEventListener('keydown', e => {
-  if (e.key === 'Enter'){
-    e.preventDefault(); e.stopPropagation(); applySettings();
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'number'){
+    e.preventDefault(); e.stopPropagation(); e.target.blur();
   }
   if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); closeSettings(); }
 });
@@ -1555,7 +1610,7 @@ function reparentNode(n, newParent){
     drag = {
       id, n, parent,
       oldIdx: parent.children.findIndex(c => c.id === id),
-      ids: [], baseLeft: new Map(),
+      ids: [], baseLeft: new Map(), baseTop: new Map(),
       moved: false, startX: e.clientX, startY: e.clientY,
       insertIdx: -1,
       hoverId: null, targetId: null
@@ -1573,13 +1628,16 @@ function reparentNode(n, newParent){
       drag.els = new Map();   // 缓存元素引用：拖动期间零 DOM 查询（性能）
       drag.ids.forEach(iid => {
         const w = document.querySelector('.node[data-id="' + iid + '"]');
-        if (w){ drag.baseLeft.set(iid, parseFloat(w.style.left) || 0); w.classList.add('dragging'); drag.els.set(iid, w); }
+        if (w){ drag.baseTop.set(iid, parseFloat(w.style.top) || 0); drag.baseLeft.set(iid, parseFloat(w.style.left) || 0); w.classList.add('dragging'); drag.els.set(iid, w); }
       });
     }
     /* 整个子树跟随平移（连线落位后重画） */
     drag.ids.forEach(iid => {
       const w = drag.els && drag.els.get(iid);
-      if (w && drag.baseLeft.has(iid)) w.style.left = (drag.baseLeft.get(iid) + dx) + 'px';
+      if (w && drag.baseLeft.has(iid)){
+        w.style.left = (drag.baseLeft.get(iid) + dx / scale) + 'px';
+        w.style.top = (drag.baseTop.get(iid) + dy / scale) + 'px';
+      }
     });
     /* 指针换算画布坐标 */
     const rect = stage.getBoundingClientRect();
@@ -1610,16 +1668,23 @@ function reparentNode(n, newParent){
     /* —— 兄弟换位逻辑（原有行为）—— */
     const sibs = drag.parent.children.filter(c => c.id !== drag.id);
     let idx = 0;
-    for (const s of sibs){ if (px > s._x) idx++; else break; }
+    const horizontal = horizontalLayout();
+    const breadth = n => horizontal ? n._y + nodeRects.get(n.id).h / 2 : n._x;
+    const pointerB = horizontal ? py : px;
+    for (const s of sibs){ if (pointerB > breadth(s)) idx++; else break; }
     drag.insertIdx = idx;
     const m = document.getElementById('__dropMarker');
-    let mx;
-    if (sibs.length === 0){ mx = drag.n._x; }
-    else if (idx === 0){ mx = sibs[0]._x - (sibs[0]._w || 80) / 2 - H_SPACE / 2; }
-    else if (idx >= sibs.length){ mx = sibs[sibs.length - 1]._x + (sibs[sibs.length - 1]._w || 80) / 2 + H_SPACE / 2; }
-    else { mx = (sibs[idx - 1]._x + sibs[idx]._x) / 2; }
-    m.style.left = mx + 'px';
-    m.style.top = (drag.n._y + 12) + 'px';
+    const prev = idx ? nodeRects.get(sibs[idx - 1].id) : null;
+    const next = idx < sibs.length ? nodeRects.get(sibs[idx].id) : null;
+    const end = r => horizontal ? r.y + r.h : r.x + r.w / 2;
+    const start = r => horizontal ? r.y : r.x - r.w / 2;
+    const markerB = prev && next ? (end(prev) + start(next)) / 2 : prev ? end(prev) + H_SPACE / 2 : next ? start(next) - H_SPACE / 2 : breadth(drag.n);
+    m.style.left = (horizontal ? drag.n._x - nodeRects.get(drag.id).w / 2 : markerB) + 'px';
+    m.style.top = (horizontal ? markerB : drag.n._y + 12) + 'px';
+    m.style.width = horizontal ? nodeRects.get(drag.id).w + 'px' : '0';
+    m.style.height = horizontal ? '0' : '88px';
+    m.style.borderLeftWidth = horizontal ? '0' : '2px';
+    m.style.borderTop = horizontal ? '2px dashed var(--rank-bg)' : '0';
     m.style.display = 'block';
   });
 
@@ -1683,9 +1748,19 @@ let scale = 1;
 function applyZoom(recenter){
   const stEl = document.getElementById('stage');
   const scEl = document.getElementById('scaler');
-  scEl.style.transform = 'scale(' + scale + ')';
+  /* CSS zoom 按目标倍率排版文字；旧内核保留 transform 回退。
+     offsetWidth/offsetHeight 仍是局部布局单位，命中检测统一用世界坐标 / scale。 */
+  const layoutZoom = window.CSS && CSS.supports('zoom', '1');
+  scEl.style.zoom = layoutZoom ? String(scale) : '';
+  scEl.style.transform = layoutZoom ? 'none' : 'scale(' + scale + ')';
   /* stage 盒子 = 基准×缩放：滚动范围随之正确（transform 不产生滚动范围） */
-  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (stEl._baseW){
+    stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px';
+    /* 画布平面：舞台四周恒定 2400px 余量 → 任何缩放下都有完整拖动空间 */
+    const pl = document.getElementById('plane');
+    pl.style.width = (stEl._baseW * scale + 4800) + 'px';
+    pl.style.height = (stEl._baseH * scale + 4800) + 'px';
+  }
   if (recenter) centerStage();   /* 锚点缩放（滚轮）期间不重居中：会和锚点补偿打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
@@ -1699,6 +1774,7 @@ function animateZoom(){
       scale = targetScale;
       applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
+      zoomAnchor = null;
       zoomRaf = null;
       return;
     }
@@ -1719,38 +1795,62 @@ function zoomAtAnchor(){
   vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
   vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
+function stopZoom(){
+  if (zoomRaf) cancelAnimationFrame(zoomRaf);
+  zoomRaf = null;
+  zoomAnchor = null;
+  targetScale = scale;
+}
 function zoomBy(d){
+  stopZoom();
   scale = Math.min(2.5, Math.max(0.12, scale + d));
   targetScale = scale;
   applyZoom();
   return scale;
 }
-function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function resetZoom(){ stopZoom(); scale = 1; targetScale = 1; applyZoom(); }
+function availableCanvasRect(){
+  const vp = document.getElementById('viewport'), r = vp.getBoundingClientRect();
+  let top = 15, bottom = vp.clientHeight - 15;
+  const bar = document.querySelector('.topbar').getBoundingClientRect();
+  if (bar.bottom > r.top && bar.top < r.bottom) top = Math.max(top, bar.bottom - r.top + 12);
+  document.querySelectorAll('.tips,.legend').forEach(el => {
+    const q = el.getBoundingClientRect();
+    if (q.width && q.height && q.top > r.top && q.top < r.bottom) bottom = Math.min(bottom, q.top - r.top - 12);
+  });
+  return { left: 15, top, width: Math.max(1, vp.clientWidth - 30), height: Math.max(1, bottom - top) };
+}
 function centerStage(){
-  /* 按当前缩放把舞台在视口内居中：水平居中解决“靠左”，垂直居中让画布上下都有余量 */
   const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
   if (!stEl._baseW) return;
-  const barTop = window.innerWidth <= 860 ? 120 : 76;
-  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
-  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+  const area = availableCanvasRect();
+  vp.scrollLeft = Math.max(0, stEl.offsetLeft + stEl._baseW * scale / 2 - area.left - area.width / 2);
+  vp.scrollTop  = Math.max(0, stEl.offsetTop + stEl._baseH * scale / 2 - area.top - area.height / 2);
 }
 function fitToScreen(){
+  stopZoom();
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
-  const w = st.offsetWidth, h = st.offsetHeight;
+  const w = st._baseW, h = st._baseH;
   if (!w || !h) return;
-  scale = Math.max(0.12, Math.min((vp.clientWidth - 30) / w, (vp.clientHeight - 30) / h, 1.2));
+  const area = availableCanvasRect();
+  scale = Math.max(0.12, Math.min(area.width / w, area.height / h, 1.2));
   targetScale = scale;
   applyZoom();
   centerStage();
 }
+window.addEventListener('resize', () => {
+  const stage = document.getElementById('stage');
+  if (stage._baseW) requestAnimationFrame(fitToScreen);
+});
 document.getElementById('viewport').addEventListener('wheel', e => {
-  if (e.ctrlKey){
+  if (cfg.wheelZoom || e.ctrlKey){
     e.preventDefault();
     const vp = document.getElementById('viewport');
-    const rect = vp.getBoundingClientRect();
+    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1);
+    if (!delta) return;
     zoomAnchor = { cx: e.clientX, cy: e.clientY, sl: vp.scrollLeft, st: vp.scrollTop, s: scale };
-    setTargetScale(scale * Math.exp(-e.deltaY * 0.0016));
+    setTargetScale(targetScale * Math.exp(-delta * 0.0016));
   }
 }, { passive: false });
 function setTargetScale(ns){
@@ -1765,8 +1865,13 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
+    stopZoom();
     down = true; sx = e.clientX; sy = e.clientY;
     sl = vp.scrollLeft; st = vp.scrollTop;
+    if (e.pointerType === 'mouse'){
+      e.preventDefault();
+      vp.setPointerCapture(e.pointerId);
+    }
     vp.classList.add('panning');
   });
   window.addEventListener('pointermove', e => {
@@ -2188,7 +2293,7 @@ function exportPalette(){
 }
 function exportTreeCanvas(){
   const stage = document.getElementById('stage');
-  let W = stage.offsetWidth, H = stage.offsetHeight;
+  let W = stage._baseW, H = stage._baseH;
   if (!W || !H) throw new Error('画布尚未渲染');
   {   /* 标题行宽度自适应：谱名（堂号）· 日期 在窄画布（竖排）下不被裁切 */
     const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
@@ -2207,7 +2312,7 @@ function exportTreeCanvas(){
   ctx.fillStyle = '#16324f';
   ctx.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
   ctx.fillText(puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), 20, 30);
-  ctx.translate((W - stage.offsetWidth) / 2, 46);   /* 加宽出的边距左右均分，树居中 */
+  ctx.translate((W - stage._baseW) / 2, 46);   /* 加宽出的边距左右均分，树居中 */
 
   const P = exportPalette();
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -2223,36 +2328,9 @@ function exportTreeCanvas(){
   const FONT = '"PingFang SC","Microsoft YaHei",sans-serif';
 
   ctx.strokeStyle = cfg.vertical ? '#d5dde6' : P.line; ctx.lineWidth = 1.5;
-  (function lines(n){
-    const r = nodeRects.get(n.id); if (!r) return;
-    if (n.expanded && n.children && n.children.length){
-      const f = nodeRects.get(n.children[0].id), l = nodeRects.get(n.children[n.children.length - 1].id);
-      if (f && l){
-        ctx.beginPath();
-        if (cfg.vertical){
-          const yTop = r.y + r.h;
-          const busY = Math.max(yTop + 8, (yTop + f.y) / 2);
-          ctx.moveTo(r.x, yTop); ctx.lineTo(r.x, busY);
-          if (n.children.length > 1){ ctx.moveTo(Math.min(f.x, l.x), busY); ctx.lineTo(Math.max(f.x, l.x), busY); }
-          n.children.forEach(c => {
-            const cr = nodeRects.get(c.id);
-            if (cr){ ctx.moveTo(cr.x, busY); ctx.lineTo(cr.x, cr.y); }
-          });
-        } else {
-          const yTop = r.y + r.h, yChild = r.y + V_SPACE;
-          const midY = Math.max(yTop + 26, (yTop + yChild) / 2);
-          ctx.moveTo(r.x, yTop); ctx.lineTo(r.x, midY);
-          if (n.children.length > 1){ ctx.moveTo(Math.min(f.x, l.x), midY); ctx.lineTo(Math.max(f.x, l.x), midY); }
-          n.children.forEach(c => {
-            const cr = nodeRects.get(c.id);
-            if (cr){ ctx.moveTo(cr.x, midY); ctx.lineTo(cr.x, yChild); }
-          });
-        }
-        ctx.stroke();
-      }
-      n.children.forEach(lines);
-    }
-  })(treeData);
+  ctx.beginPath();
+  edgeSegments.forEach(([x1, y1, x2, y2]) => { ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); });
+  ctx.stroke();
 
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function ellipText(t, maxW){
@@ -2440,38 +2518,14 @@ function exportTreeCanvas(){
     if (n.expanded && n.children) n.children.forEach(drawNode);
   })(treeData);
 
-  /* 竖排：行左世数标（与页面上的谱书页边标注一致，固定汉字数字） */
-  if (cfg.vertical){
-    const rowGenX = [];
-    (function rgx(n, d){
-      if (!rowGenX[d]){
-        const g = LAST_GENS.get(n.id);
-        if (g) rowGenX[d] = g.gen;
-      }
-      if (n.expanded && n.children) n.children.forEach(c => rgx(c, d + 1));
-    })(treeData, 0);
-    const zbX = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-    ctx.font = '600 13.5px ' + FONT;
-    ctx.fillStyle = '#9aa9bb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    for (let d = 1; d < rowGenX.length; d++){
-      const g = rowGenX[d];
-      if (!g) continue;
-      let minY = null;
-      (function ny(n, dd){
-        if (dd === d){
-          const r0 = nodeRects.get(n.id);
-          if (r0 && (minY === null || r0.y < minY)) minY = r0.y;
-        }
-        if (n.expanded && n.children) n.children.forEach(c => ny(c, dd + 1));
-      })(treeData, 0);
-      if (minY !== null){
-        const zi = zbX[g - 1] || '';
-        const t = numToCn(g + genOffset()) + genUnit() + (zi ? '·' + zi : '');
-        for (let i = 0; i < t.length; i++) ctx.fillText(t[i], 8, minY + 14 + i * 16);
-      }
-    }
-    ctx.textBaseline = 'alphabetic';
-  }
+  ctx.font = '600 13.5px ' + FONT;
+  ctx.fillStyle = '#9aa9bb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  rowMarkers.forEach(m => {
+    if (m.horizontal){ ctx.fillText(m.text, m.x, m.y + 8); return; }
+    const startY = m.y - m.text.length * 8;
+    for (let i = 0; i < m.text.length; i++) ctx.fillText(m.text[i], m.x + 7, startY + 8 + i * 16);
+  });
+  ctx.textBaseline = 'alphabetic';
   return cv;
 }
 function stampName(ext){
@@ -2544,20 +2598,22 @@ function buildPrintDomVertical(){
   const stage = document.getElementById('stage');
   const clone = stage.cloneNode(true);
   clone.removeAttribute('id');
-  clone.className = 'ps v';
+  clone.className = 'ps' + (cfg.vertical ? ' v' : '');
   clone.style.transform = 'none';
-  clone.style.width = stage.offsetWidth + 'px';
-  clone.style.height = stage.offsetHeight + 'px';
+  clone.style.width = stage._baseW + 'px';
+  clone.style.height = stage._baseH + 'px';
   clone.style.left = '0';
   clone.style.top = '0';
+  const clonedScaler = clone.querySelector('#scaler');
+  clonedScaler.style.transform = 'none'; clonedScaler.style.zoom = '1';
   clone.querySelectorAll('.quick-add').forEach(q => q.remove());
   clone.querySelectorAll('.selected,.hit,.hit-active,.menu-open').forEach(el =>
     el.classList.remove('selected', 'hit', 'hit-active', 'menu-open'));
-  const s = Math.min(1, 700 / stage.offsetWidth, 1030 / stage.offsetHeight);   /* A4 纵向可打印区 ≈ 186×273mm */
+  const s = Math.min(1, 700 / stage._baseW, 1030 / stage._baseH);   /* A4 纵向可打印区 ≈ 186×273mm */
   const wrap = document.createElement('div');
   wrap.className = 'pstage-wrap';
-  wrap.style.width = Math.ceil(stage.offsetWidth * s) + 'px';
-  wrap.style.height = Math.ceil(stage.offsetHeight * s) + 'px';
+  wrap.style.width = Math.ceil(stage._baseW * s) + 'px';
+  wrap.style.height = Math.ceil(stage._baseH * s) + 'px';
   clone.style.transform = 'scale(' + s + ')';
   clone.style.transformOrigin = 'top left';
   wrap.appendChild(clone);
@@ -2567,7 +2623,7 @@ function buildPrintDomVertical(){
   const note = document.createElement('div');
   note.className = 'pmeta';
   note.style.marginTop = '6px';
-  note.textContent = '谱书竖排 · 共 ' + cnt + ' 人' + (s < 1 ? '（整图已按页面缩放 ' + Math.round(s * 100) + '%）' : '');
+  note.textContent = (cfg.vertical ? '谱书竖排' : '常规横排') + ' · 共 ' + cnt + ' 人' + (s < 1 ? '（整图已按页面缩放 ' + Math.round(s * 100) + '%）' : '');
   area.appendChild(note);
 }
 
@@ -2593,7 +2649,7 @@ function printMemberRow(n, gen, rank){
   return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
 }
 function buildPrintDomReal(){
-  if (cfg.vertical) return buildPrintDomVertical();
+  if (cfg.vertical || cfg.direction !== 'down') return buildPrintDomVertical();
   const area = document.getElementById('printArea');
   area.innerHTML = '';
   const GENSX = LAST_GENS.size ? LAST_GENS : computeGenerations();

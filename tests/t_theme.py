@@ -13,10 +13,10 @@ def t_theme_default_switch_persist(b):
               "默认主题为羊皮纸", page.evaluate("document.body.dataset.theme"))
         # 显示设置里切到暗色
         page.evaluate("(function(){ openSettings(); })()")
-        check(page.locator('#__cfgTheme').input_value() == "parchment", "设置项回填当前主题",
-              page.locator('#__cfgTheme').input_value())
-        page.select_option('#__cfgTheme', 'dark')
-        page.click('#__setSave')
+        check(page.locator('[data-cfg-theme="parchment"]').get_attribute('aria-pressed') == "true", "设置项回填当前主题")
+        page.locator('[data-cfg-theme="dark"]').click()
+        check(page.locator('#__setModal').is_visible(), "选中后留在面板，立即预览")
+        page.click('#__setDone')
         page.wait_for_timeout(250)
         check(page.evaluate("document.body.dataset.theme") == "dark", "切换后立即生效")
         # 刷新后持久（不用 goto——goto 会清 localStorage）
@@ -28,7 +28,9 @@ def t_theme_default_switch_persist(b):
         check(page.evaluate("JSON.parse(localStorage.getItem('zupu_cfg_v1')).theme") == "dark",
               "主题写入 cfg 存储")
         # 切回羊皮纸
-        page.evaluate("(function(){ openSettings(); document.getElementById('__cfgTheme').value='parchment'; applySettings(); })()")
+        page.evaluate("openSettings()")
+        page.locator('[data-cfg-theme="parchment"]').click()
+        page.click('#__setDone')
         page.wait_for_timeout(200)
         check(page.evaluate("document.body.dataset.theme") == "parchment", "可切回羊皮纸")
         check(not errs, "无 JS 错误", str(errs[:3]))

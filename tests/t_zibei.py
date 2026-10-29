@@ -172,7 +172,8 @@ def t_zibei_save_persists_and_help_grid(b):
     data = _json.loads(open(di.value.path(), encoding="utf-8").read())
     check(data.get("zibei") == ZIBEI, "备份 json 携带完整字辈表")
     # 帮助弹窗网格
-    page.locator('button[title="帮助 / 快捷键"]').click()
+    page.locator('#btnHelp').click()
+    page.locator('#__ctxMenu .mi', has_text='帮助 / 快捷键').click()
     page.wait_for_timeout(200)
     total = page.locator("#__zbGrid .zb").count()
     on = page.locator("#__zbGrid .zb.on").count()

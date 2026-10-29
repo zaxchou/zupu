@@ -61,7 +61,9 @@ def goto_book(page):
 
 def open_settings(page, base=None, spouse=None):
     page.locator("#btnView").click()
-    page.locator("#__ctxMenu .mi", has_text="显示设置").click()
+    page.locator("#__ctxMenu .mi", has_text="视觉设置").click()
+    if page.locator("#__cfgOther").get_attribute("open") is None:
+        page.locator("#__cfgOther summary").click()
     if base is not None:
         page.fill("#__cfgBase", str(base))
     if spouse is not None:
@@ -97,7 +99,7 @@ def t_spouse_book_display_and_gender_badge(b):
     check(page.locator('.node[data-id="z1"] .gx').count() == 0, "男性不标（谱书惯例）")
     # 关闭谱书式 → 恢复原名
     open_settings(page, spouse=False)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     sp_off = page.locator('.node[data-id="z3"] .sp[data-sp="0"]').inner_text().replace("\n", "")
     check("丁嘉" in sp_off and "丁氏嘉" not in sp_off, "关闭后恢复原名显示", sp_off)
@@ -149,7 +151,7 @@ def t_genbase_alignment(b):
     check(chip("z1") == "11代·勤", "默认按应用自算：11代·勤", chip("z1"))
     # 对齐谱书：字辈第 1 字（多）= 第 13 世 → 勤 11+12=23世
     open_settings(page, base=13)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(150)
     check(chip("z1") == "23世·勤", "世代基准13：勤=23世", chip("z1"))
     check(chip("z2") == "24世·修", "推算代同样偏移：修=24世", chip("z2"))
@@ -178,7 +180,7 @@ def t_genbase_alignment(b):
     check(chip("z1") == "23世·勤", "世代基准刷新后持久", chip("z1"))
     # 改回 1 → 恢复「代」
     open_settings(page, base=1)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     check(chip("z1") == "11代·勤", "改回1恢复代数", chip("z1"))
     check(not errs, "无 JS 错误", str(errs))
@@ -190,7 +192,7 @@ def t_export_book_style(b):
     ctx, page, errs, cons = fresh_page(b, downloads=True)
     goto_book(page)
     open_settings(page, base=13)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     # 画布渲染（PNG/PDF 的底）：谱式显示 + 女徽标 + 世数下不报错
     size = page.evaluate("() => { const c = exportTreeCanvas(); return { w: c.width, h: c.height }; }")
@@ -218,7 +220,7 @@ def t_surname_toggle(b):
     # 关闭 → 只报名：周勤善 → 勤善；数据与搜索不受影响
     open_settings(page)
     page.set_checked("#__cfgSurname", False)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(150)
     nm2 = page.locator('.node[data-id="z1"] .node-label').inner_text()
     check("勤善" in nm2 and "周勤善" not in nm2, "关闭后只报名", nm2)
@@ -249,7 +251,7 @@ def t_surname_toggle(b):
     # 打开设置恢复显示姓氏
     open_settings(page)
     page.set_checked("#__cfgSurname", True)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     nm4 = page.locator('.node[data-id="z1"] .node-label').inner_text()
     check("周勤善" in nm4, "恢复显示姓氏", nm4)
@@ -318,7 +320,7 @@ def t_cn_numeral(b):
     goto_book(page)
     open_settings(page, base=13)
     page.set_checked("#__cfgCn", True)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(150)
     chip = lambda nid: page.locator(f'.node[data-id="{nid}"] .gen').inner_text().replace("\n", "")
     check(chip("z1") == "廿三世·勤", "汉字世数：廿三世·勤", chip("z1"))
@@ -339,12 +341,12 @@ def t_cn_numeral(b):
     check(chip("z1") == "廿三世·勤", "汉字设置刷新后持久", chip("z1"))
     # 基准=1 时也可用汉字：十一代
     open_settings(page, base=1)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     check(chip("z1") == "十一代·勤", "代数也可用汉字", chip("z1"))
     open_settings(page)
     page.set_checked("#__cfgCn", False)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     check(chip("z1") == "11代·勤", "关闭恢复数字", chip("z1"))
     check(not errs, "无 JS 错误", str(errs))
@@ -356,8 +358,9 @@ def t_vertical_book_view(b):
     ctx, page, errs, cons = fresh_page(b)
     goto_book(page)
     # 开竖排：视图菜单
-    page.locator("#btnView").click()
-    page.locator("#__ctxMenu .mi", has_text="谱书竖排").click()
+    open_settings(page)
+    page.locator('[data-cfg-vertical="true"]').click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(250)
     check("v" in (page.locator("#stage").get_attribute("class") or ""), "stage 挂 v 类", page.locator("#stage").get_attribute("class"))
     wm = page.evaluate("getComputedStyle(document.querySelector('.node[data-id=\\'z1\\'] .node-label')).writingMode")
@@ -402,8 +405,9 @@ def t_vertical_book_view(b):
     page.reload()
     page.wait_for_load_state("domcontentloaded")
     check("v" in (page.locator("#stage").get_attribute("class") or ""), "竖排刷新后持久")
-    page.locator("#btnView").click()
-    page.locator("#__ctxMenu .mi", has_text="谱书竖排").click()
+    open_settings(page)
+    page.locator('[data-cfg-vertical="false"]').click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(200)
     check("v" not in (page.locator("#stage").get_attribute("class") or ""), "切回常规视图")
     check(not errs, "无 JS 错误", str(errs))
@@ -420,7 +424,7 @@ def t_clan_xu(b):
     check(page.locator("#__tangTag").inner_text() == "申锡堂", "顶栏堂号", page.locator("#__tangTag").inner_text())
     check("潮阳泗水周氏族谱" in page.title(), "标签页标题带谱名", page.title())
     # 谱序弹窗：编辑堂号
-    page.locator("#btnView").click()
+    page.locator("#btnFile").click()
     page.locator("#__ctxMenu .mi", has_text="谱序").click()
     check(page.locator("#__clTang").input_value() == "申锡堂", "弹窗回填现有谱序")
     page.fill("#__clTang", "爱莲堂")
@@ -454,7 +458,7 @@ def t_shixilu_export(b):
     goto_book(page)
     # 设定世代基准13 → 谱世 23-25世，同属「第廿一世至第廿五世」表
     open_settings(page, base=13)
-    page.locator("#__setSave").click()
+    page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     with page.expect_download() as dl:
         page.evaluate("exportShixilu()")
