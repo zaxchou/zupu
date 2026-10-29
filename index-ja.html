@@ -10,22 +10,23 @@
  * 设计令牌：改配色只动这里
  * ========================================================= */
 :root{
-  --canvas-bg:#f6f8fb;
-  --grid-dot:rgba(21,50,86,.06);
-  --line:#a9b6c6;
-  --node-bg:#ffffff;
-  --node-border:#ccd6e0;
-  --accent:#3fa7dd;
-  --accent-strong:#2196d3;
-  --save:#c77e28;
-  --text:#1c2333;
-  --text-light:#69758a;
-  --danger:#d64545;
-  --rank-bg:#ef8f3f;
-  --birth-bg:#3b6ea5;
-  --root-bg:#16324f;
-  --root-fg:#ffffff;
-  --g1:#35618f; --g2:#46875c; --g3:#a3742f; --g4:#7d5382; --g5:#4f7086;
+  /* 羊皮纸（默认主题）。晴空（经典蓝）与暗色见文末 body[data-theme] 覆盖块。 */
+  --canvas-bg:#ece1c8;
+  --grid-dot:rgba(122,90,40,.12);
+  --line:#b4a382;
+  --node-bg:#f9f1de;
+  --node-border:#cdbb96;
+  --accent:#a8442e;
+  --accent-strong:#8f3524;
+  --save:#9a7428;
+  --text:#3b2f1e;
+  --text-light:#8a7a5c;
+  --danger:#a83a2e;
+  --rank-bg:#b0742f;
+  --birth-bg:#6b5a36;
+  --root-bg:#54402a;
+  --root-fg:#f7ecd7;
+  --g1:#7a6234; --g2:#6f7a44; --g3:#9c6a2f; --g4:#7d5560; --g5:#5f6f6a;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
@@ -390,8 +391,8 @@ body{
 .modal-btns{display:flex;justify-content:flex-end;margin-top:6px;}
 .modal-btns>*+*{margin-left:8px}
 .modal-btns button{
-  padding:7px 18px;border-radius:6px;border:1px solid #c3ccd8;
-  background:#fff;color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
+  padding:7px 18px;border-radius:6px;border:1px solid var(--node-border);
+  background:var(--node-bg);color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
 }
 .modal-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
 .modal-btns button:hover{filter:brightness(1.12)}
@@ -454,22 +455,34 @@ body{
 @page{size:A4 portrait;margin:12mm}
 #__uipModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__uipModal.open{display:flex}
-#__uipModal .uip-box{width:92vw;max-width:430px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__uipModal h3{font-size:14.5px;color:#1c2333;margin:0 0 12px;line-height:1.55;white-space:pre-line}
-#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
+#__uipModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uipModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
-#__textModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__textModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__textModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
 #__textModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 #__pasteModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__pasteModal.open{display:flex}
-#__pasteModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__pasteModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__pasteModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__pasteModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+/* 批量添加（v15.39） */
+#__batchModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__batchModal.open{display:flex}
+#__batchModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__batchModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__batchRel{display:flex;gap:6px;margin-bottom:10px}
+#__batchRel button{padding:5px 14px;border-radius:8px;border:1px solid var(--node-border);background:var(--node-bg);color:var(--text-light);cursor:pointer;font-family:inherit;font-size:12.5px}
+#__batchRel button.rel-on{background:var(--accent);border-color:var(--accent-strong);color:#fff;font-weight:600}
+#__batchInput{width:100%;height:96px;font-size:13px;padding:8px 10px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;background:var(--canvas-bg);color:var(--text);resize:vertical;-webkit-user-select:text;user-select:text}
+#__batchFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+#__batchHint{font-size:11px;color:var(--text-light)}
+#__batchCount{font-size:12px;color:var(--accent-strong);font-weight:700;white-space:nowrap}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
@@ -495,6 +508,7 @@ html{touch-action:manipulation}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
+  #__batchModal{align-items:flex-start;padding-top:9vh}
   .wiz-actions{flex-direction:column}
   .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
@@ -508,34 +522,51 @@ html{touch-action:manipulation}
   max-width:92vw;text-align:center}
 #__gestureHint.show{opacity:1}
 
-/* ---------- 配色主题（v15.38）：羊皮纸=默认 / 晴空=经典蓝（:root 原配色） / 暗色 ----------
-/* 导出图片 / PDF / 世系录 / 打印不跟随主题，永远保持纸面。 */
-body[data-theme="parchment"]{
-  --canvas-bg:#ece1c8; --grid-dot:rgba(122,90,40,.12); --line:#b4a382;
-  --node-bg:#f9f1de; --node-border:#cdbb96;
-  --accent:#a8442e; --accent-strong:#8f3524;
-  --save:#9a7428; --text:#3b2f1e; --text-light:#8a7a5c;
-  --danger:#a83a2e; --rank-bg:#b0742f; --birth-bg:#6b5a36;
-  --root-bg:#54402a; --root-fg:#f7ecd7;
-  --g1:#7a6234; --g2:#6f7a44; --g3:#9c6a2f; --g4:#7d5560; --g5:#5f6f6a;
-  background:#ece1c8;
-}
-body[data-theme="parchment"] .node.g0>.node-label{background:linear-gradient(160deg,#6a5136,#463321);border-color:#8a6f47;box-shadow:0 3px 12px rgba(60,40,15,.35)}
-body[data-theme="parchment"] .topbar .tag.o{background:#f2e7cd;border-color:#cdbb96;color:#6b5230}
-body[data-theme="parchment"] .modal{background:#f7efdc}
-body[data-theme="parchment"] .modal input,body[data-theme="parchment"] .modal textarea,body[data-theme="parchment"] .modal select{background:#fffdf5;border-color:#cdbb96;color:#3b2f1e}
-body[data-theme="parchment"] #__ctxMenu{background:#faf3e1;border-color:#cdbb96}
-body[data-theme="parchment"] #searchBox{background:#faf3e1;border-color:#cdbb96}
-body[data-theme="parchment"] #searchBox input{background:#fffdf5;color:#3b2f1e}
-body[data-theme="parchment"] #searchBox button{background:#efe5cd;color:#8a7a5c}
-body[data-theme="parchment"] #searchBox button:hover{background:#e6d9ba;color:#3b2f1e}
-body[data-theme="parchment"] .wiz-actions button{background:#faf3e1;border-color:#cdbb96;color:#6b5a36}
-body[data-theme="parchment"] .wiz-actions button b{color:#8f3524}
-body[data-theme="parchment"] .fold{background:#f7efdc;border-color:#8a7a5c;color:#3b2f1e}
-body[data-theme="parchment"] .node-label .heir.out{background:transparent}
-body[data-theme="parchment"] .topbar,body[data-theme="parchment"] .legend,body[data-theme="parchment"] .tips,body[data-theme="parchment"] #__toast{background:rgba(43,33,20,.82);border-color:rgba(255,236,200,.14)}
-body[data-theme="parchment"] .tips b{color:#e8c882}
+/* ---------- 配色主题（v15.38）：羊皮纸=默认（:root 即羊皮纸） / 晴空=经典蓝 / 暗色 ----------
+/* 导出图片 / PDF / 世系录 / 打印不跟随主题，永远保持纸面。羊皮纸无需属性即可生效，
+   因此零脚本、零闪烁，也不受内联脚本限制（小红书容器 CSP）。 */
+body{background:#ece1c8}
+body .node.g0>.node-label{background:linear-gradient(160deg,#6a5136,#463321);border-color:#8a6f47;box-shadow:0 3px 12px rgba(60,40,15,.35)}
+body .topbar .tag.o{background:#f2e7cd;border-color:#cdbb96;color:#6b5230}
+body .modal{background:#f7efdc}
+body .modal input,body .modal textarea,body .modal select{background:#fffdf5;border-color:#cdbb96;color:#3b2f1e}
+body #__ctxMenu{background:#faf3e1;border-color:#cdbb96}
+body #searchBox{background:#faf3e1;border-color:#cdbb96}
+body #searchBox input{background:#fffdf5;color:#3b2f1e}
+body #searchBox button{background:#efe5cd;color:#8a7a5c}
+body #searchBox button:hover{background:#e6d9ba;color:#3b2f1e}
+body .wiz-actions button{background:#faf3e1;border-color:#cdbb96;color:#6b5a36}
+body .wiz-actions button b{color:#8f3524}
+body .fold{background:#f7efdc;border-color:#8a7a5c;color:#3b2f1e}
+body .node-label .heir.out{background:transparent}
+body .topbar,body .legend,body .tips,body #__toast{background:rgba(43,33,20,.82);border-color:rgba(255,236,200,.14)}
+body .tips b{color:#e8c882}
 
+body[data-theme="sky"]{
+  --canvas-bg:#f6f8fb; --grid-dot:rgba(21,50,86,.06); --line:#a9b6c6;
+  --node-bg:#ffffff; --node-border:#ccd6e0;
+  --accent:#3fa7dd; --accent-strong:#2196d3;
+  --save:#c77e28; --text:#1c2333; --text-light:#69758a;
+  --danger:#d64545; --rank-bg:#ef8f3f; --birth-bg:#3b6ea5;
+  --root-bg:#16324f; --root-fg:#ffffff;
+  --g1:#35618f; --g2:#46875c; --g3:#a3742f; --g4:#7d5382; --g5:#4f7086;
+  background:#fff;
+}
+body[data-theme="sky"] .node.g0>.node-label{background:linear-gradient(160deg,#1d4266,#122741);border-color:#28486b;box-shadow:0 3px 12px rgba(10,25,45,.45)}
+body[data-theme="sky"] .topbar .tag.o{background:#fffdf8;border-color:rgba(93,80,60,.4);color:#16324f}
+body[data-theme="sky"] .modal{background:#f6f8fb}
+body[data-theme="sky"] .modal input,body[data-theme="sky"] .modal textarea,body[data-theme="sky"] .modal select{background:#fff;border-color:#c3ccd8;color:var(--text)}
+body[data-theme="sky"] #__ctxMenu{background:#fff;border-color:#d5dce6}
+body[data-theme="sky"] #searchBox{background:#fff;border-color:#d5dce6}
+body[data-theme="sky"] #searchBox input{background:#fff;color:var(--text)}
+body[data-theme="sky"] #searchBox button{background:#eef2f7;color:var(--text-light)}
+body[data-theme="sky"] #searchBox button:hover{background:#e0e8f0;color:var(--text)}
+body[data-theme="sky"] .wiz-actions button{background:#fff;border-color:#c3ccd8;color:var(--text-light)}
+body[data-theme="sky"] .wiz-actions button b{color:var(--root-bg)}
+body[data-theme="sky"] .fold{background:#fff;border-color:#52616f;color:var(--text)}
+body[data-theme="sky"] .node-label .heir.out{background:#fff}
+body[data-theme="sky"] .topbar,body[data-theme="sky"] .legend,body[data-theme="sky"] .tips,body[data-theme="sky"] #__toast{background:rgba(14,22,38,.72);border-color:rgba(255,255,255,.16)}
+body[data-theme="sky"] .tips b{color:#5cc3f2}
 body[data-theme="dark"]{
   --canvas-bg:#12161f; --grid-dot:rgba(130,170,220,.08); --line:#3d4a5e;
   --node-bg:#1b2334; --node-border:#33405a;
@@ -573,7 +604,6 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 </style>
 </head>
 <body>
-<script>try{var _c=JSON.parse(localStorage.getItem('zupu_cfg_v1')||'{}');document.body.dataset.theme=({parchment:1,dark:1,sky:1}[_c.theme]?_c.theme:'parchment');}catch(e){document.body.dataset.theme='parchment';}</script>
 
 <!-- =========================================================
   数据真源（Single Source of Truth）：本文件内嵌的 JSON。
@@ -822,6 +852,15 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3>バックアップ json を貼り付けて復元</h3>
     <textarea id="__pasteArea" style="-webkit-user-select:text;user-select:text"></textarea>
     <div class="modal-btns"><button id="__pasteCancel">キャンセル</button><button class="primary" id="__pasteOk">导入</button></div>
+  </div>
+</div>
+<div id="__batchModal">
+  <div class="uip-box">
+    <h3 id="__batchTitle">一括追加</h3>
+    <div id="__batchRel"><button type="button" data-rel="child" class="rel-on">子</button><button type="button" data-rel="sibling">兄弟姉妹</button></div>
+    <textarea id="__batchInput" rows="4" placeholder="1 行に 1 名。カンマ・読点区切りも可"></textarea>
+    <div id="__batchFoot"><span id="__batchHint">カンマ・読点・改行で区切り · 先に入力した人が年長</span><span id="__batchCount">追加する人数：0</span></div>
+    <div class="modal-btns"><button id="__batchCancel">キャンセル</button><button class="primary" id="__batchOk">追加</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">このブラウザに自動保存されました。編集は即保存</div>
@@ -1954,10 +1993,12 @@ function buildMenuItems(n){
   ctxMenu.innerHTML = '';
   if (n.id === 'root'){
     ctxMenu.appendChild(mi('＋ 第一世代', '', '', () => addChild(n)));
+    ctxMenu.appendChild(mi('一括追加…', '', '', () => openBatchAdd(n)));
   } else {
     ctxMenu.appendChild(mi('＋ 配偶者', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 兄弟姉妹', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(mi('一括追加…', '', '', () => openBatchAdd(n)));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('名前変更', '', 'F2', () => editName(n)));
     ctxMenu.appendChild(mi('人物情報', '', 'Ctrl+I', () => editDetails(n)));
@@ -2323,6 +2364,66 @@ function addSibling(n){
   });
 }
 
+/* ---------- 批量添加（v15.39）：同一直系下同一辈分，一次加多人；整批一次撤销 ---------- */
+let _batchNode = null;
+let _batchRel = 'child';
+function openBatchAdd(n){
+  _batchNode = n;
+  _batchRel = 'child';
+  const isRoot = n.id === 'root';
+  document.getElementById('__batchRel').style.display = isRoot ? 'none' : 'flex';
+  document.getElementById('__batchTitle').textContent = isRoot
+    ? '一括追加 · 「' + n.name + '」の第一世代に追加'
+    : '一括追加 · 「' + n.name + '」に追加（先頭=年長）';
+  document.getElementById('__batchInput').value = '';
+  updateBatchCount();
+  document.getElementById('__batchModal').classList.add('open');
+  setTimeout(function(){ try { document.getElementById('__batchInput').focus(); } catch(e){} }, 80);
+}
+function closeBatchAdd(){ document.getElementById('__batchModal').classList.remove('open'); }
+function batchNames(){
+  return document.getElementById('__batchInput').value
+    .split(/[，,、;；\n]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+}
+function updateBatchCount(){
+  document.getElementById('__batchCount').textContent = '追加する人数：' + batchNames().length;
+}
+document.getElementById('__batchInput').addEventListener('input', updateBatchCount);
+document.getElementById('__batchInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ e.stopPropagation(); closeBatchAdd(); }
+});
+document.getElementById('__batchCancel').onclick = closeBatchAdd;
+document.querySelectorAll('#__batchRel button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    _batchRel = btn.dataset.rel;
+    document.querySelectorAll('#__batchRel button').forEach(function(b){ b.classList.toggle('rel-on', b === btn); });
+  });
+});
+document.getElementById('__batchOk').onclick = function(){
+  const names = batchNames();
+  if (!names.length || !_batchNode) return;
+  const n = _batchNode;
+  const asSibling = _batchRel === 'sibling' && n.id !== 'root';
+  const parent = asSibling ? findParent(n.id) : n;
+  if (!parent) return;
+  pushHistory('batchAdd:' + n.id);
+  if (!parent.children) parent.children = [];
+  parent.expanded = true;
+  let first = null;
+  names.forEach(function(t){
+    const b = { id: genId(asSibling ? 's' : 'c'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
+    parent.children.push(b);
+    if (!first) first = b.id;
+  });
+  render();
+  selectNode(first);
+  closeBatchAdd();
+  const what = asSibling ? (parent.id === 'root' ? '第一世代メンバー' : '兄弟姉妹') : '子';
+  toast('「' + parent.name + '」に ' + names.length + ' 人（' + what + '）を追加しました（Ctrl+Z で一括取り消し）');
+};
+document.getElementById('__batchModal').addEventListener('mousedown', function(e){
+  if (e.target.id === '__batchModal') closeBatchAdd();
+});
 function toggleExpand(n){
   pushHistory('fold:' + n.id);
   n.expanded = !n.expanded;

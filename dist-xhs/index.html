@@ -391,8 +391,8 @@ body{
 .modal-btns{display:flex;justify-content:flex-end;margin-top:6px;}
 .modal-btns>*+*{margin-left:8px}
 .modal-btns button{
-  padding:7px 18px;border-radius:6px;border:1px solid #c3ccd8;
-  background:#fff;color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
+  padding:7px 18px;border-radius:6px;border:1px solid var(--node-border);
+  background:var(--node-bg);color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
 }
 .modal-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
 .modal-btns button:hover{filter:brightness(1.12)}
@@ -455,22 +455,34 @@ body{
 @page{size:A4 portrait;margin:12mm}
 #__uipModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__uipModal.open{display:flex}
-#__uipModal .uip-box{width:92vw;max-width:430px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__uipModal h3{font-size:14.5px;color:#1c2333;margin:0 0 12px;line-height:1.55;white-space:pre-line}
-#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
+#__uipModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uipModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
-#__textModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__textModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__textModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
 #__textModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 #__pasteModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__pasteModal.open{display:flex}
-#__pasteModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__pasteModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__pasteModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__pasteModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+/* 批量添加（v15.39） */
+#__batchModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__batchModal.open{display:flex}
+#__batchModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__batchModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__batchRel{display:flex;gap:6px;margin-bottom:10px}
+#__batchRel button{padding:5px 14px;border-radius:8px;border:1px solid var(--node-border);background:var(--node-bg);color:var(--text-light);cursor:pointer;font-family:inherit;font-size:12.5px}
+#__batchRel button.rel-on{background:var(--accent);border-color:var(--accent-strong);color:#fff;font-weight:600}
+#__batchInput{width:100%;height:96px;font-size:13px;padding:8px 10px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;background:var(--canvas-bg);color:var(--text);resize:vertical;-webkit-user-select:text;user-select:text}
+#__batchFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+#__batchHint{font-size:11px;color:var(--text-light)}
+#__batchCount{font-size:12px;color:var(--accent-strong);font-weight:700;white-space:nowrap}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
@@ -496,6 +508,7 @@ html{touch-action:manipulation}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
+  #__batchModal{align-items:flex-start;padding-top:9vh}
   .wiz-actions{flex-direction:column}
   .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
@@ -678,6 +691,15 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3>粘贴备份 json 导入</h3>
     <textarea id="__pasteArea" style="-webkit-user-select:text;user-select:text"></textarea>
     <div class="modal-btns"><button id="__pasteCancel">取消</button><button class="primary" id="__pasteOk">导入</button></div>
+  </div>
+</div>
+<div id="__batchModal">
+  <div class="uip-box">
+    <h3 id="__batchTitle">批量添加</h3>
+    <div id="__batchRel"><button type="button" data-rel="child" class="rel-on">子女</button><button type="button" data-rel="sibling">同辈</button></div>
+    <textarea id="__batchInput" rows="4" placeholder="每行一个名字；也可用逗号、顿号分隔"></textarea>
+    <div id="__batchFoot"><span id="__batchHint">支持逗号 / 顿号 / 换行分隔 · 先输入=年长</span><span id="__batchCount">将添加 0 人</span></div>
+    <div class="modal-btns"><button id="__batchCancel">取消</button><button class="primary" id="__batchOk">添加</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自动保存在本浏览器，编辑即保存</div>

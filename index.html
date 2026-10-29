@@ -391,8 +391,8 @@ body{
 .modal-btns{display:flex;justify-content:flex-end;margin-top:6px;}
 .modal-btns>*+*{margin-left:8px}
 .modal-btns button{
-  padding:7px 18px;border-radius:6px;border:1px solid #c3ccd8;
-  background:#fff;color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
+  padding:7px 18px;border-radius:6px;border:1px solid var(--node-border);
+  background:var(--node-bg);color:var(--text-light);font-size:13px;cursor:pointer;font-family:inherit;
 }
 .modal-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
 .modal-btns button:hover{filter:brightness(1.12)}
@@ -455,22 +455,34 @@ body{
 @page{size:A4 portrait;margin:12mm}
 #__uipModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__uipModal.open{display:flex}
-#__uipModal .uip-box{width:92vw;max-width:430px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__uipModal h3{font-size:14.5px;color:#1c2333;margin:0 0 12px;line-height:1.55;white-space:pre-line}
-#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
+#__uipModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uipModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
-#__textModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__textModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__textModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__textArea{width:100%;height:46vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
 #__textModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 #__pasteModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__pasteModal.open{display:flex}
-#__pasteModal .uip-box{width:92vw;max-width:520px;background:#fff;border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
-#__pasteModal h3{font-size:14.5px;color:#1c2333;margin:0 0 10px;line-height:1.5}
-#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid #ccd6e0;border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+#__pasteModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__pasteModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px;line-height:1.5}
+#__pasteArea{width:100%;height:40vh;font-size:12px;padding:10px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;-webkit-user-select:text;user-select:text}
+/* 批量添加（v15.39） */
+#__batchModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__batchModal.open{display:flex}
+#__batchModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__batchModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__batchRel{display:flex;gap:6px;margin-bottom:10px}
+#__batchRel button{padding:5px 14px;border-radius:8px;border:1px solid var(--node-border);background:var(--node-bg);color:var(--text-light);cursor:pointer;font-family:inherit;font-size:12.5px}
+#__batchRel button.rel-on{background:var(--accent);border-color:var(--accent-strong);color:#fff;font-weight:600}
+#__batchInput{width:100%;height:96px;font-size:13px;padding:8px 10px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;background:var(--canvas-bg);color:var(--text);resize:vertical;-webkit-user-select:text;user-select:text}
+#__batchFoot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+#__batchHint{font-size:11px;color:var(--text-light)}
+#__batchCount{font-size:12px;color:var(--accent-strong);font-weight:700;white-space:nowrap}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
 html{touch-action:manipulation}
@@ -496,6 +508,7 @@ html{touch-action:manipulation}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
+  #__batchModal{align-items:flex-start;padding-top:9vh}
   .wiz-actions{flex-direction:column}
   .wiz-actions>*+*{margin-left:0;margin-top:10px}   /* 列方向必须翻转行距，否则第二个按钮被 margin-left 推右溢出 */
   .wiz-actions [data-wiz]{width:100%}
@@ -839,6 +852,15 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3>粘贴备份 json 导入</h3>
     <textarea id="__pasteArea" style="-webkit-user-select:text;user-select:text"></textarea>
     <div class="modal-btns"><button id="__pasteCancel">取消</button><button class="primary" id="__pasteOk">导入</button></div>
+  </div>
+</div>
+<div id="__batchModal">
+  <div class="uip-box">
+    <h3 id="__batchTitle">批量添加</h3>
+    <div id="__batchRel"><button type="button" data-rel="child" class="rel-on">子女</button><button type="button" data-rel="sibling">同辈</button></div>
+    <textarea id="__batchInput" rows="4" placeholder="每行一个名字；也可用逗号、顿号分隔"></textarea>
+    <div id="__batchFoot"><span id="__batchHint">支持逗号 / 顿号 / 换行分隔 · 先输入=年长</span><span id="__batchCount">将添加 0 人</span></div>
+    <div class="modal-btns"><button id="__batchCancel">取消</button><button class="primary" id="__batchOk">添加</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自动保存在本浏览器，编辑即保存</div>
@@ -1971,10 +1993,12 @@ function buildMenuItems(n){
   ctxMenu.innerHTML = '';
   if (n.id === 'root'){
     ctxMenu.appendChild(mi('＋ 第一代', '', '', () => addChild(n)));
+    ctxMenu.appendChild(mi('批量添加…', '', '', () => openBatchAdd(n)));
   } else {
     ctxMenu.appendChild(mi('＋ 配偶', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子女', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 同辈', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(mi('批量添加…', '', '', () => openBatchAdd(n)));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('改名', '', 'F2', () => editName(n)));
     ctxMenu.appendChild(mi('档案', '', 'Ctrl+I', () => editDetails(n)));
@@ -2340,6 +2364,66 @@ function addSibling(n){
   });
 }
 
+/* ---------- 批量添加（v15.39）：同一直系下同一辈分，一次加多人；整批一次撤销 ---------- */
+let _batchNode = null;
+let _batchRel = 'child';
+function openBatchAdd(n){
+  _batchNode = n;
+  _batchRel = 'child';
+  const isRoot = n.id === 'root';
+  document.getElementById('__batchRel').style.display = isRoot ? 'none' : 'flex';
+  document.getElementById('__batchTitle').textContent = isRoot
+    ? '批量添加 · 在「' + n.name + '」下添加第一代成员'
+    : '批量添加 · 为「' + n.name + '」添加（先输入=年长）';
+  document.getElementById('__batchInput').value = '';
+  updateBatchCount();
+  document.getElementById('__batchModal').classList.add('open');
+  setTimeout(function(){ try { document.getElementById('__batchInput').focus(); } catch(e){} }, 80);
+}
+function closeBatchAdd(){ document.getElementById('__batchModal').classList.remove('open'); }
+function batchNames(){
+  return document.getElementById('__batchInput').value
+    .split(/[，,、;；\n]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+}
+function updateBatchCount(){
+  document.getElementById('__batchCount').textContent = '将添加 ' + batchNames().length + ' 人';
+}
+document.getElementById('__batchInput').addEventListener('input', updateBatchCount);
+document.getElementById('__batchInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ e.stopPropagation(); closeBatchAdd(); }
+});
+document.getElementById('__batchCancel').onclick = closeBatchAdd;
+document.querySelectorAll('#__batchRel button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    _batchRel = btn.dataset.rel;
+    document.querySelectorAll('#__batchRel button').forEach(function(b){ b.classList.toggle('rel-on', b === btn); });
+  });
+});
+document.getElementById('__batchOk').onclick = function(){
+  const names = batchNames();
+  if (!names.length || !_batchNode) return;
+  const n = _batchNode;
+  const asSibling = _batchRel === 'sibling' && n.id !== 'root';
+  const parent = asSibling ? findParent(n.id) : n;
+  if (!parent) return;
+  pushHistory('batchAdd:' + n.id);
+  if (!parent.children) parent.children = [];
+  parent.expanded = true;
+  let first = null;
+  names.forEach(function(t){
+    const b = { id: genId(asSibling ? 's' : 'c'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
+    parent.children.push(b);
+    if (!first) first = b.id;
+  });
+  render();
+  selectNode(first);
+  closeBatchAdd();
+  const what = asSibling ? (parent.id === 'root' ? '第一代成员' : '同辈') : '子女';
+  toast('已为「' + parent.name + '」添加 ' + names.length + ' 位' + what + '（Ctrl+Z 可整批撤销）');
+};
+document.getElementById('__batchModal').addEventListener('mousedown', function(e){
+  if (e.target.id === '__batchModal') closeBatchAdd();
+});
 function toggleExpand(n){
   pushHistory('fold:' + n.id);
   n.expanded = !n.expanded;

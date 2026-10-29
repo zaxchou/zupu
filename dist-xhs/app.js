@@ -990,10 +990,12 @@ function buildMenuItems(n){
   ctxMenu.innerHTML = '';
   if (n.id === 'root'){
     ctxMenu.appendChild(mi('＋ 第一代', '', '', () => addChild(n)));
+    ctxMenu.appendChild(mi('批量添加…', '', '', () => openBatchAdd(n)));
   } else {
     ctxMenu.appendChild(mi('＋ 配偶', '', 'Ctrl+Shift+S', () => addSpouse(n)));
     ctxMenu.appendChild(mi('＋ 子女', '', 'Tab', () => addChild(n)));
     ctxMenu.appendChild(mi('＋ 同辈', '', 'Enter', () => addSibling(n)));
+    ctxMenu.appendChild(mi('批量添加…', '', '', () => openBatchAdd(n)));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('改名', '', 'F2', () => editName(n)));
     ctxMenu.appendChild(mi('档案', '', 'Ctrl+I', () => editDetails(n)));
@@ -1359,6 +1361,66 @@ function addSibling(n){
   });
 }
 
+/* ---------- 批量添加（v15.39）：同一直系下同一辈分，一次加多人；整批一次撤销 ---------- */
+let _batchNode = null;
+let _batchRel = 'child';
+function openBatchAdd(n){
+  _batchNode = n;
+  _batchRel = 'child';
+  const isRoot = n.id === 'root';
+  document.getElementById('__batchRel').style.display = isRoot ? 'none' : 'flex';
+  document.getElementById('__batchTitle').textContent = isRoot
+    ? '批量添加 · 在「' + n.name + '」下添加第一代成员'
+    : '批量添加 · 为「' + n.name + '」添加（先输入=年长）';
+  document.getElementById('__batchInput').value = '';
+  updateBatchCount();
+  document.getElementById('__batchModal').classList.add('open');
+  setTimeout(function(){ try { document.getElementById('__batchInput').focus(); } catch(e){} }, 80);
+}
+function closeBatchAdd(){ document.getElementById('__batchModal').classList.remove('open'); }
+function batchNames(){
+  return document.getElementById('__batchInput').value
+    .split(/[，,、;；\n]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+}
+function updateBatchCount(){
+  document.getElementById('__batchCount').textContent = '将添加 ' + batchNames().length + ' 人';
+}
+document.getElementById('__batchInput').addEventListener('input', updateBatchCount);
+document.getElementById('__batchInput').addEventListener('keydown', function(e){
+  if (e.key === 'Escape'){ e.stopPropagation(); closeBatchAdd(); }
+});
+document.getElementById('__batchCancel').onclick = closeBatchAdd;
+document.querySelectorAll('#__batchRel button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    _batchRel = btn.dataset.rel;
+    document.querySelectorAll('#__batchRel button').forEach(function(b){ b.classList.toggle('rel-on', b === btn); });
+  });
+});
+document.getElementById('__batchOk').onclick = function(){
+  const names = batchNames();
+  if (!names.length || !_batchNode) return;
+  const n = _batchNode;
+  const asSibling = _batchRel === 'sibling' && n.id !== 'root';
+  const parent = asSibling ? findParent(n.id) : n;
+  if (!parent) return;
+  pushHistory('batchAdd:' + n.id);
+  if (!parent.children) parent.children = [];
+  parent.expanded = true;
+  let first = null;
+  names.forEach(function(t){
+    const b = { id: genId(asSibling ? 's' : 'c'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [] };
+    parent.children.push(b);
+    if (!first) first = b.id;
+  });
+  render();
+  selectNode(first);
+  closeBatchAdd();
+  const what = asSibling ? (parent.id === 'root' ? '第一代成员' : '同辈') : '子女';
+  toast('已为「' + parent.name + '」添加 ' + names.length + ' 位' + what + '（Ctrl+Z 可整批撤销）');
+};
+document.getElementById('__batchModal').addEventListener('mousedown', function(e){
+  if (e.target.id === '__batchModal') closeBatchAdd();
+});
 function toggleExpand(n){
   pushHistory('fold:' + n.id);
   n.expanded = !n.expanded;
