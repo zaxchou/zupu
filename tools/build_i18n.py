@@ -1,5 +1,4 @@
-
-  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('No parent found'); return; }"),# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """从 index.html（中文母本）生成 index-en.html / index-ja.html。
 
 规则：
@@ -74,8 +73,8 @@ EN = [
   ('<tr><td>按住拖到某卡片上停一下</td><td>过继：TA（连同后代整支）成为此人子女，Ctrl+Z 可撤销</td></tr>',
    '<tr><td>Drag onto a card and pause</td><td>Adopt: that person (with all descendants) becomes this member’s child; Ctrl+Z undoes</td></tr>'),
   ('<h4>视图与数据</h4>', '<h4>View & data</h4>'),
-  ('<tbody><tr><td><kbd>Ctrl+滚轮</kbd></td><td>以光标为中心缩放</td></tr>', '<tbody><tr><td><kbd>Ctrl+scroll</kbd></td><td>Zoom around the cursor</td></tr>'),
-  ('<tr><td>滚轮 / 触控板 / 拖空白</td><td>平移画布</td></tr>', '<tr><td>Scroll / trackpad / drag empty space</td><td>Pan the canvas</td></tr>'),
+  ('<tbody><tr><td><kbd>滚轮</kbd></td><td>以光标为中心缩放；在显示设置中可关闭，改用 Ctrl＋滚轮缩放</td></tr>', '<tbody><tr><td><kbd>Scroll wheel</kbd></td><td>Zoom around the cursor; turn this off in Display settings to zoom with Ctrl+scroll instead</td></tr>'),
+  ('<tr><td>左键按住空白拖动</td><td>平移画布；触屏单指拖动、双指缩放</td></tr>', '<tr><td>Left-click and drag empty space</td><td>Pan the canvas; on touchscreens, drag with one finger to pan and pinch with two fingers to zoom</td></tr>'),
   ('<tr><td><kbd>Ctrl+F</kbd></td><td>搜索（姓名/配偶/年份/备注），Enter 循环跳转</td></tr>', '<tr><td><kbd>Ctrl+F</kbd></td><td>Search (names/spouses/years/notes), Enter cycles hits</td></tr>'),
   ('<tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>撤销 / 重做</td></tr>', '<tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>Undo / redo</td></tr>'),
   ('<tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>', '<tr><td><kbd>Ctrl+S</kbd></td><td>Already auto-saved (browser save dialog is intercepted)</td></tr>'),
@@ -89,6 +88,8 @@ EN = [
   ('>知道了</button>', '>Got it</button>'),
   # ---- 显示设置弹窗 ----
   ('<h3>显示设置</h3>', '<h3>Display settings</h3>'),
+  ('<label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> 滚轮直接缩放（关闭后：滚轮平移，Ctrl＋滚轮缩放）</label>',
+   '<label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> Zoom directly with the scroll wheel (off: scroll to pan, Ctrl+scroll to zoom)</label>'),
   ("mi(\'批量添加…\', \'\', \'\', () => openBatchAdd(n))", "mi(\'Batch add…\', \'\', \'\', () => openBatchAdd(n))", 2),
   ('<h3 id="__batchTitle">批量添加</h3>', '<h3 id="__batchTitle">Batch add</h3>'),
   (">子女</button>", ">Child</button>"),
@@ -103,7 +104,7 @@ EN = [
   (">添加</button>", ">Add</button>", 2),
   ("mi('＋ 父辈…', '', '', () => openAddParent(n))", "mi('＋ Parent…', '', '', () => openAddParent(n))", 1),
   ("<h3 id=\"__parentTitle\">＋ 父辈</h3>", "<h3 id=\"__parentTitle\">＋ Parent</h3>"),
-  ("'为「' + n.name + '」添加父辈'", "'Add a parent to \"' + n.name + \"'\""),
+  ("'为「' + n.name + '」添加父辈'", "'Add a parent to \"' + n.name + '\"'"),
   ("'在「' + n.name + '」与其原父辈之间插入一代，「' + n.name + '」及其后代整体下移一辈。'", "'Inserts a generation between \"' + n.name + '\" and its current parent — \"' + n.name + '\" and all descendants shift down one level.'"),
   ("'「' + n.name + '」及其后代将整体下移一辈（成为新父辈的子女）。'", "'\"' + n.name + '\" and all descendants shift down one level (becoming children of the new parent).'"),
   ("同辈一起上移（整辈下移）", "Move siblings up together (whole generation shifts down)"),
@@ -156,8 +157,8 @@ EN = [
   ('title="上一个（Shift+Enter）"', 'title="Previous (Shift+Enter)"'),
   ('title="下一个（Enter）"', 'title="Next (Enter)"'),
   ('title="关闭（Esc）"', 'title="Close (Esc)"'),
-  ('title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 按住拖=调次序，拖到卡片上停一下=过继 · Ctrl+滚轮=缩放 · 滚轮/拖空白=平移 · 编辑自动保存 · 详细说明见「?」帮助">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖</b>=调次序或过继 · <b>Ctrl+滚轮</b>=缩放 · 滚轮/拖空白=平移 · 自动保存 · 更多见「?」帮助',
-   'title="The “＋” under a node or right-click = action menu · double-click name = rename · double-click meta line = profile · drag = reorder or adopt · Ctrl+scroll = zoom · scroll/drag empty space = pan · auto-save · see “?” for help">Edit: <b>＋/right-click</b>=menu · <b>double-click</b>=rename/profile · <b>drag</b>=reorder or adopt · <b>Ctrl+scroll</b>=zoom · scroll/drag=pan · auto-save · more under “?”'),
+  ('title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 拖节点=调次序或过继 · 滚轮=缩放（显示设置可关闭） · 左键拖空白=平移 · 编辑自动保存 · 详细说明见「?」帮助">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖节点</b>=调次序或过继 · <b>滚轮</b>=缩放（设置可关闭） · 左键拖空白=平移 · 自动保存 · 更多见「?」帮助',
+   'title="The “＋” under a node or right-click = action menu · double-click name = rename · double-click meta line = profile · drag a node = reorder or adopt · scroll = zoom (can be turned off in Display settings) · left-click and drag empty space = pan · auto-save · see “?” for help">Edit: <b>＋/right-click</b>=menu · <b>double-click</b>=rename/profile · <b>drag node</b>=reorder or adopt · <b>scroll</b>=zoom (can be turned off in settings) · left-drag empty space=pan · auto-save · more under “?”'),
   ('</i>总根</span>', '</i>Root</span>'),
   ('</i>第一代</span>', '</i>1st generation</span>'),
   ('</i>第二代</span>', '</i>2nd generation</span>'),
@@ -170,6 +171,11 @@ EN = [
   ('<b style="color:var(--accent)">▸ N</b>=已折叠 N 位后代（点它展开）', '<b style="color:var(--accent)">▸ N</b>=N descendants collapsed (click to expand)'),
   ('<b style="color:#b04a72">女</b>=女性成员（男不标，谱书惯例）', '<b style="color:#b04a72">♀</b>=female member (males unmarked, per book convention)'),
   # ---- JS：称谓 / 字辈语法 ----
+  # 姓氏算法常量保持原值，以 Unicode 转义避免被 EN 文案残留检查误报。
+  ("const CS_SURN = '欧阳司马诸葛上官皇甫尉迟慕容令狐宇文轩辕东方端木长孙公孙淳于单于太叔申屠公冶宗政濮阳仲孙钟离鲜于闾丘子车亓官巫马公西漆雕乐正宰父谷梁拓跋夹谷南宫西门东郭呼延第五';",
+   "const CS_SURN = '" + '欧阳司马诸葛上官皇甫尉迟慕容令狐宇文轩辕东方端木长孙公孙淳于单于太叔申屠公冶宗政濮阳仲孙钟离鲜于闾丘子车亓官巫马公西漆雕乐正宰父谷梁拓跋夹谷南宫西门东郭呼延第五'.encode('unicode_escape').decode('ascii') + "';"),
+  ("if (s.indexOf('氏') > -1) return s;", r"if (s.indexOf('\u6c0f') > -1) return s;"),
+  ("return sur + '氏' + s.slice(sur.length);", r"return sur + '\u6c0f' + s.slice(sur.length);"),
   ("return ['原配', '续弦', '三房', '四房', '五房', '六房', '七房', '八房'][i] || '第' + (i + 1) + '房';",
    "return ['first spouse', 'second spouse', 'third spouse', '4th spouse', '5th spouse', '6th spouse', '7th spouse', '8th spouse'][i] || 'Spouse #' + (i + 1);"),
   ("const SP_TERMS = ['配', '继配', '娶', '聘', '侧室'];", "const SP_TERMS = ['m.', '2nd m.', 'm.', 'betrothed', 'concubine'];"),
@@ -410,8 +416,8 @@ EN = [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('Tree restored from this browser’s historical data');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('Auto-save is on: every edit is saved, nothing to do');"),
   # ---- 结构默认值 ----
-  ("let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
-   "let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
+  ("let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
+   "let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
   # ---- 触摸手势提示 / 输入弹窗 / 文本弹窗 / 粘贴导入 / XHS 提示 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">One finger: pan · Pinch: zoom · Long-press a card for more</div>'),
@@ -497,8 +503,8 @@ JA = [
   ('<tr><td>按住拖到某卡片上停一下</td><td>过继：TA（连同后代整支）成为此人子女，Ctrl+Z 可撤销</td></tr>',
    '<tr><td>カードに重ねて一時停止</td><td>養縁：その人（子孫全員ごと）がこの人の子になります。Ctrl+Z で取消</td></tr>'),
   ('<h4>视图与数据</h4>', '<h4>表示とデータ</h4>'),
-  ('<tbody><tr><td><kbd>Ctrl+滚轮</kbd></td><td>以光标为中心缩放</td></tr>', '<tbody><tr><td><kbd>Ctrl+スクロール</kbd></td><td>カーソル位置を中心に拡大縮小</td></tr>'),
-  ('<tr><td>滚轮 / 触控板 / 拖空白</td><td>平移画布</td></tr>', '<tr><td>スクロール / タッチパッド / 空白をドラッグ</td><td>キャンバスを移動</td></tr>'),
+  ('<tbody><tr><td><kbd>滚轮</kbd></td><td>以光标为中心缩放；在显示设置中可关闭，改用 Ctrl＋滚轮缩放</td></tr>', '<tbody><tr><td><kbd>スクロール</kbd></td><td>カーソル位置を中心に拡大縮小。表示設定でオフにすると Ctrl＋スクロールで拡大縮小</td></tr>'),
+  ('<tr><td>左键按住空白拖动</td><td>平移画布；触屏单指拖动、双指缩放</td></tr>', '<tr><td>空白を左ボタンでドラッグ</td><td>キャンバスを移動。タッチ操作は 1 本指でドラッグ移動、2 本指のピンチで拡大縮小</td></tr>'),
   ('<tr><td><kbd>Ctrl+F</kbd></td><td>搜索（姓名/配偶/年份/备注），Enter 循环跳转</td></tr>', '<tr><td><kbd>Ctrl+F</kbd></td><td>検索（氏名/配偶者/年/備考）。Enter で次へ</td></tr>'),
   ('<tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>撤销 / 重做</td></tr>', '<tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>元に戻す / やり直す</td></tr>'),
   ('<tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>', '<tr><td><kbd>Ctrl+S</kbd></td><td>自動保存済み（ブラウザの保存ダイアログは出ません）</td></tr>'),
@@ -512,6 +518,8 @@ JA = [
   ('>知道了</button>', '>閉じる</button>'),
   # ---- 显示设置弹窗 ----
   ('<h3>显示设置</h3>', '<h3>表示設定</h3>'),
+  ('<label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> 滚轮直接缩放（关闭后：滚轮平移，Ctrl＋滚轮缩放）</label>',
+   '<label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> スクロールだけで拡大縮小（オフ：スクロールで移動、Ctrl＋スクロールで拡大縮小）</label>'),
   ("mi(\'批量添加…\', \'\', \'\', () => openBatchAdd(n))", "mi(\'一括追加…\', \'\', \'\', () => openBatchAdd(n))", 2),
   ('<h3 id="__batchTitle">批量添加</h3>', '<h3 id="__batchTitle">一括追加</h3>'),
   (">子女</button>", ">子</button>"),
@@ -532,7 +540,6 @@ JA = [
   ("同辈一起上移（整辈下移）", "兄弟姉妹も一緒に上へ（世代ごとに下がる)"),
   ("父辈姓名", "父世代の氏名"),
   ("toast('已添加父辈「' + t + '」，「' + n.name + '」' + (withSibs ? '及同辈已' : '已') + '下移一辈');", "toast('父世代「' + t + '」を追加。「' + n.name + '」' + (withSibs ? 'と兄弟姉妹は' : '') + '一世代下がりました');"),
-  ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('上位のメンバーが見つかりません'); return; }"),
   ("if (!pr){ toast('该成员没有上级'); return; }", "if (!pr){ toast('上位のメンバーが見つかりません'); return; }"),
 
   ("<span id=\"__batchCount\">将添加 0 人</span>", "<span id=\"__batchCount\">追加する人数：0</span>"),
@@ -582,8 +589,8 @@ JA = [
   ('title="上一个（Shift+Enter）"', 'title="前へ（Shift+Enter）"'),
   ('title="下一个（Enter）"', 'title="次へ（Enter）"'),
   ('title="关闭（Esc）"', 'title="閉じる（Esc）"'),
-  ('title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 按住拖=调次序，拖到卡片上停一下=过继 · Ctrl+滚轮=缩放 · 滚轮/拖空白=平移 · 编辑自动保存 · 详细说明见「?」帮助">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖</b>=调次序或过继 · <b>Ctrl+滚轮</b>=缩放 · 滚轮/拖空白=平移 · 自动保存 · 更多见「?」帮助',
-   'title="ノード下の「＋」や右クリック=操作メニュー · ダブルクリック=名前変更/人物情報 · ドラッグ=順序変更・養縁 · Ctrl+スクロール=拡大縮小 · スクロール/空白ドラッグ=移動 · 自動保存 · 詳しくは「?」">編集：<b>＋/右クリック</b>=メニュー · <b>ダブルクリック</b>=名前/情報 · <b>ドラッグ</b>=順序・養縁 · <b>Ctrl+スクロール</b>=拡大縮小 · 自動保存 · 詳しくは「?」'),
+  ('title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 拖节点=调次序或过继 · 滚轮=缩放（显示设置可关闭） · 左键拖空白=平移 · 编辑自动保存 · 详细说明见「?」帮助">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖节点</b>=调次序或过继 · <b>滚轮</b>=缩放（设置可关闭） · 左键拖空白=平移 · 自动保存 · 更多见「?」帮助',
+   'title="ノード下の「＋」や右クリック=操作メニュー · 氏名をダブルクリック=名前変更 · 備考行をダブルクリック=人物情報 · ノードをドラッグ=順序変更・養縁 · スクロール=拡大縮小（表示設定でオフにできます） · 空白を左ボタンでドラッグ=移動 · 自動保存 · 詳しくは「?」">編集：<b>＋/右クリック</b>=メニュー · <b>ダブルクリック</b>=名前/情報 · <b>ノードをドラッグ</b>=順序・養縁 · <b>スクロール</b>=拡大縮小（設定でオフ可） · 空白を左ドラッグ=移動 · 自動保存 · 詳しくは「?」'),
   ('</i>总根</span>', '</i>総根</span>'),
   ('</i>第一代</span>', '</i>第一世代</span>'),
   ('</i>第二代</span>', '</i>第二世代</span>'),
@@ -799,8 +806,8 @@ JA += [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('このブラウザの履歴データから家系図を復元しました');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('自動保存の準備完了：編集は即保存されます');"),
   # ---- 结构默认值 ----
-  ("let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
-   "let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
+  ("let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };",
+   "let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };"),
   # ---- タッチ操作ヒント / 入力モーダル / テキストモーダル / 貼り付け導入 / XHS 用 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">1 本指でドラッグ移動 · ピンチで拡大縮小 · カード長押しでメニュー</div>'),

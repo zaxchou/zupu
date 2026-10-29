@@ -97,8 +97,9 @@ body{
   cursor:grab;
 }
 .viewport::-webkit-scrollbar{display:none}
-.viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:76px;left:0}
+.viewport.panning{cursor:grabbing;user-select:none;-webkit-user-select:none}
+#plane{position:absolute;left:0;top:0}
+#stage{position:absolute;left:2400px;top:2400px}
 #scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
@@ -499,7 +500,6 @@ html{touch-action:manipulation}
   .tips,.legend{display:none}
   /* 全屏画布 + 悬浮工具栏：画布铺满整屏，工具层浮在画布之上 */
   .topbar{top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));left:8px;right:8px;min-height:0;padding:6px 10px}
-  #stage{top:120px}   /* 移动端工具栏三行更高：整棵树再下移 */
   .topbar .btn{padding:8px 10px}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
@@ -875,7 +875,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="uip-box">
     <h3 id="__parentTitle">＋ 親世代</h3>
     <p id="__parentHint" style="font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6"></p>
-    <label class="checkline"><input type="checkbox" id="__parentSibs"> 兄弟姉妹も一緒に上へ（世代ごとに下がる)</label>
+    <label class="checkline" style="color:var(--text)"><input type="checkbox" id="__parentSibs"> 兄弟姉妹も一緒に上へ（世代ごとに下がる)</label>
     <input id="__parentInput" autocomplete="off" placeholder="父世代の氏名">
     <div class="modal-btns"><button id="__parentCancel">キャンセル</button><button class="primary" id="__parentOk">追加</button></div>
   </div>
@@ -907,8 +907,8 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     </tbody></table>
     <h4>表示とデータ</h4>
     <table class="hk-table">
-      <tbody><tr><td><kbd>Ctrl+スクロール</kbd></td><td>カーソル位置を中心に拡大縮小</td></tr>
-      <tr><td>スクロール / タッチパッド / 空白をドラッグ</td><td>キャンバスを移動</td></tr>
+      <tbody><tr><td><kbd>スクロール</kbd></td><td>カーソル位置を中心に拡大縮小。表示設定でオフにすると Ctrl＋スクロールで拡大縮小</td></tr>
+      <tr><td>空白を左ボタンでドラッグ</td><td>キャンバスを移動。タッチ操作は 1 本指でドラッグ移動、2 本指のピンチで拡大縮小</td></tr>
       <tr><td><kbd>Ctrl+F</kbd></td><td>検索（氏名/配偶者/年/備考）。Enter で次へ</td></tr>
       <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>元に戻す / やり直す</td></tr>
       <tr><td><kbd>Ctrl+S</kbd></td><td>自動保存済み（ブラウザの保存ダイアログは出ません）</td></tr>
@@ -927,6 +927,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="modal">
     <h3>表示設定</h3>
     <label>テーマ —— 配色（データと印刷は常に紙面）<select id="__cfgTheme"><option value="parchment">羊皮紙（既定）</option><option value="sky">晴空（青）</option><option value="dark">暗色</option></select></label>
+    <label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> スクロールだけで拡大縮小（オフ：スクロールで移動、Ctrl＋スクロールで拡大縮小）</label>
     <label>世代基準 —— 字輩の 1 字目が譜書で何世に当たるか<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       伝統的な譜書の「世」は<b>始祖を一世</b>として数えますが、字輩は後世に定められることも少なくありません。例：譜書で「勤」の字輩が<b>廿三世</b>、「勤」は字輩の 11 字目なら、字輩 1 字目「多」は第 <b>13</b> 世。ここに <b>13</b> と入れるとカードは「23世・勤」と表示され、1 と入れるとアプリ計算の「11代」になります。表示のみの変更で、データには影響しません。
@@ -984,11 +985,13 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
+    <div id="plane">
     <div id="stage" style="width: 234px; height: 540px;">
       <div id="scaler">
         <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
         <div id="nodes"><div id="__dropMarker"></div></div>
       </div>
+    </div>
     </div>
   </div>
   <div id="searchBox">
@@ -1001,7 +1004,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div id="sbList"></div>
 </div>
 
-<div class="tips" title="ノード下の「＋」や右クリック=操作メニュー · ダブルクリック=名前変更/人物情報 · ドラッグ=順序変更・養縁 · Ctrl+スクロール=拡大縮小 · スクロール/空白ドラッグ=移動 · 自動保存 · 詳しくは「?」">編集：<b>＋/右クリック</b>=メニュー · <b>ダブルクリック</b>=名前/情報 · <b>ドラッグ</b>=順序・養縁 · <b>Ctrl+スクロール</b>=拡大縮小 · 自動保存 · 詳しくは「?」</div>
+<div class="tips" title="ノード下の「＋」や右クリック=操作メニュー · 氏名をダブルクリック=名前変更 · 備考行をダブルクリック=人物情報 · ノードをドラッグ=順序変更・養縁 · スクロール=拡大縮小（表示設定でオフにできます） · 空白を左ボタンでドラッグ=移動 · 自動保存 · 詳しくは「?」">編集：<b>＋/右クリック</b>=メニュー · <b>ダブルクリック</b>=名前/情報 · <b>ノードをドラッグ</b>=順序・養縁 · <b>スクロール</b>=拡大縮小（設定でオフ可） · 空白を左ドラッグ=移動 · 自動保存 · 詳しくは「?」</div>
 </div>
 
 <div class="legend">
@@ -1086,7 +1089,7 @@ function heirTitle(n){
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面 */
 const CFG_KEY = 'zupu_cfg_v1_ja';
-let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };
+let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -1095,6 +1098,7 @@ let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (typeof c.wheelZoom === 'boolean') cfg.wheelZoom = c.wheelZoom;
     if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
@@ -2151,6 +2155,7 @@ function openSettings(){
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
     document.getElementById('__cfgCn').checked = !!cfg.cnNum;
   document.getElementById('__cfgTheme').value = cfg.theme;
+  document.getElementById('__cfgWheelZoom').checked = cfg.wheelZoom;
     document.getElementById('__setModal').classList.add('open');
   document.getElementById('__cfgBase').focus();
 }
@@ -2162,6 +2167,7 @@ function applySettings(){
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   cfg.cnNum = document.getElementById('__cfgCn').checked;
   cfg.theme = document.getElementById('__cfgTheme').value;
+  cfg.wheelZoom = document.getElementById('__cfgWheelZoom').checked;
   applyTheme();
   saveCfg();
   closeSettings();
@@ -2468,7 +2474,7 @@ document.getElementById('__parentOk').onclick = function(){
   if (!t || !_parentNode) return;
   const n = _parentNode;
   const pr = findParent(n.id);
-  if (!pr){ toast('该成员没有上级'); return; }
+  if (!pr){ toast('上位のメンバーが見つかりません'); return; }
   const withSibs = document.getElementById('__parentSibs').checked;
   pushHistory('addParent:' + n.id);
   const f = { id: genId('p'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [n] };
@@ -2705,7 +2711,13 @@ function applyZoom(recenter){
   const scEl = document.getElementById('scaler');
   scEl.style.transform = 'scale(' + scale + ')';
   /* stage 盒子 = 基准×缩放：滚动范围随之正确（transform 不产生滚动范围） */
-  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (stEl._baseW){
+    stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px';
+    /* 画布平面：舞台四周恒定 2400px 余量 → 任何缩放下都有完整拖动空间 */
+    const pl = document.getElementById('plane');
+    pl.style.width = (stEl._baseW * scale + 4800) + 'px';
+    pl.style.height = (stEl._baseH * scale + 4800) + 'px';
+  }
   if (recenter) centerStage();   /* 锚点缩放（滚轮）期间不重居中：会和锚点补偿打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
@@ -2719,6 +2731,7 @@ function animateZoom(){
       scale = targetScale;
       applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
+      zoomAnchor = null;
       zoomRaf = null;
       return;
     }
@@ -2739,22 +2752,29 @@ function zoomAtAnchor(){
   vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
   vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
+function stopZoom(){
+  if (zoomRaf) cancelAnimationFrame(zoomRaf);
+  zoomRaf = null;
+  zoomAnchor = null;
+  targetScale = scale;
+}
 function zoomBy(d){
+  stopZoom();
   scale = Math.min(2.5, Math.max(0.12, scale + d));
   targetScale = scale;
   applyZoom();
   return scale;
 }
-function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function resetZoom(){ stopZoom(); scale = 1; targetScale = 1; applyZoom(); }
 function centerStage(){
-  /* 按当前缩放把舞台在视口内居中：水平居中解决“靠左”，垂直居中让画布上下都有余量 */
+  /* 平面坐标恒定（舞台居平面中心），居中=滚动到平面中点；任何缩放下均可再拖动 */
   const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
   if (!stEl._baseW) return;
-  const barTop = window.innerWidth <= 860 ? 120 : 76;
-  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
-  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+  vp.scrollLeft = Math.max(0, 2400 + stEl._baseW * scale / 2 - vp.clientWidth / 2);
+  vp.scrollTop  = Math.max(0, 2400 + stEl._baseH * scale / 2 - vp.clientHeight / 2);
 }
 function fitToScreen(){
+  stopZoom();
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
   const w = st.offsetWidth, h = st.offsetHeight;
@@ -2765,12 +2785,13 @@ function fitToScreen(){
   centerStage();
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
-  if (e.ctrlKey){
+  if (cfg.wheelZoom || e.ctrlKey){
     e.preventDefault();
     const vp = document.getElementById('viewport');
-    const rect = vp.getBoundingClientRect();
+    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1);
+    if (!delta) return;
     zoomAnchor = { cx: e.clientX, cy: e.clientY, sl: vp.scrollLeft, st: vp.scrollTop, s: scale };
-    setTargetScale(scale * Math.exp(-e.deltaY * 0.0016));
+    setTargetScale(targetScale * Math.exp(-delta * 0.0016));
   }
 }, { passive: false });
 function setTargetScale(ns){
@@ -2785,8 +2806,13 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
+    stopZoom();
     down = true; sx = e.clientX; sy = e.clientY;
     sl = vp.scrollLeft; st = vp.scrollTop;
+    if (e.pointerType === 'mouse'){
+      e.preventDefault();
+      vp.setPointerCapture(e.pointerId);
+    }
     vp.classList.add('panning');
   });
   window.addEventListener('pointermove', e => {

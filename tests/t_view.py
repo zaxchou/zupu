@@ -27,16 +27,12 @@ def t_zoom_anchor_and_controls(b):
     }""")
     check(info["mx"] > 40 and info["my"] > 40, "光标点不在钳制边界", str(info))
 
-    # Ctrl+滚轮放大一格：CDP 合成 wheel 不带修饰键，注入带 ctrlKey 的参数事件
-    # 专测 handler 分支与锚点数学（受托事件路径由真实浏览器保证）。
+    # 默认真实滚轮直接缩放，并以光标为锚点。
     vpr_l = page.evaluate("document.getElementById('viewport').getBoundingClientRect().left")
     vpr_t = page.evaluate("document.getElementById('viewport').getBoundingClientRect().top")
-    page.evaluate("""(pt) => {
-      const vp = document.getElementById('viewport');
-      vp.dispatchEvent(new WheelEvent('wheel', { deltaY: -240, ctrlKey: true,
-        clientX: pt.l + pt.mx, clientY: pt.t + pt.my, bubbles: true, cancelable: true }));
-    }""", {"l": vpr_l, "t": vpr_t, "mx": info["mx"], "my": info["my"]})
-    page.wait_for_timeout(600)   # 等缩放动画完全收敛
+    page.mouse.move(vpr_l + info['mx'], vpr_t + info['my'])
+    page.mouse.wheel(0, -240)
+    page.wait_for_function("zoomRaf === null")
 
     res = page.evaluate("""(o) => {
       const vp = document.getElementById('viewport');
@@ -55,9 +51,8 @@ def t_zoom_anchor_and_controls(b):
     expT_raw = info["oy"] + (info["st"] + info["my"] - info["oy"]) / info["s"] * res["s2"] - info["my"]
     lims = page.evaluate("""() => {
       const vp = document.getElementById('viewport');
-      const st = document.getElementById('stage');
-      return { h: Math.max(0, st.offsetLeft + st.offsetWidth*__ZP.scale - vp.clientWidth),
-               v: Math.max(0, st.offsetTop + st.offsetHeight*__ZP.scale - vp.clientHeight) };
+      return { h: Math.max(0, vp.scrollWidth - vp.clientWidth),
+               v: Math.max(0, vp.scrollHeight - vp.clientHeight) };
     }""")
     expL = max(0.0, min(expL_raw, lims["h"]))
     expT = max(0.0, min(expT_raw, lims["v"]))
@@ -119,7 +114,7 @@ def t_native_wheel_and_blank_drag_pan(b):
       const el = document.elementFromPoint(pt.x, pt.y);
       return el ? (el.id || el.className || el.tagName) : 'null';
     }""", spot)
-    check(tag in ("viewport", "stage", "nodes", "tips"), "落点是画布空白", str(tag))
+    check(tag in ("viewport", "plane", "stage", "nodes", "tips"), "落点是画布空白", str(tag))
     sl0 = page.evaluate("document.getElementById('viewport').scrollLeft")
     st0 = page.evaluate("document.getElementById('viewport').scrollTop")
     page.mouse.move(spot["x"], spot["y"])
@@ -136,7 +131,10 @@ def t_native_wheel_and_blank_drag_pan(b):
     cls = page.locator("#viewport").get_attribute("class")
     check(cls and "panning" not in cls, "松手结束平移态")
 
-    # 再测普通滚轮横向滚动；先回到最左，保证有余量
+    # 关闭直接缩放后，普通滚轮恢复平移。
+    page.evaluate("() => { openSettings(); }")
+    page.locator('#__cfgWheelZoom').uncheck()
+    page.locator('#__setSave').click()
     page.evaluate("() => document.getElementById('viewport').scrollTo({left:0,top:0})")
     page.mouse.move(450, 320)
     for _ in range(4):
@@ -145,6 +143,64 @@ def t_native_wheel_and_blank_drag_pan(b):
     sl2 = page.evaluate("document.getElementById('viewport').scrollLeft")
     check(sl2 >= 60, "普通滚轮可平移(v12 完全无效)", f"scrollLeft={sl2}")
     check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
+def t_wheel_mode_persistence_and_burst(b):
+    ctx, page, errs, cons = fresh_page(b, width=1100, height=700)
+    goto(page)
+    page.locator('[data-act="reset"]').click()
+    page.mouse.move(360, 250)
+    s0 = page.evaluate('__ZP.scale')
+    page.evaluate("""() => {
+      const vp=document.getElementById('viewport');
+      for(let i=0;i<5;i++) vp.dispatchEvent(new WheelEvent('wheel', {
+        deltaY:-40, clientX:360, clientY:250, bubbles:true, cancelable:true
+      }));
+    }""")
+    page.wait_for_function('zoomRaf === null')
+    expected = s0 * 2.718281828459045 ** (200 * .0016)
+    check(abs(page.evaluate('__ZP.scale') - expected) < 1e-6,
+          '快速滚轮输入累计，不丢增量')
+    page.evaluate('() => { openSettings(); }')
+    check(page.locator('#__cfgWheelZoom').is_checked(), '默认开启滚轮缩放')
+    page.locator('#__cfgWheelZoom').uncheck()
+    page.locator('#__setSave').click()
+    page.reload()
+    page.wait_for_load_state('domcontentloaded')
+    page.evaluate('() => { openSettings(); }')
+    check(not page.locator('#__cfgWheelZoom').is_checked(), '关闭后刷新仍关闭')
+    page.locator('#__setCancel').click()
+    page.evaluate('() => { stopZoom(); centerStage(); }')
+    s0 = page.evaluate('__ZP.scale')
+    st0 = page.evaluate("document.getElementById('viewport').scrollTop")
+    page.mouse.move(360, 250)
+    page.mouse.wheel(0, 160)
+    page.wait_for_function("document.getElementById('viewport').scrollTop > " + str(st0 + 50))
+    check(abs(page.evaluate('__ZP.scale') - s0) < 1e-9, '关闭后普通滚轮只平移')
+    page.keyboard.down('Control')
+    page.mouse.wheel(0, -120)
+    page.keyboard.up('Control')
+    page.wait_for_function('zoomRaf === null')
+    check(page.evaluate('__ZP.scale') > s0, '关闭后 Ctrl＋滚轮仍可缩放')
+    page.evaluate('() => { openSettings(); }')
+    page.locator('#__cfgWheelZoom').check()
+    page.locator('#__setSave').click()
+    page.reload()
+    page.wait_for_load_state('domcontentloaded')
+    page.evaluate('() => { openSettings(); }')
+    check(page.locator('#__cfgWheelZoom').is_checked(), '重新开启后刷新仍开启')
+    page.locator('#__setCancel').click()
+    page.evaluate('() => { centerStage(); }')
+    page.mouse.move(320, 250)
+    page.mouse.wheel(0, -100)
+    page.mouse.down()
+    page.mouse.move(440, 310, steps=6)
+    page.mouse.up()
+    page.wait_for_function('zoomRaf === null')
+    check('panning' not in page.locator('#viewport').get_attribute('class'), '缩放后拖动可正常结束')
+    check(not errs, '无 JS 错误', str(errs))
     ctx.close()
 
 

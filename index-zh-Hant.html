@@ -97,8 +97,9 @@ body{
   cursor:grab;
 }
 .viewport::-webkit-scrollbar{display:none}
-.viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:76px;left:0}
+.viewport.panning{cursor:grabbing;user-select:none;-webkit-user-select:none}
+#plane{position:absolute;left:0;top:0}
+#stage{position:absolute;left:2400px;top:2400px}
 #scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避開懸浮工具欄；縮放錨點數學已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
@@ -499,7 +500,6 @@ html{touch-action:manipulation}
   .tips,.legend{display:none}
   /* 全屏畫布 + 懸浮工具欄：畫布鋪滿整屏，工具層浮在畫布之上 */
   .topbar{top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));left:8px;right:8px;min-height:0;padding:6px 10px}
-  #stage{top:120px}   /* 移動端工具欄三行更高：整棵樹再下移 */
   .topbar .btn{padding:8px 10px}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
@@ -875,7 +875,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="uip-box">
     <h3 id="__parentTitle">＋ 父輩</h3>
     <p id="__parentHint" style="font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6"></p>
-    <label class="checkline"><input type="checkbox" id="__parentSibs"> 同輩一起上移（整輩下移）</label>
+    <label class="checkline" style="color:var(--text)"><input type="checkbox" id="__parentSibs"> 同輩一起上移（整輩下移）</label>
     <input id="__parentInput" autocomplete="off" placeholder="父輩姓名">
     <div class="modal-btns"><button id="__parentCancel">取消</button><button class="primary" id="__parentOk">新增</button></div>
   </div>
@@ -907,8 +907,8 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     </tbody></table>
     <h4>檢視與資料</h4>
     <table class="hk-table">
-      <tbody><tr><td><kbd>Ctrl+滾輪</kbd></td><td>以游標為中心縮放</td></tr>
-      <tr><td>滾輪 / 觸控板 / 拖空白</td><td>平移畫布</td></tr>
+      <tbody><tr><td><kbd>滾輪</kbd></td><td>以游標為中心縮放；在顯示設定中可關閉，改用 Ctrl＋滾輪縮放</td></tr>
+      <tr><td>左鍵按住空白拖動</td><td>平移畫布；觸屏單指拖動、雙指縮放</td></tr>
       <tr><td><kbd>Ctrl+F</kbd></td><td>搜尋（姓名/配偶/年份/備註），Enter 迴圈跳轉</td></tr>
       <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>撤銷 / 重做</td></tr>
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自動儲存（攔截瀏覽器另存，無需手動操作）</td></tr>
@@ -927,6 +927,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="modal">
     <h3>顯示設定</h3>
     <label>主題 —— 配色（資料與列印永遠保持紙面）<select id="__cfgTheme"><option value="parchment">羊皮紙（預設）</option><option value="sky">晴空（經典藍）</option><option value="dark">暗色</option></select></label>
+    <label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> 滾輪直接縮放（關閉後：滾輪平移，Ctrl＋滾輪縮放）</label>
     <label>世代基準 —— 字輩第 1 字對應的譜書世數<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       傳統譜書的「世」從<b>始祖一世</b>起算，而字輩往往是後世才議定的。你家譜書「勤」字輩記為<b>廿三世</b>，「勤」是字輩第 11 字，所以「多」字輩=第 <b>13</b> 世：這裡填 <b>13</b>，卡片即顯示「23世·勤」；填 1 則按應用自算顯示「11代」。只改顯示，不影響資料。
@@ -984,11 +985,13 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
+    <div id="plane">
     <div id="stage" style="width: 234px; height: 540px;">
       <div id="scaler">
         <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
         <div id="nodes"><div id="__dropMarker"></div></div>
       </div>
+    </div>
     </div>
   </div>
   <div id="searchBox">
@@ -1001,7 +1004,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div id="sbList"></div>
 </div>
 
-<div class="tips" title="節點下方常駐「＋」或右鍵=操作選單 · 雙擊姓名=改名 · 雙擊備註行=檔案 · 按住拖=調次序，拖到卡片上停一下=過繼 · Ctrl+滾輪=縮放 · 滾輪/拖空白=平移 · 編輯自動儲存 · 詳細說明見「?」幫助">操作：<b>＋/右鍵</b>=選單 · <b>雙擊</b>=改名/檔案 · <b>拖</b>=調次序或過繼 · <b>Ctrl+滾輪</b>=縮放 · 滾輪/拖空白=平移 · 自動儲存 · 更多見「?」幫助</div>
+<div class="tips" title="節點下方常駐「＋」或右鍵=操作選單 · 雙擊姓名=改名 · 雙擊備註行=檔案 · 拖節點=調次序或過繼 · 滾輪=縮放（顯示設定可關閉） · 左鍵拖空白=平移 · 編輯自動儲存 · 詳細說明見「?」幫助">操作：<b>＋/右鍵</b>=選單 · <b>雙擊</b>=改名/檔案 · <b>拖節點</b>=調次序或過繼 · <b>滾輪</b>=縮放（設定可關閉） · 左鍵拖空白=平移 · 自動儲存 · 更多見「?」幫助</div>
 </div>
 
 <div class="legend">
@@ -1086,7 +1089,7 @@ function heirTitle(n){
  * cnNum：世數用漢字（廿三世）；vertical：譜書豎排古法排版（世代成行、名字豎書、行左標世數）
  * theme：配色主題（parchment 羊皮紙=預設 / sky 晴空=經典藍 / dark 暗色）；匯出與列印永遠保持紙面 */
 const CFG_KEY = 'zupu_cfg_v1_hant';
-let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
+let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -1095,6 +1098,7 @@ let cfg = { theme: 'parchment', genBase: 1, bookSpouse: true, showSurname: true,
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (typeof c.wheelZoom === 'boolean') cfg.wheelZoom = c.wheelZoom;
     if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
@@ -2151,6 +2155,7 @@ function openSettings(){
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
     document.getElementById('__cfgCn').checked = !!cfg.cnNum;
   document.getElementById('__cfgTheme').value = cfg.theme;
+  document.getElementById('__cfgWheelZoom').checked = cfg.wheelZoom;
     document.getElementById('__setModal').classList.add('open');
   document.getElementById('__cfgBase').focus();
 }
@@ -2162,6 +2167,7 @@ function applySettings(){
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   cfg.cnNum = document.getElementById('__cfgCn').checked;
   cfg.theme = document.getElementById('__cfgTheme').value;
+  cfg.wheelZoom = document.getElementById('__cfgWheelZoom').checked;
   applyTheme();
   saveCfg();
   closeSettings();
@@ -2705,7 +2711,13 @@ function applyZoom(recenter){
   const scEl = document.getElementById('scaler');
   scEl.style.transform = 'scale(' + scale + ')';
   /* stage 盒子 = 基準×縮放：滾動範圍隨之正確（transform 不產生滾動範圍） */
-  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (stEl._baseW){
+    stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px';
+    /* 畫布平面：舞臺四周恆定 2400px 餘量 → 任何縮放下都有完整拖動空間 */
+    const pl = document.getElementById('plane');
+    pl.style.width = (stEl._baseW * scale + 4800) + 'px';
+    pl.style.height = (stEl._baseH * scale + 4800) + 'px';
+  }
   if (recenter) centerStage();   /* 錨點縮放（滾輪）期間不重居中：會和錨點補償打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
@@ -2719,6 +2731,7 @@ function animateZoom(){
       scale = targetScale;
       applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
+      zoomAnchor = null;
       zoomRaf = null;
       return;
     }
@@ -2739,22 +2752,29 @@ function zoomAtAnchor(){
   vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
   vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
+function stopZoom(){
+  if (zoomRaf) cancelAnimationFrame(zoomRaf);
+  zoomRaf = null;
+  zoomAnchor = null;
+  targetScale = scale;
+}
 function zoomBy(d){
+  stopZoom();
   scale = Math.min(2.5, Math.max(0.12, scale + d));
   targetScale = scale;
   applyZoom();
   return scale;
 }
-function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function resetZoom(){ stopZoom(); scale = 1; targetScale = 1; applyZoom(); }
 function centerStage(){
-  /* 按當前縮放把舞臺在視口內居中：水平居中解決“靠左”，垂直居中讓畫布上下都有餘量 */
+  /* 平面座標恆定（舞臺居平面中心），居中=滾動到平面中點；任何縮放下均可再拖動 */
   const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
   if (!stEl._baseW) return;
-  const barTop = window.innerWidth <= 860 ? 120 : 76;
-  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
-  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+  vp.scrollLeft = Math.max(0, 2400 + stEl._baseW * scale / 2 - vp.clientWidth / 2);
+  vp.scrollTop  = Math.max(0, 2400 + stEl._baseH * scale / 2 - vp.clientHeight / 2);
 }
 function fitToScreen(){
+  stopZoom();
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
   const w = st.offsetWidth, h = st.offsetHeight;
@@ -2765,12 +2785,13 @@ function fitToScreen(){
   centerStage();
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
-  if (e.ctrlKey){
+  if (cfg.wheelZoom || e.ctrlKey){
     e.preventDefault();
     const vp = document.getElementById('viewport');
-    const rect = vp.getBoundingClientRect();
+    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1);
+    if (!delta) return;
     zoomAnchor = { cx: e.clientX, cy: e.clientY, sl: vp.scrollLeft, st: vp.scrollTop, s: scale };
-    setTargetScale(scale * Math.exp(-e.deltaY * 0.0016));
+    setTargetScale(targetScale * Math.exp(-delta * 0.0016));
   }
 }, { passive: false });
 function setTargetScale(ns){
@@ -2785,8 +2806,13 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
+    stopZoom();
     down = true; sx = e.clientX; sy = e.clientY;
     sl = vp.scrollLeft; st = vp.scrollTop;
+    if (e.pointerType === 'mouse'){
+      e.preventDefault();
+      vp.setPointerCapture(e.pointerId);
+    }
     vp.classList.add('panning');
   });
   window.addEventListener('pointermove', e => {

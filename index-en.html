@@ -97,8 +97,9 @@ body{
   cursor:grab;
 }
 .viewport::-webkit-scrollbar{display:none}
-.viewport.panning{cursor:grabbing}
-#stage{position:absolute;top:76px;left:0}
+.viewport.panning{cursor:grabbing;user-select:none;-webkit-user-select:none}
+#plane{position:absolute;left:0;top:0}
+#stage{position:absolute;left:2400px;top:2400px}
 #scaler{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}   /* top 避开悬浮工具栏；缩放锚点数学已含此偏移 */
 #lines{position:absolute;top:0;left:0;pointer-events:none}
 #lines path{fill:none;stroke:var(--line);stroke-width:1.5}
@@ -499,7 +500,6 @@ html{touch-action:manipulation}
   .tips,.legend{display:none}
   /* 全屏画布 + 悬浮工具栏：画布铺满整屏，工具层浮在画布之上 */
   .topbar{top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));left:8px;right:8px;min-height:0;padding:6px 10px}
-  #stage{top:120px}   /* 移动端工具栏三行更高：整棵树再下移 */
   .topbar .btn{padding:8px 10px}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
@@ -874,7 +874,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="uip-box">
     <h3 id="__parentTitle">＋ Parent</h3>
     <p id="__parentHint" style="font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6"></p>
-    <label class="checkline"><input type="checkbox" id="__parentSibs"> Move siblings up together (whole generation shifts down)</label>
+    <label class="checkline" style="color:var(--text)"><input type="checkbox" id="__parentSibs"> Move siblings up together (whole generation shifts down)</label>
     <input id="__parentInput" autocomplete="off" placeholder="Parent's name">
     <div class="modal-btns"><button id="__parentCancel">Cancel</button><button class="primary" id="__parentOk">Add</button></div>
   </div>
@@ -906,8 +906,8 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     </tbody></table>
     <h4>View & data</h4>
     <table class="hk-table">
-      <tbody><tr><td><kbd>Ctrl+scroll</kbd></td><td>Zoom around the cursor</td></tr>
-      <tr><td>Scroll / trackpad / drag empty space</td><td>Pan the canvas</td></tr>
+      <tbody><tr><td><kbd>Scroll wheel</kbd></td><td>Zoom around the cursor; turn this off in Display settings to zoom with Ctrl+scroll instead</td></tr>
+      <tr><td>Left-click and drag empty space</td><td>Pan the canvas; on touchscreens, drag with one finger to pan and pinch with two fingers to zoom</td></tr>
       <tr><td><kbd>Ctrl+F</kbd></td><td>Search (names/spouses/years/notes), Enter cycles hits</td></tr>
       <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>Undo / redo</td></tr>
       <tr><td><kbd>Ctrl+S</kbd></td><td>Already auto-saved (browser save dialog is intercepted)</td></tr>
@@ -926,6 +926,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="modal">
     <h3>Display settings</h3>
     <label>Theme &mdash; colours (data &amp; print always stay on paper)<select id="__cfgTheme"><option value="parchment">Parchment (default)</option><option value="sky">Sky (classic blue)</option><option value="dark">Dark</option></select></label>
+    <label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> Zoom directly with the scroll wheel (off: scroll to pan, Ctrl+scroll to zoom)</label>
     <label>Generation base — the book generation number of zibei char #1<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
       In traditional genealogy books the generation count starts at <b>1 = the founding ancestor</b>, while the zibei (generation-char) list was often agreed later. Example: if your book records zibei char #11 as <b>generation 23</b>, enter <b>13</b> here (= 23 − 11 + 1) and every card shows book generations; enter 1 to use app-computed counting. Display only — data is never changed.
@@ -983,11 +984,13 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 
 <div class="canvas-wrap">
   <div class="viewport" id="viewport">
+    <div id="plane">
     <div id="stage" style="width: 234px; height: 540px;">
       <div id="scaler">
         <svg id="lines" width="234" height="540" viewBox="0 0 234 540"><g id="linesG"></g></svg>
         <div id="nodes"><div id="__dropMarker"></div></div>
       </div>
+    </div>
     </div>
   </div>
   <div id="searchBox">
@@ -1000,7 +1003,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div id="sbList"></div>
 </div>
 
-<div class="tips" title="The “＋” under a node or right-click = action menu · double-click name = rename · double-click meta line = profile · drag = reorder or adopt · Ctrl+scroll = zoom · scroll/drag empty space = pan · auto-save · see “?” for help">Edit: <b>＋/right-click</b>=menu · <b>double-click</b>=rename/profile · <b>drag</b>=reorder or adopt · <b>Ctrl+scroll</b>=zoom · scroll/drag=pan · auto-save · more under “?”</div>
+<div class="tips" title="The “＋” under a node or right-click = action menu · double-click name = rename · double-click meta line = profile · drag a node = reorder or adopt · scroll = zoom (can be turned off in Display settings) · left-click and drag empty space = pan · auto-save · see “?” for help">Edit: <b>＋/right-click</b>=menu · <b>double-click</b>=rename/profile · <b>drag node</b>=reorder or adopt · <b>scroll</b>=zoom (can be turned off in settings) · left-drag empty space=pan · auto-save · more under “?”</div>
 </div>
 
 <div class="legend">
@@ -1085,7 +1088,7 @@ function heirTitle(n){
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面 */
 const CFG_KEY = 'zupu_cfg_v1_en';
-let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };
+let cfg = { theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false };
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
@@ -1094,6 +1097,7 @@ let cfg = { theme: 'parchment', genBase: 1, bookSpouse: false, showSurname: true
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
     if (typeof c.vertical === 'boolean') cfg.vertical = c.vertical;
+    if (typeof c.wheelZoom === 'boolean') cfg.wheelZoom = c.wheelZoom;
     if (c.theme === 'parchment' || c.theme === 'sky' || c.theme === 'dark') cfg.theme = c.theme;
   } catch(e){}
 })();
@@ -1124,14 +1128,14 @@ function dispName(name){
   return s.slice(FAM_SUR.length);
 }
 /* 谱书式配偶名：姓 + 氏 + 名（复姓取两字；已含「氏」的原样保留） */
-const CS_SURN = '欧阳司马诸葛上官皇甫尉迟慕容令狐宇文轩辕东方端木长孙公孙淳于单于太叔申屠公冶宗政濮阳仲孙钟离鲜于闾丘子车亓官巫马公西漆雕乐正宰父谷梁拓跋夹谷南宫西门东郭呼延第五';
+const CS_SURN = '\u6b27\u9633\u53f8\u9a6c\u8bf8\u845b\u4e0a\u5b98\u7687\u752b\u5c09\u8fdf\u6155\u5bb9\u4ee4\u72d0\u5b87\u6587\u8f69\u8f95\u4e1c\u65b9\u7aef\u6728\u957f\u5b59\u516c\u5b59\u6df3\u4e8e\u5355\u4e8e\u592a\u53d4\u7533\u5c60\u516c\u51b6\u5b97\u653f\u6fee\u9633\u4ef2\u5b59\u949f\u79bb\u9c9c\u4e8e\u95fe\u4e18\u5b50\u8f66\u4e93\u5b98\u5deb\u9a6c\u516c\u897f\u6f06\u96d5\u4e50\u6b63\u5bb0\u7236\u8c37\u6881\u62d3\u8dcb\u5939\u8c37\u5357\u5bab\u897f\u95e8\u4e1c\u90ed\u547c\u5ef6\u7b2c\u4e94';
 function spouseDisplay(s){
   if (!cfg.bookSpouse || !s) return s;
   if (!/[\u3400-\u9fff]/.test(s)) return s;   // 非中日文姓名（如罗马字）不补「氏」，原样返回
-  if (s.indexOf('氏') > -1) return s;
+  if (s.indexOf('\u6c0f') > -1) return s;
   const two = CS_SURN.indexOf(s.slice(0, 2)) > -1;   // 复姓：含只有复姓两字（欧阳 → 欧阳氏）
   const sur = two ? s.slice(0, 2) : s.slice(0, 1);
-  return sur + '氏' + s.slice(sur.length);           // 只有姓也补氏（黄 → 黄氏）
+  return sur + '\u6c0f' + s.slice(sur.length);           // 只有姓也补氏（黄 → 黄氏）
 }
 function parseYear(v){
   if (v === null || v === undefined) return null;
@@ -2139,6 +2143,7 @@ function openSettings(){
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
     document.getElementById('__cfgCn').checked = !!cfg.cnNum;
   document.getElementById('__cfgTheme').value = cfg.theme;
+  document.getElementById('__cfgWheelZoom').checked = cfg.wheelZoom;
     document.getElementById('__setModal').classList.add('open');
   document.getElementById('__cfgBase').focus();
 }
@@ -2150,6 +2155,7 @@ function applySettings(){
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   cfg.cnNum = document.getElementById('__cfgCn').checked;
   cfg.theme = document.getElementById('__cfgTheme').value;
+  cfg.wheelZoom = document.getElementById('__cfgWheelZoom').checked;
   applyTheme();
   saveCfg();
   closeSettings();
@@ -2436,7 +2442,7 @@ function openAddParent(n){
   _parentNode = n;
   const pr = findParent(n.id);
   const mid = pr && pr.id !== 'root';
-  document.getElementById('__parentTitle').textContent = 'Add a parent to "' + n.name + "'";
+  document.getElementById('__parentTitle').textContent = 'Add a parent to "' + n.name + '"';
   document.getElementById('__parentHint').textContent = mid
     ? 'Inserts a generation between "' + n.name + '" and its current parent — "' + n.name + '" and all descendants shift down one level.'
     : '"' + n.name + '" and all descendants shift down one level (becoming children of the new parent).'
@@ -2455,7 +2461,7 @@ document.getElementById('__parentOk').onclick = function(){
   if (!t || !_parentNode) return;
   const n = _parentNode;
   const pr = findParent(n.id);
-  if (!pr){ toast('该成员没有上级'); return; }
+  if (!pr){ toast('No parent found'); return; }
   const withSibs = document.getElementById('__parentSibs').checked;
   pushHistory('addParent:' + n.id);
   const f = { id: genId('p'), name: t, spouses: [], birth:'', death:'', note:'', expanded: true, children: [n] };
@@ -2692,7 +2698,13 @@ function applyZoom(recenter){
   const scEl = document.getElementById('scaler');
   scEl.style.transform = 'scale(' + scale + ')';
   /* stage 盒子 = 基准×缩放：滚动范围随之正确（transform 不产生滚动范围） */
-  if (stEl._baseW){ stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px'; }
+  if (stEl._baseW){
+    stEl.style.width = stEl._baseW * scale + 'px'; stEl.style.height = stEl._baseH * scale + 'px';
+    /* 画布平面：舞台四周恒定 2400px 余量 → 任何缩放下都有完整拖动空间 */
+    const pl = document.getElementById('plane');
+    pl.style.width = (stEl._baseW * scale + 4800) + 'px';
+    pl.style.height = (stEl._baseH * scale + 4800) + 'px';
+  }
   if (recenter) centerStage();   /* 锚点缩放（滚轮）期间不重居中：会和锚点补偿打架 */
   document.getElementById('zoomLabel').textContent = Math.round(scale * 100) + '%';
 }
@@ -2706,6 +2718,7 @@ function animateZoom(){
       scale = targetScale;
       applyZoom(!zoomAnchor);
       if (zoomAnchor) zoomAtAnchor();
+      zoomAnchor = null;
       zoomRaf = null;
       return;
     }
@@ -2726,22 +2739,29 @@ function zoomAtAnchor(){
   vp.scrollLeft = Math.max(0, ox + wx * scale - mx);
   vp.scrollTop  = Math.max(0, oy + wy * scale - my);
 }
+function stopZoom(){
+  if (zoomRaf) cancelAnimationFrame(zoomRaf);
+  zoomRaf = null;
+  zoomAnchor = null;
+  targetScale = scale;
+}
 function zoomBy(d){
+  stopZoom();
   scale = Math.min(2.5, Math.max(0.12, scale + d));
   targetScale = scale;
   applyZoom();
   return scale;
 }
-function resetZoom(){ scale = 1; targetScale = 1; applyZoom(); }
+function resetZoom(){ stopZoom(); scale = 1; targetScale = 1; applyZoom(); }
 function centerStage(){
-  /* 按当前缩放把舞台在视口内居中：水平居中解决“靠左”，垂直居中让画布上下都有余量 */
+  /* 平面坐标恒定（舞台居平面中心），居中=滚动到平面中点；任何缩放下均可再拖动 */
   const stEl = document.getElementById('stage'), vp = document.getElementById('viewport');
   if (!stEl._baseW) return;
-  const barTop = window.innerWidth <= 860 ? 120 : 76;
-  stEl.style.left = Math.max(0, (vp.clientWidth - stEl._baseW * scale) / 2) + 'px';
-  stEl.style.top = Math.max(barTop, barTop + (vp.clientHeight - barTop - stEl._baseH * scale) / 2) + 'px';
+  vp.scrollLeft = Math.max(0, 2400 + stEl._baseW * scale / 2 - vp.clientWidth / 2);
+  vp.scrollTop  = Math.max(0, 2400 + stEl._baseH * scale / 2 - vp.clientHeight / 2);
 }
 function fitToScreen(){
+  stopZoom();
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
   const w = st.offsetWidth, h = st.offsetHeight;
@@ -2752,12 +2772,13 @@ function fitToScreen(){
   centerStage();
 }
 document.getElementById('viewport').addEventListener('wheel', e => {
-  if (e.ctrlKey){
+  if (cfg.wheelZoom || e.ctrlKey){
     e.preventDefault();
     const vp = document.getElementById('viewport');
-    const rect = vp.getBoundingClientRect();
+    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? vp.clientHeight : 1);
+    if (!delta) return;
     zoomAnchor = { cx: e.clientX, cy: e.clientY, sl: vp.scrollLeft, st: vp.scrollTop, s: scale };
-    setTargetScale(scale * Math.exp(-e.deltaY * 0.0016));
+    setTargetScale(targetScale * Math.exp(-delta * 0.0016));
   }
 }, { passive: false });
 function setTargetScale(ns){
@@ -2772,8 +2793,13 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
+    stopZoom();
     down = true; sx = e.clientX; sy = e.clientY;
     sl = vp.scrollLeft; st = vp.scrollTop;
+    if (e.pointerType === 'mouse'){
+      e.preventDefault();
+      vp.setPointerCapture(e.pointerId);
+    }
     vp.classList.add('panning');
   });
   window.addEventListener('pointermove', e => {
