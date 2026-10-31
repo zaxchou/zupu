@@ -559,6 +559,75 @@ def t_roundrect_fallback_old_kernel(b):
     ctx.close()
 
 
+@testcase
+def t_demo_photo_upgrade_respects_user_data(b):
+    """老示例数据自动补帝王头像；用户改过的成员/真实数据绝不覆盖。"""
+    ctx, page, errs, _ = fresh_page(b)
+    # 用「保留真实内嵌种子（demo:true + 10 张帝王头像）」的夹具，不用 SAMPLE 夹具
+    demo_fixture = Path(LOCAL_OUT) / "fixture_demo_photos.html"
+    demo_fixture.write_text(Path(LOCAL_HTML).read_text(encoding="utf-8"), encoding="utf-8")
+    page.goto(OUT_DIR + "/fixture_demo_photos.html")
+    page.wait_for_load_state("domcontentloaded")
+    page.evaluate("() => { try { localStorage.clear(); } catch(e){} }")
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_function("document.querySelectorAll('img.node-avatar').length === 10")
+
+    # 模拟老访客：示例数据在照片功能上线前保存——全树无 photoThumb/photoRev
+    old_demo = page.evaluate("""() => {
+      const d = JSON.parse(JSON.stringify(treeData));
+      (function w(n){ delete n.photoThumb; delete n.photoRev; (n.children||[]).forEach(w); })(d);
+      return JSON.stringify(d);
+    }""")
+    page.evaluate("v => localStorage.setItem('zupu_data_v4', v)", old_demo)
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_function("document.querySelectorAll('img.node-avatar').length === 10")
+    check(page.evaluate("() => document.querySelectorAll('.node[data-id=\\'d11\\'] img.node-avatar').length") == 0,
+          "宁国公主仍为剪影（种子本就无画像）")
+    check(page.evaluate("treeData.children.find(n => n.id === 'd1').photoRev") == 1, "补头像后 rev 落位")
+    check(page.evaluate("JSON.parse(localStorage.getItem('zupu_data_v4')).children.find(n => n.id === 'd1').photoThumb.length > 100"),
+          "升级结果已自动保存")
+
+    # 用户自定义照片（rev=9）+ 已删除照片（rev=3 无 thumb）→ 都不被覆盖
+    user_mix = page.evaluate("""() => {
+      const d = JSON.parse(JSON.stringify(treeData));
+      const byId = {};
+      (function w(n){ byId[n.id] = n; (n.children||[]).forEach(w); })(d);
+      byId.d1.photoThumb = 'data:image/gif;base64,R0lGODlhAQABAAAAACw='; byId.d1.photoRev = 9;
+      delete byId.d2.photoThumb; byId.d2.photoRev = 3;   // 用户主动删过照片
+      return JSON.stringify(d);
+    }""")
+    page.evaluate("v => localStorage.setItem('zupu_data_v4', v)", user_mix)
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    check(page.evaluate("() => document.querySelector('.node[data-id=\\'d1\\'] img.node-avatar').src") ==
+          "data:image/gif;base64,R0lGODlhAQABAAAAACw=", "用户自传照片不被覆盖")
+    check(page.evaluate("() => document.querySelectorAll('.node[data-id=\\'d2\\'] img.node-avatar').length") == 0,
+          "用户删过的照片不被回填")
+    check(page.evaluate("() => document.querySelectorAll('img.node-avatar').length") == 9,
+          "其余成员仍正常升级（10 - 1 自传 - 1 已删）")
+
+    # 非示例数据（无 demo 标记）→ 完全不注入
+    user_own = page.evaluate("""() => {
+      const d = JSON.parse(JSON.stringify(treeData));
+      delete d.demo;
+      (function w(n){ delete n.photoThumb; delete n.photoRev; (n.children||[]).forEach(w); })(d);
+      return JSON.stringify(d);
+    }""")
+    page.evaluate("v => localStorage.setItem('zupu_data_v4', v)", user_own)
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_function("document.querySelectorAll('.node').length > 0")
+    page.wait_for_timeout(300)
+    check(page.evaluate("() => document.querySelectorAll('img.node-avatar').length") == 0,
+          "非示例数据零注入")
+    check(page.evaluate("() => { const d = JSON.parse(localStorage.getItem('zupu_data_v4')); return d.photoThumb === undefined && d.children.every(n => n.photoThumb === undefined); }"),
+          "用户数据未被写入任何照片字段")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
 if __name__ == "__main__":
     import sys
     sys.exit(0 if run_module(globals(), "t_photo 成员照片第一期") else 1)

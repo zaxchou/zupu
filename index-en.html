@@ -1523,6 +1523,33 @@ const INIT_TEMPLATE = (function(){
   return FALLBACK_TEMPLATE;
 })();
 
+/* 内嵌示例的肖像索引（id → {photoThumb,photoRev}）：仅供示例谱升级时补头像 */
+const DEMO_PHOTOS = (function(){
+  const m = {};
+  (function w(p){
+    if (p.photoThumb) m[p.id] = { photoThumb: p.photoThumb, photoRev: p.photoRev || 1 };
+    (p.children || []).forEach(w);
+  })(INIT_TEMPLATE);
+  return m;
+})();
+/* 示例谱照片升级：老访客浏览器里存的示例数据（demo 标记 + 照片功能上线前保存）
+   自动补上内嵌的帝王头像。只动 photoRev/photoThumb 都不存在的成员——
+   用户传过自己照片、或删过照片（rev 已存在）的永不覆盖；
+   非 demo 数据（用户真实族谱）一律不碰（DESIGN.md「成员照片」） */
+function demoPhotoUpgrade(d){
+  if (!d || d.demo !== true) return 0;
+  let n = 0;
+  (function w(p){
+    if (p.photoRev === undefined && p.photoThumb === undefined && DEMO_PHOTOS[p.id]){
+      p.photoThumb = DEMO_PHOTOS[p.id].photoThumb;
+      p.photoRev = DEMO_PHOTOS[p.id].photoRev;
+      n++;
+    }
+    (p.children || []).forEach(w);
+  })(d);
+  return n;
+}
+
 function nodeCount(d){
   let c = 0;
   (function w(n){ if (n.id !== 'root') c++; if (n.children) n.children.forEach(w); })(d);
@@ -1563,6 +1590,7 @@ function nodeCount(d){
   treeData = best ? migrate(JSON.parse(JSON.stringify(best)))
                   : JSON.parse(JSON.stringify(INIT_TEMPLATE));
   _seededFrom = best ? bestSrc : 'empty';
+  demoPhotoUpgrade(treeData);   /* 旧示例数据补头像；用户数据/非 demo 无感跳过 */
   /* 不再跨候选「补齐」字辈表/谱序（v15.31）：内嵌种子已通用化为演示数据，
      补齐等于把演示内容注入用户主动清空过的真实族谱——用户删掉的就是删掉了。
      （该逻辑诞生时内嵌是同一份真实字辈，前提已随开源化消失） */
