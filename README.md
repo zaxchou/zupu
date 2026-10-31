@@ -2,14 +2,14 @@
 
 **中文（简体）** | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover.jpg?v=15.40" alt="家族族谱 · 传代树" width="100%">
+<img src="docs/cover.jpg?v=15.42" alt="家族族谱 · 传代树" width="100%">
 
 # 家族族谱 · 传代树 (Zupu)
 
 **双击就能用的电子族谱：录入家人、自动算辈分、打印装订成册**
 
-[![Version](https://img.shields.io/badge/version-v15.40-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-57%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.42-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-78%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -29,6 +29,14 @@
   拖到别人名下就是过继；做错了 Ctrl+Z 随时撤销
 - **手机 / iPad 也顺手** — 触摸拖动调长幼、长按卡片呼出菜单、双击改名、
   双指捏合缩放；屏幕变窄自动精简界面
+- **给家人配上照片** — 「人员档案」里点「添加照片」，卡片立刻显示圆形头像，点头像看大图；
+  「文件 ▾ → 导入照片文件夹…」按文件名一次配好全家的照片，备份可连原图一起带走，
+  导出图片 / PDF 也带着头像
+- **版式配色，点了就换** — 「查看 ▾ → 视觉设置…」把样式集中在一处：排列方向四选
+  （从上到下 / 从下到上 / 从左到右 / 从右到左），配色三选（羊皮纸 / 晴空 / 暗色），
+  横排 / 谱书竖排即点即换，不用刷新
+- **滚轮直接缩放、拖空白平移** — 像看地图一样顺手；不习惯可在视觉设置里关掉，
+  改回滚轮滚动页面、Ctrl＋滚轮才缩放
 - **名字写上，辈分自动算** — 把你家的字辈贴进去（如明朝皇室字辈诗“高瞻祁见祐”），每个人是第几代自动标出来；
   还能对齐老谱：老谱记“廿三世”，这里也显示“廿三世”
 - **打印出来是一本老谱的样子** — 竖排文字、世代成行、五代一张表，导出 PDF 直接送打印店装订成册；
@@ -41,7 +49,7 @@
 
 | 常规传代树 | 谱书竖排（古法） |
 | --- | --- |
-| ![常规传代树](docs/preview-tree.png?v=15.38) | ![谱书竖排](docs/preview-vertical.png?v=15.38) |
+| ![常规传代树](docs/preview-tree.png?v=15.42) | ![谱书竖排](docs/preview-vertical.png?v=15.42) |
 
 **谱书竖排**按传统修谱版式还原：世代成行、名字竖书（右→左）、行左标世数、墨字吊线——
 打印 / 导出 PDF 即可**装订成册**。
@@ -60,7 +68,7 @@
 
 **方式二**：`git clone` 本仓库后双击 `index.html`。
 
-录入自己家族：双击名字改名、点「＋」添加成员、「视图 ▾ → 谱序」设置谱名 / 堂号 /
+录入自己家族：双击名字改名、点「＋」添加成员、「文件 ▾ → 谱序…」设置谱名 / 堂号 /
 字辈表 / 源流——全部改成你家的。`samples/` 里有真实家族的使用示例可以导入参考。
 
 ## ❓ 常见问题

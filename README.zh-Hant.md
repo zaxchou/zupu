@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.40" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.42" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.40-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-57%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.42-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-78%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![線上試用](https://img.shields.io/badge/線上試用-點擊演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -26,7 +26,7 @@
 
 | 常規傳代樹 | 譜書豎排（古法） |
 | --- | --- |
-| ![常規傳代樹](docs/preview-tree-zh-Hant.png?v=15.38) | ![譜書豎排](docs/preview-vertical-zh-Hant.png?v=15.38) |
+| ![常規傳代樹](docs/preview-tree-zh-Hant.png?v=15.42) | ![譜書豎排](docs/preview-vertical-zh-Hant.png?v=15.42) |
 
 **譜書豎排**按傳統修譜版式還原：世代成行、名字豎書（右→左）、行左標世數、墨字吊線——
 列印 / 匯出 PDF 即可**裝訂成冊**。
@@ -37,6 +37,14 @@
   拖到別人名下就是過繼；做錯了 Ctrl+Z 隨時復原
 - **手機 / iPad 也順手** — 觸控拖動調長幼、長按卡片呼出選單、雙擊改名、
   雙指捏合縮放；螢幕變窄自動精簡介面
+- **為家人配上照片** — 「人員檔案」裡點「新增照片」，卡片立刻顯示圓形頭像，點頭像看大圖；
+  「檔案 ▾ → 匯入照片資料夾…」按檔名一次配好全家的照片，備份可連原圖一起帶走，
+  匯出圖片 / PDF 也帶著頭像
+- **版式配色，點了就換** — 「檢視 ▾ → 視覺設定…」把樣式集中在一處：排列方向四選
+  （從上到下 / 從下到上 / 從左到右 / 從右到左），配色三選（羊皮紙 / 晴空 / 暗色），
+  橫排 / 譜書豎排即點即換，不用重新整理
+- **滾輪直接縮放、拖空白平移** — 像看地圖一樣順手；不習慣可在視覺設定裡關掉，
+  改回滾輪捲動頁面、Ctrl＋滾輪才縮放
 - **名字寫上，輩分自動算** — 把你家的字輩貼進去（如明朝皇室字輩詩「高瞻祁見祐」），每個人是第幾代自動標出來；
   還能對齊老譜：老譜記「廿三世」，這裡也顯示「廿三世」
 - **列印出來是一本老譜的樣子** — 豎排文字、世代成行、五代一張表，匯出 PDF 直接送印刷廠裝訂成冊；
@@ -62,7 +70,7 @@
 
 **方式二**：`git clone` 本倉庫後雙擊 `index-zh-Hant.html`。
 
-錄入自己家族：雙擊名字改名、點「＋」新增成員、「檢視 ▾ → 譜序」設定譜名 / 堂號 /
+錄入自己家族：雙擊名字改名、點「＋」新增成員、「檔案 ▾ → 譜序…」設定譜名 / 堂號 /
 字輩表 / 源流——全部改成你家的。
 
 ## ❓ 常見問題

@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.40" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.42" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
 **A double-click electronic genealogy: record your family, auto-number generations, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.40-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-57%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.42-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-78%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![Try online](https://img.shields.io/badge/try%20it-online-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -26,7 +26,7 @@ browser, and every change is saved automatically.
 
 | Standard tree | In-page profile editor |
 | --- | --- |
-| ![Standard tree](docs/preview-tree-en.png?v=15.38) | ![Profile editor](docs/preview-vertical-en.png?v=15.38) |
+| ![Standard tree](docs/preview-tree-en.png?v=15.42) | ![Profile editor](docs/preview-vertical-en.png?v=15.42) |
 
 Every member has an **in-page profile editor** (name, dates, sex, adoption, courtesy /
 art names, spouse terms, notes). A **vertical book layout** following the conventions
@@ -39,6 +39,17 @@ top-to-bottom (right to left) — print it / export it to PDF and **bind it into
   to reorder siblings; drop one onto another to adopt. Ctrl+Z undoes anything
 - **Made for phones & tablets too** — drag to reorder, long-press for menus,
   double-tap to rename, pinch to zoom; the UI trims itself on small screens
+- **Put a face to every name** — click “Add photo” in the profile and the card instantly
+  shows a round avatar; click the avatar to see it large. “File ▾ → Import photo folder…”
+  matches a whole folder of photos by file name, backups can carry the originals, and
+  exports to PNG / PDF include the avatars
+- **Make it look the way you want** — “View ▾ → Visual settings…” gathers it all in one
+  place: four growth directions (top to bottom / bottom to top / left to right / right to
+  left), three color themes (Parchment / Sky / Dark), horizontal or vertical book layout —
+  every change applies on the spot, no reload
+- **Scroll to zoom, drag to pan** — the wheel zooms straight in and out, and grabbing any
+  empty spot pans the tree, like a map app; prefer the old way? Turn direct zoom off in
+  Visual settings (wheel scrolls the page, Ctrl+scroll zooms)
 - **Names in, generations out** — paste your generation-char list (e.g. the real Ming imperial poem “高瞻祁见祐”) and
   everyone's generation is numbered automatically; align it with your old book, so “the 23rd
   generation” there reads “the 23rd generation” here
@@ -70,7 +81,7 @@ double-click it; a first-run wizard appears:
 **Option 2**: `git clone` this repo and double-click `index-en.html`.
 
 To record your own family: double-click a name to rename, click “＋” to add members,
-“View ▾ → Preface” sets the tree name / generation chars / lineage —
+“File ▾ → Preface…” sets the tree name / generation chars / lineage —
 make it entirely yours.
 
 ## ❓ FAQ
