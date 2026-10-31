@@ -173,6 +173,80 @@ body{
 .node-label .xh{
   font-size:10px;font-weight:400;color:var(--text-light);margin-left:4px;letter-spacing:.5px;
 }
+/* ---------- 成员照片（第一期）：28px 圆形头像 / 中性剪影 / 灯箱 ---------- */
+.node-avatar{
+  width:28px;height:28px;border-radius:50%;
+  margin-right:7px;vertical-align:-9px;
+  border:1px solid rgba(60,50,35,.22);
+  background:#fff;object-fit:cover;
+  display:inline-block;padding:0;
+  cursor:pointer;user-select:none;
+  -webkit-user-drag:none;   /* 防 img 原生拖拽拖影（JS 层另有 draggable=false） */
+}
+.node-avatar.ph-empty{cursor:default;background:rgba(127,147,170,.14);color:inherit}
+.node-avatar.ph-empty svg{display:block;width:100%;height:100%}
+/* 谱书竖排：头像移到卡片顶部居中，姓名列其下（用 padding-top 让位，不改 writing-mode） */
+#stage.v .node-label .node-avatar,.ps.v .node-label .node-avatar{
+  position:absolute;top:6px;left:50%;margin-left:-14px;margin-right:0;
+}
+#stage.v .node-label.has-photo,.ps.v .node-label.has-photo{padding-top:42px}
+/* 灯箱：全屏遮罩 + 大图 + 成员名 + 关闭 */
+#__lightbox{
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:300;
+  background:rgba(8,12,22,.82);
+  display:none;align-items:center;justify-content:center;
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#__lightbox.open{display:flex}
+#__lightbox img{
+  max-width:86vw;max-height:76vh;
+  border-radius:12px;box-shadow:0 24px 80px rgba(0,0,0,.55);
+  background:#fff;object-fit:contain;
+}
+#__lightbox.no-photo img{width:200px;height:200px;max-width:none;max-height:none;padding:26px;background:rgba(255,255,255,.94);color:#66768c}
+#__lbName{
+  position:absolute;left:50%;bottom:7vh;transform:translateX(-50%);
+  color:#fff;font-size:15px;font-weight:600;letter-spacing:.5px;
+  background:rgba(12,20,34,.72);border-radius:18px;padding:8px 20px;
+  white-space:nowrap;max-width:86vw;overflow:hidden;text-overflow:ellipsis;
+}
+#__lbClose{
+  position:absolute;top:calc(14px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)));right:16px;
+  width:36px;height:36px;border:none;border-radius:50%;
+  background:rgba(255,255,255,.16);color:#fff;
+  font-size:20px;line-height:1;cursor:pointer;font-family:inherit;
+}
+#__lbClose:hover{background:rgba(255,255,255,.3)}
+/* 档案弹窗·照片区 */
+.dm-photo{display:flex;align-items:center;margin:0 0 12px}
+.dm-photo-box{
+  width:64px;height:64px;border-radius:10px;flex:none;
+  border:1px solid var(--node-border);background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;color:#9aa6b5;
+}
+.dm-photo-box img{width:100%;height:100%;object-fit:cover;display:block}
+.dm-photo-box svg{width:44px;height:44px;display:block}
+.dm-photo-ops{margin-left:12px;display:flex;flex-direction:column;align-items:stretch}
+.dm-photo-ops button{
+  padding:5px 12px;border-radius:7px;border:1px solid var(--node-border);
+  background:#fff;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;
+  white-space:nowrap;
+}
+.dm-photo-ops button:hover{border-color:var(--accent);color:var(--accent-strong)}
+.dm-photo-ops button+button{margin-top:6px;color:var(--danger);border-color:#e3c4c0}
+.dm-photo-ops button+button:hover{border-color:var(--danger);color:var(--danger)}
+/* 批量导入照片结果窗 */
+#__photoImpModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__photoImpModal.open{display:flex}
+#__photoImpModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__photoImpModal h3{font-size:14.5px;color:var(--text);margin:0 0 8px;line-height:1.5}
+#__photoImpSum{font-size:12px;color:var(--text-light);margin:0 0 10px;line-height:1.6}
+#__photoImpList{max-height:44vh;overflow:auto;border:1px solid var(--node-border);border-radius:8px;background:var(--canvas-bg);padding:4px 8px}
+.pimp-row{display:flex;align-items:center;padding:6px 2px;font-size:12px;color:var(--text)}
+.pimp-row+.pimp-row{border-top:1px dashed rgba(127,147,170,.3)}
+.pimp-row .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px}
+.pimp-row select{flex:none;max-width:58%;font-size:12px;font-family:inherit;color:var(--text);background:#fff;border:1px solid #c3ccd8;border-radius:6px;padding:3px 4px}
 /* ---------- 谱书竖排（古法）：世代成行、名字竖书（右→左读）、行左标世数 ---------- */
 #stage.v .node-label,.ps.v .node-label{
   writing-mode:vertical-rl;text-orientation:upright;
@@ -668,11 +742,20 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <span id="statsChip"><b>4</b> 位成员 · 配偶 <b>2</b> · 4 代</span>
   <button class="btn is-saved" id="saveState" title="编辑即自动保存（存于本浏览器），无需手动操作"><span class="dot"></span>已保存</button>
   <input type="file" id="__importFile" accept=".json,.html,.htm,application/json,text/html" style="display:none">
+  <input type="file" id="__photoDirInput" webkitdirectory multiple style="display:none">
 </header>
 
 <div class="modal-mask" id="__detailModal">
   <div class="modal">
     <h3 id="__dmTitle">人员档案</h3>
+    <div class="dm-photo">
+      <div class="dm-photo-box" id="__dmPhotoBox" title="成员照片（方形预览）"></div>
+      <div class="dm-photo-ops">
+        <button type="button" id="__dmPhotoAdd">添加照片</button>
+        <button type="button" id="__dmPhotoDel" style="display:none">删除照片</button>
+      </div>
+    </div>
+    <input type="file" id="__dmPhotoFile" accept="image/*" style="display:none">
     <label>姓名<input id="__dmName"></label>
     <div class="row">
       <label>出生<input id="__dmBirth" placeholder="1951 或 1951-03-15（约1900 / 1920? 也行；卡片只显示年份）"></label>
@@ -739,6 +822,21 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自动保存在本浏览器，编辑即保存</div>
 
+<div id="__lightbox">
+  <button id="__lbClose" type="button" title="关闭（Esc）" aria-label="关闭">×</button>
+  <img id="__lbImg" alt="成员照片">
+  <div id="__lbName"></div>
+</div>
+
+<div id="__photoImpModal">
+  <div class="uip-box">
+    <h3 id="__photoImpTitle">照片导入结果</h3>
+    <p id="__photoImpSum"></p>
+    <div id="__photoImpList"></div>
+    <div class="modal-btns"><button id="__photoImpCancel">取消</button><button class="primary" id="__photoImpOk">导入</button></div>
+  </div>
+</div>
+
 <div class="modal-mask" id="__helpModal">
   <div class="modal">
     <h3>使用帮助</h3>
@@ -772,6 +870,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
       <tr><td>查看 ▾ 视觉设置 · 谱书竖排</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
       <tr><td>查看 ▾ 视觉设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td>成员照片</td><td>「档案」里添加照片后卡片显示圆形头像，点头像看大图；文件 ▾ 可按文件夹批量导入照片，备份（含照片原图）换电脑不丢原图</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
     </tbody></table>
     <h4 id="__zbTitle">字辈表（蓝框 = 族谱中已出现）</h4>
@@ -808,6 +907,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <label class="checkline"><input type="checkbox" id="__cfgSpouse"> 配偶按谱书式显示（丁嘉 → 丁氏嘉；数据仍存原名，搜索不受影响）</label>
     <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「<span id="__cfgSurName">—</span>」（关闭 = 按谱书习惯只报名；仅显示层，姓氏随数据自动识别）</label>
     <label class="checkline"><input type="checkbox" id="__cfgCn"> 世数用汉字（廿三世·勤；关闭显示 23世·勤）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgPhotos"> 成员照片头像（卡片显示照片/剪影，点头像看大图）</label>
     </details>
     <div class="modal-btns"><button id="__setDone" type="button">关闭</button></div>
   </div>
@@ -875,7 +975,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div id="sbList"></div>
 </div>
 
-<div class="tips" title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 拖节点=调次序或过继 · 滚轮=缩放（视觉设置可关闭） · 左键拖空白=平移 · 编辑自动保存 · 详细说明见「帮助」菜单">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖节点</b>=调次序或过继 · <b>滚轮</b>=缩放（设置可关闭） · 左键拖空白=平移 · 自动保存 · 更多见「帮助」菜单</div>
+<div class="tips" title="节点下方常驻「＋」或右键=操作菜单 · 双击姓名=改名 · 双击备注行=档案 · 拖节点=调次序或过继 · 点头像=看照片 · 滚轮=缩放（视觉设置可关闭） · 左键拖空白=平移 · 编辑自动保存 · 详细说明见「帮助」菜单">操作：<b>＋/右键</b>=菜单 · <b>双击</b>=改名/档案 · <b>拖节点</b>=调次序或过继 · <b>点头像</b>=看照片 · <b>滚轮</b>=缩放（设置可关闭） · 左键拖空白=平移 · 自动保存 · 更多见「帮助」菜单</div>
 </div>
 
 <div class="legend">

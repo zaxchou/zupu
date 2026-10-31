@@ -195,7 +195,7 @@ def t_export_book_style(b):
     page.locator("#__setDone").click()
     page.wait_for_timeout(120)
     # 画布渲染（PNG/PDF 的底）：谱式显示 + 女徽标 + 世数下不报错
-    size = page.evaluate("() => { const c = exportTreeCanvas(); return { w: c.width, h: c.height }; }")
+    size = page.evaluate("() => exportTreeCanvas().then(c => ({ w: c.width, h: c.height }))")
     check(size["w"] > 0 and size["h"] > 0, "画布含新元素可渲染", str(size))
     # MD 导出：女（女）、配偶谱式、与视图一致
     with page.expect_download() as dl:
@@ -387,7 +387,7 @@ def t_vertical_book_view(b):
     page.wait_for_timeout(150)
     check(page.locator('.node[data-id="z2"]').count() == 1, "竖排下可展开")
     # 竖排下画布导出正常
-    size = page.evaluate("() => { const c = exportTreeCanvas(); return { w: c.width, h: c.height }; }")
+    size = page.evaluate("() => exportTreeCanvas().then(c => ({ w: c.width, h: c.height }))")
     check(size["w"] > 0 and size["h"] > 0, "竖排画布可导出", str(size))
     # 竖排打印 = 谱书竖排页（克隆舞台，可装订）
     page.evaluate("buildPrintDomReal()")
@@ -507,7 +507,7 @@ def t_jian_tiao(b):
     dl.value.save_as(path)
     check("（兼祧）" in open(path, encoding="utf-8").read(), "MD 含（兼祧）")
     # 画布可渲染（横排徽标分支）
-    size = page.evaluate("() => { const c = exportTreeCanvas(); return c.width > 0; }")
+    size = page.evaluate("() => exportTreeCanvas().then(c => c.width > 0)")
     check(size, "横排画布含兼祧徽标可渲染")
     # 撤销复位
     page.keyboard.press("Control+z")
@@ -547,10 +547,10 @@ def t_zhi_mark(b):
     dl2.value.save_as(path2)
     check("止" in open(path2, encoding="utf-8").read(), "世系录记列含止")
     # 画布横竖两式可渲染
-    check(page.evaluate("() => exportTreeCanvas().width > 0"), "横排画布含止可渲染")
+    check(page.evaluate("() => exportTreeCanvas().then(c => c.width > 0)"), "横排画布含止可渲染")
     page.evaluate("toggleVertical()")
     page.wait_for_timeout(150)
-    check(page.evaluate("() => exportTreeCanvas().width > 0"), "竖排画布含止可渲染")
+    check(page.evaluate("() => exportTreeCanvas().then(c => c.width > 0)"), "竖排画布含止可渲染")
     check(page.locator('.node[data-id="w1"] .zhi').count() == 1, "竖排卡面止徽标仍在")
     page.evaluate("toggleVertical()")
     page.wait_for_timeout(150)

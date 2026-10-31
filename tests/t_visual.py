@@ -71,10 +71,10 @@ def t_four_directions_geometry_fit_and_outputs(b):
             first = page.evaluate('scale')
             page.evaluate('fitToScreen()')
             check(abs(first-page.evaluate('scale')) < 1e-9, '重复fit不漂移')
-            # 导出在镜头改变后仍是同一套世界坐标和图片尺寸。
-            size1 = page.evaluate('() => { const c=exportTreeCanvas();return [c.width,c.height]; }')
+            # 导出在镜头改变后仍是同一套世界坐标和图片尺寸。（v15.x 起为异步：等头像解码后绘制）
+            size1 = page.evaluate('() => exportTreeCanvas().then(c => [c.width, c.height])')
             page.evaluate('() => { scale=1.54;applyZoom(); }')
-            size2 = page.evaluate('() => { const c=exportTreeCanvas();return [c.width,c.height]; }')
+            size2 = page.evaluate('() => exportTreeCanvas().then(c => [c.width, c.height])')
             check(size1 == size2, '导出尺寸不受镜头影响', str((size1,size2)))
             for kind in ['PNG', 'PDF']:
                 with page.expect_download() as dl:
@@ -201,7 +201,7 @@ def t_horizontal_book_export_generation_marker(b):
     page.evaluate("() => {treeData.children=[{id:'single',name:'周勤甲',expanded:true,spouses:[],children:[]}];treeData.zibei=['勤'];cfg.genBase=23;render()}")
     for direction in ['right','left']:
         choose(page,direction,True)
-        result = page.evaluate("""() => {const draws=[],proto=CanvasRenderingContext2D.prototype,original=proto.fillText;proto.fillText=function(t,x,y){draws.push({t:String(t),x,y});return original.apply(this,arguments)};try{exportTreeCanvas()}finally{proto.fillText=original}const m=rowMarkers[0],r=nodeRects.get('single');return {draws,m,r,writing:getComputedStyle(document.querySelector('.vrow')).writingMode};}""")
+        result = page.evaluate("""async () => {const draws=[],proto=CanvasRenderingContext2D.prototype,original=proto.fillText;proto.fillText=function(t,x,y){draws.push({t:String(t),x,y});return original.apply(this,arguments)};try{await exportTreeCanvas()}finally{proto.fillText=original}const m=rowMarkers[0],r=nodeRects.get('single');return {draws,m,r,writing:getComputedStyle(document.querySelector('.vrow')).writingMode};}""")
         marker = [t for t in result['draws'] if t['t'] == '廿三世·勤']
         check(len(marker) == 1, '图片世数标整条横排绘制', str(result['draws']))
         check(marker[0]['y']+10 < result['r']['y'], '世数标与姓名无垂直重叠')
