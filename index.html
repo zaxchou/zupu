@@ -141,7 +141,7 @@ body{
   font-style:normal;font-size:9px;color:#8fa0b5;
   background:#e3ebf2;border-radius:3px;padding:0 3px;margin-right:4px;vertical-align:1px;
 }
-/* 字辈代数角标（卡片最左侧）：蓝=按字辈字权威定代；灰=按世系推算 */
+/* 字辈代数角标（卡片最左侧）：蓝=名字含本代字辈字（与世系一致）；灰=按世系推算 */
 .node-label .gen{
   display:inline-block;margin-right:7px;padding:0 6px;
   background:#eef2f7;border:1px solid #dbe3ec;border-radius:5px;
@@ -1441,75 +1441,63 @@ function migrate(d){
  * 优先级：名字含字辈字（权威）> 父辈推算 > 同辈推算 > 世系偏移。
  * 推算结果与字辈冲突时（如中间缺一代），以字辈为准并在角标提示里注明。 */
 function computeGenerations(){
-  const map = new Map();   // id -> {gen, src:'match'|'parent'|'sibling'|'depth', zi, via, conflict}
+  const map = new Map();   // id -> {gen, src:'match'|'depth', zi, ziConflict:{zi,gen}}
   const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  const depths = new Map(), names = new Map();
+  (function walk(n, d){
+    if (n.id !== 'root'){
+      depths.set(n.id, d);
+      names.set(n.id, String(n.name || ''));
+    }
+    if (n.children) n.children.forEach(c => walk(c, d + 1));
+  })(treeData, 0);
   if (!zb.length) return map;
-  const matchOf = name => {
-    const s = String(name || '');
-    for (let i = 0; i < zb.length; i++) if (zb[i] && s.includes(zb[i])) return { gen: i + 1, zi: zb[i] };
-    return null;
-  };
-  let anchors = 0;
-  (function pass1(n){
-    if (n.id !== 'root'){
-      const m = matchOf(n.name);
-      if (m){ map.set(n.id, { gen: m.gen, src: 'match', zi: m.zi }); anchors++; }
+  /* 结构优先 + 字辈整体校准（v15.44）：
+     ① 父子链（父+1）是骨架——堂/亲兄弟必然同代，任何名字都不能推翻；
+     ② 很多谱从字辈诗中间开始记（如从「勤」=第11字起），所以用票选求整体偏移：
+        在所有「名字含字辈字」的人里，选使最多人名字与本代字辈字一致的 depth→字辈 偏移；
+     ③ 个体误命中（常见字碰上其他代字辈字）只进 tooltip 提示核对，绝不带偏整支。
+     旧版「名字含字辈字=权威定代」即栽在 ③（网友反馈：堂兄弟相差好几辈） */
+  const votes = new Set([0]);
+  depths.forEach((d, id) => {
+    const s = names.get(id);
+    for (let i = 0; i < zb.length; i++)
+      if (zb[i] && s.includes(zb[i])) votes.add(i + 1 - d);
+  });
+  let bestOff = 0, bestScore = -1;
+  votes.forEach(o => {
+    let consistent = 0;
+    depths.forEach((d, id) => {
+      const gi = d + o - 1;
+      if (gi >= 0 && gi < zb.length && zb[gi] && names.get(id).includes(zb[gi])) consistent++;
+    });
+    if (consistent > bestScore || (consistent === bestScore && o < bestOff)){ bestScore = consistent; bestOff = o; }
+  });
+  depths.forEach((d, id) => {
+    const gen = Math.max(1, d + bestOff);
+    const e = { gen: gen, src: 'depth' };
+    const s = names.get(id);
+    const here = zb[gen - 1];
+    if (here && s.includes(here)){ e.zi = here; e.src = 'match'; }
+    else {
+      for (let i = 0; i < zb.length; i++)
+        if (zb[i] && i !== gen - 1 && s.includes(zb[i])){ e.ziConflict = { zi: zb[i], gen: i + 1 }; break; }
     }
-    if (n.children) n.children.forEach(pass1);
-  })(treeData);
-  (function pass2(n, pgen){
-    /* 子代 = 父代 + 1；pgen 传入的是「当前节点自己的代数」 */
-    if (n.id !== 'root' && !map.get(n.id) && pgen != null)
-      map.set(n.id, { gen: pgen + 1, src: 'parent' });
-    const myGen = n.id === 'root' ? null : (map.get(n.id) ? map.get(n.id).gen : (pgen != null ? pgen + 1 : null));
-    if (n.children) n.children.forEach(c => pass2(c, myGen));
-  })(treeData, null);
-  (function pass3(n){
-    if (!n.children || !n.children.length) return;
-    const known = n.children.find(c => map.get(c.id));
-    if (known){
-      const g = map.get(known.id);
-      n.children.forEach(c => { if (!map.get(c.id)) map.set(c.id, { gen: g.gen, src: 'sibling', via: known.name }); });
-    }
-    n.children.forEach(pass3);
-  })(treeData);
-  if (anchors){
-    let off = null;
-    (function find(n, d){
-      if (off != null) return;
-      const e = map.get(n.id);
-      if (e && e.src === 'match'){ off = e.gen - d; return; }
-      if (n.children) n.children.forEach(c => find(c, d + 1));
-    })(treeData, 0);
-    (function fill(n, d){
-      if (n.id !== 'root' && !map.get(n.id)) map.set(n.id, { gen: d + off, src: 'depth' });
-      if (n.children) n.children.forEach(c => fill(c, d + 1));
-    })(treeData, 0);
-  }
-  (function conflicts(n, pgen){
-    if (n.id !== 'root'){
-      const e = map.get(n.id);
-      if (e && e.src === 'match' && pgen != null && e.gen !== pgen + 1) e.conflict = pgen + 1;
-    }
-    const g = n.id === 'root' ? null : (map.get(n.id) ? map.get(n.id).gen : pgen);
-    if (n.children) n.children.forEach(c => conflicts(c, g));
-  })(treeData, null);
+    map.set(id, e);
+  });
   return map;
 }
 function genTitle(g, n){
-  const p = findParent(n.id);
   const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
   const ziOfGen = zbList[g.gen - 1] || '';
-  const unused = ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';
   const base = genOffset() ? '（谱书世数，应用自算第' + g.gen + '代）' : '';
-  switch (g.src){
-    case 'match':
-      return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base
-        + (g.conflict ? '（注意：按父辈推算应为' + genLabel(g.conflict) + '，树中可能缺一代）' : '');
-    case 'parent':  return '由父/母「' + (p ? dispName(p.name) : '') + '」推算：' + genLabel(g.gen) + base + unused;
-    case 'sibling': return '与「' + dispName(g.via || '') + '」同辈推算：' + genLabel(g.gen) + base + unused;
-    default:        return '按世系推算：' + genLabel(g.gen) + base + unused;
-  }
+  if (g.src === 'match')
+    return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base;
+  let t = '按世系推算：' + genLabel(g.gen) + base;
+  t += ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';
+  if (g.ziConflict)
+    t += '。注意：名字里的「' + g.ziConflict.zi + '」是字辈第 ' + g.ziConflict.gen + ' 字，与世系不符——或系重名巧合、过继继嗣或谱书缺代，请核对';
+  return t;
 }
 /* 序列化前清理：布局把 _w/_x/_y 写进数据对象，绝不能持久化。
    顶层先判 typeof，否则配偶字符串会被 Object.keys 拆成逐字对象（历史教训） */

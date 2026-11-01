@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""字辈定代：名字含字辈字=权威；未用字辈按父/同辈推算；冲突提示缺代。
+"""字辈定代（v15.44 结构优先）：父子链是唯一真值（堂/亲兄弟必然同代）；
+名字含「本代」字辈字=蓝色印证；含「其他代」=照常显示世系代数 + tooltip 提示核对。
 使用独立夹具（fixture_zibei），不影响其他模块的示例数据。"""
 from helper import *
 import json as _json
@@ -84,10 +85,10 @@ def t_zibei_match_and_infer(b):
 
 @testcase
 def t_zibei_conflict_hint(b):
-    """结构缺代（父链推算与字辈冲突）：以字辈为准，tooltip 提示可能缺一代"""
+    """名字含其他代字辈字：以世系为准显示，tooltip 提示核对（不再被字辈带偏）"""
     ctx, page, errs, cons = fresh_page(b)
     goto_zibei(page)
-    # 把 周厚翰 挂到 王大锤(w1) 名下 → 父链推算=第2代，与字辈14冲突
+    # 把 周厚翰（名字含「厚」=字辈14）挂到 王大锤(w1) 名下 → 世系=第2代
     s = page.locator('.node[data-id="z4"] .node-label').bounding_box()
     d = page.locator('.node[data-id="w1"] .node-label').bounding_box()
     sx, sy = s["x"] + s["width"] / 2, s["y"] + s["height"] / 2
@@ -99,9 +100,63 @@ def t_zibei_conflict_hint(b):
     page.mouse.up()
     page.wait_for_timeout(450)
     txt = chip_of(page, "z4").inner_text().replace("\n", "")
-    check(txt == "14代·厚", "冲突时以字辈为准：仍显示14·厚", txt)
+    # 字辈校准偏移由全树票选决定（本夹具=10：勤善11·厚翰14），挂到 w1 下后世系=2+10=12
+    check(txt == "12代·修", "冲突时以世系为准：显示12代·修（不再被「厚」带偏到14代）", txt)
     tip = chip_of(page, "z4").get_attribute("title")
-    check("缺一代" in tip and "2" in tip, "tooltip 提示可能缺一代", tip)
+    check("「厚」" in tip and "14" in tip and "核对" in tip, "tooltip 提示名字与世系不符请核对", tip)
+    # 同样被挂过去的 z1 分支不受影响（票选偏移对全树一致）
+    check(chip_of(page, "z1").inner_text().replace("\n", "") == "11代·勤", "整体校准不破坏其他成员",
+          chip_of(page, "z1").inner_text())
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
+def t_zibei_cousins_always_same_gen(b):
+    """网友反馈回归：堂兄弟（父亲是亲兄弟）必须同代——
+    一支祖先名字偶然含其他代字辈字，不得把整支带偏"""
+    ctx, page, errs, cons = fresh_page(b)
+    data = {
+        "id": "root", "name": "始祖", "spouses": [], "expanded": True,
+        "zibei": list("文成高见"),
+        "children": [
+            { "id": "a", "name": "赵文", "spouses": [], "expanded": True, "children": [
+                { "id": "a1", "name": "赵高", "spouses": [], "expanded": True, "children": [
+                    { "id": "a1a", "name": "赵铁柱", "spouses": [], "expanded": True, "children": [] } ] },
+                { "id": "a2", "name": "赵二狗", "spouses": [], "expanded": True, "children": [] } ] },
+            { "id": "b", "name": "赵武", "spouses": [], "expanded": True, "children": [
+                { "id": "b1", "name": "赵三", "spouses": [], "expanded": True, "children": [
+                    { "id": "b1a", "name": "赵狗剩", "spouses": [], "expanded": True, "children": [] } ] } ] }
+        ]
+    }
+    app = open(LOCAL_HTML, encoding="utf-8").read()
+    sample_json = _json.dumps(data, ensure_ascii=False, indent=2)
+    import re as _re2
+    fixture, n = _re2.subn(
+        r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+        lambda m: m.group(1) + "\n" + sample_json + "\n" + m.group(2),
+        app, count=1)
+    assert n == 1
+    path = os.path.join(LOCAL_OUT, "fixture_cousin_gen.html")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(fixture)
+    page.goto(OUT_DIR + "/fixture_cousin_gen.html")
+    page.wait_for_load_state("domcontentloaded")
+    page.evaluate("() => { localStorage.clear(); }")
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    page.wait_for_function("document.querySelectorAll('.node').length >= 8")
+    # 第二代：赵高（名字含「高」=第3字，曾被带偏到3代）与堂弟赵三 → 必须同代
+    check(chip_of(page, "a1").inner_text().replace("\n", "") == "2代·成", "误命中者按世系显示 2代", chip_of(page, "a1").inner_text())
+    check(chip_of(page, "a1").inner_text() == chip_of(page, "b1").inner_text(), "堂兄弟同代（第二代）")
+    # 第三代堂兄弟：赵铁柱 vs 赵狗剩 → 必须同代
+    check(chip_of(page, "a1a").inner_text() == chip_of(page, "b1a").inner_text() == "3代·高",
+          "堂兄弟同代（第三代）", chip_of(page, "a1a").inner_text())
+    # 误命中者的 tooltip 带核对提示；一致者仍是蓝色印证
+    tip = chip_of(page, "a1").get_attribute("title")
+    check("「高」" in tip and "核对" in tip, "误命中 tooltip 提示核对", tip)
+    check("match" in (chip_of(page, "a").get_attribute("class") or ""), "名字与世系一致者保持蓝色印证",
+          chip_of(page, "a").get_attribute("class"))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
