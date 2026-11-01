@@ -341,6 +341,8 @@ function deepEq(a, b){
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小红书容器环境
 var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+/* Safari：导出画布物理上限更保守（Chrome 等 UA 也带 Safari 字样，先排除） */
+var IS_SAFARI = /^((?!chrome|crios|chromium|edge|edg|opera|opr|firefox|fxios|android|qq|micromessenger).)*safari/i.test(navigator.userAgent);
 const STORAGE_KEY = 'zupu_data_v4';   // 数据真源：本浏览器（自动保存，无感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
@@ -639,6 +641,7 @@ let _undoStack = [], _redoStack = [];
 let _lastOpKey = '', _lastOpT = 0;
 function historySnapshot(){ return JSON.stringify(sanitize(treeData)); }
 function pushHistory(opKey){
+  if (_exportLock) return;   /* 导出此支进行中：数据是临时子树，绝不进撤销历史 */
   const t = Date.now();
   if (opKey && opKey !== 'drag' && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
   /* 一旦发生真实改动就摘掉 demo 标记：向导只打扰「还没动手」的用户（v15.31） */
@@ -650,12 +653,14 @@ function pushHistory(opKey){
   refreshUndoButtons();
 }
 function undo(){
+  if (_exportLock) return;   /* 导出中数据是临时子树：Ctrl+Z 会把子树快照推进撤销栈并毁掉当次导出 */
   if (!_undoStack.length){ toast('没有可撤销的操作'); return; }
   _redoStack.push(historySnapshot());
   treeData = migrate(JSON.parse(_undoStack.pop()));
   afterHistoryJump(); toast('已撤销');
 }
 function redo(){
+  if (_exportLock) return;   /* 同 undo：导出期间撤销/重做一律封锁 */
   if (!_redoStack.length){ toast('没有可重做的操作'); return; }
   _undoStack.push(historySnapshot());
   treeData = migrate(JSON.parse(_redoStack.pop()));
@@ -706,17 +711,34 @@ function branchSegments(n){
     ...kids.map(c => line(breadth(c), bus, breadth(c), childIn(c)))];
 }
 
+/* 临时渲染目标：「导出此支」在隐藏舞台上为临时子树重算布局时指向临时元素；
+   平时为 null，render 一律使用主界面元素。_renderSilent 屏蔽渲染尾部的
+   UI 同步（镜头/统计/自动保存/指示灯），保证导出不碰用户界面与数据。 */
+let _renderTargets = null;
+let _renderSilent = false;
+let _exportLock = false;      /* 导出进行中：编辑可发生但绝不进撤销历史 */
+function renderEls(){
+  return _renderTargets || {
+    nodesEl: document.getElementById('nodes'),
+    linesG: document.getElementById('linesG'),
+    svg: document.getElementById('lines'),
+    stage: document.getElementById('stage'),
+    scaler: document.getElementById('scaler')
+  };
+}
+
 function render(){
-  const nodesEl = document.getElementById('nodes');
-  const linesG  = document.getElementById('linesG');
-  const svg     = document.getElementById('lines');
-  const stage   = document.getElementById('stage');
+  const T = renderEls();
+  const nodesEl = T.nodesEl;
+  const linesG  = T.linesG;
+  const svg     = T.svg;
+  const stage   = T.stage;
 
   nodesEl.innerHTML = '<div id="__dropMarker"></div>';
   linesG.innerHTML = '';
   nodeRects.clear();
   /* 始终在 1:1 实测，防止 CSS zoom 的像素取整随镜头改变布局与导出。 */
-  const scaler = document.getElementById('scaler');
+  const scaler = T.scaler;
   scaler.style.zoom = '1'; scaler.style.transform = 'none';
   stage.classList.toggle('v', !!cfg.vertical);   // 必须在测量前：竖排 CSS 改变卡片尺寸
 
@@ -957,6 +979,8 @@ function render(){
       rowMarkers.push({ x, y, text, horizontal });
     }
   }
+
+  if (_renderSilent) return;   /* 子树导出的临时渲染：镜头/统计/搜索高亮/自动保存一律不碰 */
 
   /* 恢复搜索高亮（render 重建了 DOM） */
   if (_lastQuery) applySearchHighlight();
@@ -1386,6 +1410,8 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi(n.expanded ? '折叠此支' : '展开此支', '', '', () => toggleExpand(n)));
   }
   if (n.id !== 'root'){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('导出此支…', '', '', () => openSubtreeExport(n), '导出该成员及其全部后代（大谱可分批导出）'));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('删除', 'danger', '', () => deleteNode(n)));
   }
@@ -2826,29 +2852,48 @@ function exportPhotoImages(){
 function exportTreeCanvas(){
   return exportPhotoImages().then(photoImgs => drawTreeCanvas(photoImgs));
 }
-function drawTreeCanvas(photoImgs){
-  const stage = document.getElementById('stage');
-  let W = stage._baseW, H = stage._baseH;
-  if (!W || !H) throw new Error('画布尚未渲染');
-  {   /* 标题行宽度自适应：谱名（堂号）· 日期 在窄画布（竖排）下不被裁切 */
-    const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
-    const t0 = puTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
-    W = Math.max(W, Math.min(560, t0.length * 17 + 40));
-  }
-  let S = Math.min(3, 12000 / Math.max(W, H));
+/* 导出标题：「导出此支」时临时覆盖为 成员名+「（此支）」，平时为谱名（堂号） */
+let _exportTitle = null;
+function exportTitle(){ return _exportTitle || puTitle(); }
+/* 导出画布单边上限：Safari 保守 12000px，其余桌面 22000px（v15.4x 由 12000 提升） */
+function pngMax(){ return IS_SAFARI ? 12000 : 22000; }
+/* 单图导出倍率：≤3x、长边不超上限、面积守卫 ≤80MP（浏览器画布物理极限保护） */
+function pngScale(W, H){
+  let S = Math.min(3, pngMax() / Math.max(W, H), Math.sqrt(8e7 / (W * H)));
   if (!isFinite(S) || S <= 0) S = 1;
+  return S;
+}
+/* 导出用的布局尺寸：baseW/baseH 为舞台未缩放基准；W 为标题行自适应加宽后的宽 */
+function exportDims(){
+  const stage = renderEls().stage;
+  const baseW = stage._baseW, baseH = stage._baseH;
+  if (!baseW || !baseH) throw new Error('画布尚未渲染');
+  const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
+  const t0 = exportTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
+  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, Math.min(560, t0.length * 17 + 40)), H: baseH, title: t0 };
+}
+/* 单图导出（PNG 与小树 PDF 共用）：整树一张画布 */
+function drawTreeCanvas(photoImgs){
+  const dims = exportDims();
+  const S = pngScale(dims.W, dims.H);
   const cv = document.createElement('canvas');
-  cv.width = Math.round(W * S); cv.height = Math.round(H * S + 46 * S);
+  cv.width = Math.round(dims.W * S); cv.height = Math.round(dims.H * S + 46 * S);
   const ctx = cv.getContext('2d');
   ctx.scale(S, S);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, H + 46);
-  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  ctx.fillRect(0, 0, dims.W, dims.H + 46);
   ctx.fillStyle = '#16324f';
   ctx.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillText(puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), 20, 30);
-  ctx.translate((W - stage._baseW) / 2, 46);   /* 加宽出的边距左右均分，树居中 */
-
+  ctx.fillText(dims.title, 20, 30);
+  ctx.translate((dims.W - dims.baseW) / 2, 46);   /* 加宽出的边距左右均分，树居中 */
+  paintTreeBody(ctx, photoImgs);
+  cv._exportS = S;   /* 有效倍率：PNG 名字过小时 toast 建议分页 PDF */
+  return cv;
+}
+/* 绘制主体（可传参）：ctx 已按目标倍率 scale 并平移到世界坐标 (0,0)-(baseW,baseH)，
+   单图与分页 PDF 每页共用；读全局 treeData/nodeRects/edgeSegments/rowMarkers，
+   「导出此支」在临时子树数据上调用（见 withTempRender）。 */
+function paintTreeBody(ctx, photoImgs){
   const P = exportPalette();
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
@@ -3114,11 +3159,10 @@ function drawTreeCanvas(photoImgs){
     for (let i = 0; i < m.text.length; i++) ctx.fillText(m.text[i], m.x + 7, startY + 8 + i * 16);
   });
   ctx.textBaseline = 'alphabetic';
-  return cv;
 }
-function stampName(ext){
+function stampName(ext, base){
   const d = new Date(), pad = n => String(n).padStart(2, '0');
-  return (clanOf().ming || '家族族谱') + '-图-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+  return (base || clanOf().ming || '家族族谱') + '-图-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
        + '-' + pad(d.getHours()) + pad(d.getMinutes()) + ext;
 }
 function savePngToAlbum(cv){
@@ -3132,17 +3176,152 @@ function savePngToAlbum(cv){
       .catch(function(e){ toast('保存失败：' + ((e && e.errMsg) || e)); });
   } catch(e){ toast('保存失败：' + e.message); }
 }
-function exportPNG(){
-  exportTreeCanvas().then(cv => {
+function exportPNG(){ exportPngAs(); }
+function exportPngAs(base){
+  return exportTreeCanvas().then(cv => {
     if (IS_XHS){ savePngToAlbum(cv); return; }
     cv.toBlob(bl => {
-      download(stampName('.png'), bl, 'image/png');
-      toast('图片已下载（' + cv.width + '×' + cv.height + '）');
+      download(stampName('.png', base), bl, 'image/png');
+      /* 名字有效字号 <8px（S<0.62）：整图能导出来但看不清，主动引导去分页 PDF */
+      toast(cv._exportS && 13 * cv._exportS < 8
+        ? '已导出整图（名字较小）；建议 文件 ▾ → 导出 PDF 获取分页可读版'
+        : '图片已下载（' + cv.width + '×' + cv.height + '）');
     }, 'image/png');
   }).catch(e => toast('导出失败：' + ((e && e.message) || e)));
 }
-function exportPDF(){
-  exportTreeCanvas().then(cv => {
+/* 分页判定（纯函数）：单页导出下名字有效字号 13*S<15（约 max(W,H)>10400px）
+   → 大谱导出 PDF 自动改为 A4 横向分页 */
+function pdfNeedsPaging(W, H){
+  return 13 * Math.min(3, 12000 / Math.max(W, H)) < 15;
+}
+/* 分页计划（纯函数，__ZP.pagePlan 供测试）：页 842×595pt，S_tile=clamp(max(595/H,842/W),0.6,2.5)
+   ——短边整放一页、长边切片（宽树按行分页、竖排高树按列分页，自动取更大倍率的轴） */
+function pagePlan(W, H){
+  const S = Math.max(0.6, Math.min(2.5, Math.max(595 / H, 842 / W)));
+  const cols = Math.ceil(W * S / 842), rows = Math.ceil(H * S / 595);
+  return { S: S, cols: cols, rows: rows, total: cols * rows };
+}
+/* 导出遮罩：大谱逐页渲染期间挡住指针操作（数据/布局可能临时切换），Esc 仍可关菜单 */
+function exportBusy(on, msg){
+  let el = document.getElementById('__exportBusy');
+  if (on){
+    if (!el){
+      el = document.createElement('div');
+      el.id = '__exportBusy';
+      el.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:200;cursor:progress';
+      document.body.appendChild(el);
+    }
+    if (msg) toast(msg);
+  } else if (el) el.parentNode.removeChild(el);
+}
+/* 大谱分页渲染：每页独立 1684×1190 canvas（2x 密度 ≈203dpi）逐页画——
+   不先画巨图再切（800 人会超画布物理极限）；相邻页重叠 ≥0（通常≈24pt 上下）防切卡片；页眉烘焙进图 */
+function renderTile(x0, y0, tw, th, S, photoImgs, pageLabel, title){
+  const cv = document.createElement('canvas');
+  cv.width = 1684; cv.height = 1190;
+  const ctx = cv.getContext('2d');
+  /* 底色必须在设备坐标铺满整页：世界坐标 (x0,y0) 经 scale/translate 后会落到画布外 */
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 1684, 1190);
+  ctx.scale(S * 2, S * 2);
+  ctx.translate(-x0, -y0);
+  paintTreeBody(ctx, photoImgs);
+  /* 页眉：谱名·日期 + 第 x / N 页（设备坐标绘制，与倍率无关，每页清晰一致）。
+     只在标题/页码文字局部垫白，不铺整条白带——横排（direction 左/右）时页顶
+     世界 y≈8-16 就有行左世数标，整条垫白会把第一行页的世数标全部抹掉。 */
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.font = '600 20px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  const titleW = ctx.measureText(title).width, labelW = ctx.measureText(pageLabel).width;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(14, 10, titleW + 20, 30);
+  ctx.fillRect(1684 - 14 - labelW - 20, 10, labelW + 20, 30);
+  ctx.fillStyle = '#16324f';
+  ctx.fillText(title, 24, 31);
+  ctx.textAlign = 'right';
+  ctx.fillText(pageLabel, 1684 - 24, 31);
+  ctx.textAlign = 'left';
+  return cv;
+}
+/* 分页切片起点（纯函数，__ZP.tileStarts 供测试）：均匀分布、末片强制贴边——
+   任何 (worldW, count) 组合下各片并集恰好无缝覆盖 [0, worldW]（相邻片重叠 ≥0，
+   常规布局约 24pt+，防切卡片）。不能只用「固定 24pt 步进 + 末片贴边」：
+   cols≥36 时（如 364 人宽树）末片右移会与倒数第二片之间留出内洞。 */
+function tileStarts(count, tileW, worldW){
+  const last = Math.max(0, worldW - tileW);
+  const out = [];
+  for (let c = 0; c < count; c++) out.push(count > 1 ? c * last / (count - 1) : 0);
+  return out;
+}
+function buildPagedPdf(dims){
+  const plan = pagePlan(dims.baseW, dims.baseH);
+  if (plan.total > 300){
+    toast('树过大，分页将超过 300 页上限：请右键某位成员选择「导出此支…」分批导出');
+    return Promise.resolve(null);
+  }
+  const tw = 842 / plan.S, th = 595 / plan.S;   /* 每页覆盖的世界尺寸 */
+  const xs = tileStarts(plan.cols, tw, dims.baseW);
+  const ys = tileStarts(plan.rows, th, dims.baseH);
+  const jpegs = [];
+  return exportPhotoImages().then(photoImgs => {
+    for (let i = 0; i < plan.total; i++){
+      const c = i % plan.cols, r = Math.floor(i / plan.cols);
+      const cv = renderTile(xs[c], ys[r], tw, th, plan.S, photoImgs,
+        '第 ' + (i + 1) + ' / ' + plan.total + ' 页', dims.title);
+      jpegs.push(atob(cv.toDataURL('image/jpeg', 0.9).split(',')[1]));   /* 二进制串（单页路径同款） */
+    }
+    return { bytes: assemblePdfPages(jpegs), pages: plan.total };
+  });
+}
+/* 手写 PDF 扩展多页：/Pages Kids 数组 + 每页 MediaBox [0 0 842 595] + 每页独立 XObject
+  （DCTDecode JPEG q0.9）。对象编号：1=Catalog 2=Pages，页 i 的 Page/Contents/Image = 3+3i 起。 */
+function assemblePdfPages(jpegs){
+  const n = jpegs.length;
+  const parts = [], offsets = new Array(3 + 3 * n).fill(0);   /* 对象编号到 3n+2，槽位须够 */
+  let pos = 0;
+  const add = str => { parts.push(str); pos += str.length; };
+  const obj = (num, body) => { offsets[num] = pos; add(num + ' 0 obj\n' + body + '\nendobj\n'); };
+  add('%PDF-1.4\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  const kids = [];
+  for (let i = 0; i < n; i++) kids.push((3 + 3 * i) + ' 0 R');
+  obj(2, '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>');
+  for (let i = 0; i < n; i++){
+    const pNum = 3 + 3 * i, cNum = pNum + 1, iNum = pNum + 2;
+    obj(pNum, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /XObject << /Im1 ' + iNum + ' 0 R >> /ProcSet [/PDF /ImageC] >> /Contents ' + cNum + ' 0 R >>');
+    const content = 'q\n1684 0 0 1190 0 0 cm\n/Im1 Do\nQ\n';
+    obj(cNum, '<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream');
+    offsets[iNum] = pos;
+    add(iNum + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width 1684 /Height 1190' +
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpegs[i].length + ' >>\nstream\n');
+    parts.push(jpegs[i]); pos += jpegs[i].length;
+    add('\nendstream\nendobj\n');
+  }
+  const xref = pos;
+  const size = 3 + 3 * n;   /* /Size = 最高对象号 3n+2 加一（含 0 号 free 条目），末页 Image 才有 xref 条目 */
+  add('xref\n0 ' + size + '\n0000000000 65535 f\n');
+  for (let i = 1; i < size; i++) add(String(offsets[i]).padStart(10, '0') + ' 00000 n\n');
+  add('trailer\n<< /Size ' + size + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+  const bytes = new Uint8Array(pos);
+  let p = 0;
+  parts.forEach(seg => { for (let i = 0; i < seg.length; i++) bytes[p++] = seg.charCodeAt(i) & 0xff; });
+  return bytes;
+}
+function exportPDF(){ exportPdfAs(); }
+function exportPdfAs(base){
+  let dims;
+  try { dims = exportDims(); }
+  catch (e){ toast('导出失败：' + e.message); return; }
+  if (pdfNeedsPaging(dims.W, dims.H)){
+    exportBusy(true, '正在生成分页 PDF…');
+    return buildPagedPdf(dims).then(r => {
+      exportBusy(false);
+      if (!r) return;   /* 超页数上限：已 toast 引导「导出此支」，不产残缺文件 */
+      download(stampName('.pdf', base), r.bytes, 'application/pdf');
+      toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');
+    }).catch(e => { exportBusy(false); toast('导出失败：' + ((e && e.message) || e)); });
+  }
+  return exportTreeCanvas().then(cv => {
     const b64 = cv.toDataURL('image/jpeg', 0.95).split(',')[1];
     const img = atob(b64);
     const W = Math.round(cv.width * 0.75), H = Math.round(cv.height * 0.75);
@@ -3168,10 +3347,111 @@ function exportPDF(){
     const bytes = new Uint8Array(pos);
     let p = 0;
     parts.forEach(seg => { for (let i = 0; i < seg.length; i++) bytes[p++] = seg.charCodeAt(i) & 0xff; });
-    download(stampName('.pdf'), bytes, 'application/pdf');
+    download(stampName('.pdf', base), bytes, 'application/pdf');
     toast('PDF 已下载（' + W + '×' + H + ' pt）');
   }).catch(e => toast('导出失败：' + ((e && e.message) || e)));
 }
+
+/* ---------- 导出此支（含后代）：深拷贝子树 → 隐藏舞台重算布局 → 常规导出管线 ----------
+ * 铁律：不改用户 treeData、不进撤销历史、不触发自动保存、渲染后原界面完全不变。
+ * 子树同样吃 分页 PDF 阈值（A）与 PNG 上限（C）。 */
+function buildSubtreeData(n){
+  const copy = JSON.parse(JSON.stringify(sanitize(n)));   /* 去掉 _ 布局字段，id/名字等全保留 */
+  (function x(d){ d.expanded = true; if (d.children && d.children.length) d.children.forEach(x); })(copy);   /* 整支全展开导出 */
+  return copy;
+}
+/* 隐藏测量舞台：类名 ps 与打印克隆共用 #stage.v 的竖排样式；visibility:hidden 保持可测布局 */
+function makeTempStage(vertical){
+  const host = document.createElement('div');
+  host.className = 'ps' + (vertical ? ' v' : '');
+  host.setAttribute('aria-hidden', 'true');
+  host.style.cssText = 'position:absolute;left:-99999px;top:0;width:2400px;height:1600px;overflow:visible;visibility:hidden';
+  const scaler = document.createElement('div');
+  scaler.style.cssText = 'position:absolute;top:0;left:0';
+  const stage = document.createElement('div');
+  stage.style.cssText = 'position:absolute;left:0;top:0';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none';
+  const linesG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  svg.appendChild(linesG);
+  const nodes = document.createElement('div');
+  nodes.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible';
+  stage.appendChild(svg); stage.appendChild(nodes);
+  scaler.appendChild(stage); host.appendChild(scaler);
+  document.body.appendChild(host);
+  return { host: host, nodesEl: nodes, linesG: linesG, svg: svg, stage: stage, scaler: scaler };
+}
+/* 在临时子树数据上执行 fn（可返回 Promise）：换全局数据 → 隐藏舞台 render() →
+   fn 读取重算出的 nodeRects/edgeSegments/_baseW 跑导出管线 → finally 恢复一切。
+   主界面 DOM 全程不被触碰（渲染目标指向临时舞台），选中态原样保留。 */
+function withTempRender(root, fn){
+  const saved = {
+    treeData: treeData,
+    rects: Array.from(nodeRects.entries()),
+    edges: edgeSegments, markers: rowMarkers, lastGens: LAST_GENS, sel: selectedId,
+    fam: FAM_SUR   /* 本谱姓氏：临时 render 会按子树重算，漏恢复会让主界面错误剥姓 */
+  };
+  const env = makeTempStage(!!cfg.vertical);
+  _renderTargets = env;
+  _renderSilent = true;
+  _exportLock = true;
+  treeData = root;
+  selectedId = null;
+  function teardown(){
+    _renderTargets = null; _renderSilent = false; _exportLock = false;
+    treeData = saved.treeData; selectedId = saved.sel;
+    nodeRects.clear();
+    saved.rects.forEach(function(kv){ nodeRects.set(kv[0], kv[1]); });
+    edgeSegments = saved.edges; rowMarkers = saved.markers; LAST_GENS = saved.lastGens;
+    FAM_SUR = saved.fam;
+    if (env.host.parentNode) env.host.parentNode.removeChild(env.host);
+  }
+  let out;
+  try { render(); out = fn(); }   /* 隐藏舞台上为临时子树重算布局（nodeRects/edgeSegments/_baseW） */
+  catch (e){ teardown(); throw e; }
+  if (out && typeof out.then === 'function'){
+    return out.then(v => { teardown(); return v; }, e => { teardown(); throw e; });
+  }
+  teardown();
+  return out;
+}
+let _subtreeNode = null;
+function stmIsOpen(){ return document.getElementById('__subtreeModal').classList.contains('open'); }
+function openSubtreeExport(n){
+  if (!n || n.id === 'root') return;
+  _subtreeNode = n;
+  const cnt = countDescendants(n);
+  document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);
+  document.getElementById('__subtreeHint').textContent =
+    '将导出「' + dispName(n.name) + '」及其全部后代（共 ' + (cnt + 1) + ' 人），不影响当前族谱数据；谱名自动标注（此支）。';
+  document.getElementById('__subtreeModal').classList.add('open');
+}
+function closeSubtreeExport(){
+  document.getElementById('__subtreeModal').classList.remove('open');
+  _subtreeNode = null;
+}
+function runSubtreeExport(kind){
+  const n = _subtreeNode;
+  if (!n) return;
+  closeSubtreeExport();
+  const base = dispName(n.name);
+  const root = buildSubtreeData(n);
+  exportBusy(true, '正在生成导出文件…');
+  withTempRender(root, () => {
+    _exportTitle = base + '（此支）';
+    const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base);
+    return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
+  }).catch(e => { exportBusy(false); toast('导出失败：' + ((e && e.message) || e)); });
+}
+document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
+document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
+document.getElementById('__subtreePdf').addEventListener('click', () => runSubtreeExport('pdf'));
+document.getElementById('__subtreeModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__subtreeModal') closeSubtreeExport();
+});
+document.getElementById('__subtreeModal').addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ e.stopPropagation(); closeSubtreeExport(); }
+});
 
 /* 谱书竖排打印页：克隆当前舞台（卡片/连线/行左世数标），按 A4 纵向可打印区缩放，可装订成册 */
 function buildPrintDomVertical(){
@@ -3293,13 +3573,15 @@ document.addEventListener('keydown', e => {
     if (cmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeClan(); return; }
     if (wmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeWizard(); return; }
     if (pimpIsOpen()){ e.preventDefault(); e.stopPropagation(); closePhotoImpModal(); return; }
+    if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
     return;
   }
-  /* 其余按键：输入中 / 弹窗开着 一律不触发全局快捷键（v12 泄漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || e.defaultPrevented) return;
+  /* 其余按键：输入中 / 弹窗开着 / 导出遮罩在 一律不触发全局快捷键（v12 泄漏 bug 根因） */
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen()
+      || document.getElementById('__exportBusy') || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;
   if (mod && e.key.toLowerCase() === 'f'){ e.preventDefault(); openSearch(); return; }
@@ -3365,7 +3647,9 @@ window.__ZP = {
   historyLens(){ return [_undoStack.length, _redoStack.length]; },
   rects(){ return nodeRects; },
   storageKey(){ return STORAGE_KEY; },
-  findNode, sanitize, snapshot: historySnapshot
+  findNode, sanitize, snapshot: historySnapshot,
+  /* 大谱导出纯函数（测试/调试用）：分页计划 / 切片起点 / 分页判定 / 单图倍率 */
+  pagePlan, tileStarts, pdfNeedsPaging, pngScale
 };
 
 /* 初始化 */

@@ -49,7 +49,7 @@ EN = [
   ('<label>备注<textarea id="__dmNote" rows="3" placeholder="官职 / 迁徙 / 过继 / 生平注记……"></textarea></label>',
    '<label>Notes<textarea id="__dmNote" rows="3" placeholder="office / migration / adoption / life notes..."></textarea></label>'),
   ('<button class="primary" id="__dmSave">保存</button>', '<button class="primary" id="__dmSave">Save</button>'),
-  ('>取消</button>', '>Cancel</button>', 7),
+  ('>取消</button>', '>Cancel</button>', 8),
   # ---- 初始 toast ----
   ('>已自动保存在本浏览器，编辑即保存</div>', '>Saved automatically in this browser as you edit</div>'),
   # ---- 帮助弹窗 ----
@@ -404,8 +404,10 @@ EN = [
   ("const t = (n.zi ? '字' + n.zi : '') + (n.zi && n.hao ? ' ' : '') + (n.hao ? '号' + n.hao : '');",
    "const t = (n.zi ? 'zi ' + n.zi : '') + (n.zi && n.hao ? ' ' : '') + (n.hao ? 'hao ' + n.hao : '');"),
   # ---- JS：导出文件名 / toast ----
-  ("return (clanOf().ming || '家族族谱') + '-图-'", "return (clanOf().ming || 'Family Tree') + '-tree-'"),
-  ("toast('图片已下载（' + cv.width + '×' + cv.height + '）');", "toast('Image downloaded (' + cv.width + '×' + cv.height + ')');"),
+  # v15.4x：stampName 增加 base 参数（导出此支时以成员名为文件名前缀）
+  ("return (base || clanOf().ming || '家族族谱') + '-图-'", "return (base || clanOf().ming || 'Family Tree') + '-tree-'"),
+  # v15.4x：改为三元分支的 else 臂（名字过小时主动引导去分页 PDF）
+  (": '图片已下载（' + cv.width + '×' + cv.height + '）');", ": 'Image downloaded (' + cv.width + '×' + cv.height + ')');"),
   ("toast('PDF 已下载（' + W + '×' + H + ' pt）');", "toast('PDF downloaded (' + W + '×' + H + ' pt)');"),
   (".catch(e => toast('导出失败：' + ((e && e.message) || e)));", ".catch(e => toast('Export failed: ' + ((e && e.message) || e)));", 2),
   # ---- JS：打印 ----
@@ -501,6 +503,34 @@ EN = [
    "toast('Set photos for ' + (cnt - bad) + ' member(s) (existing photo = replaced)'"),
   ("+ (bad ? '，' + bad + ' 张读取失败' : ''));", "+ (bad ? ', ' + bad + ' failed to read' : ''));"),
   ("? '备份已下载（含 ' + Object.keys(full).length + ' 张照片原图）：' + fname", "? 'Backup downloaded (with ' + Object.keys(full).length + ' original photos): ' + fname"),
+  # ---- 大谱导出：分页 PDF / 导出此支 / PNG 上限（v15.4x）----
+  # 右键菜单项（含 tooltip）
+  ("ctxMenu.appendChild(mi('导出此支…', '', '', () => openSubtreeExport(n), '导出该成员及其全部后代（大谱可分批导出）'));",
+   "ctxMenu.appendChild(mi('Export this branch…', '', '', () => openSubtreeExport(n), 'Export this member and all their descendants (large trees can be exported in batches)'));"),
+  # 弹窗静态文案
+  ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">Export this branch</h3>'),
+  ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">Export image (PNG)</button>'),
+  ('<button id="__subtreePdf">导出 PDF（过大自动分页）</button>', '<button id="__subtreePdf">Export PDF (auto-paginates when large)</button>'),
+  # 弹窗动态文案（拼接形式）
+  ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
+   "document.getElementById('__subtreeTitle').textContent = 'Export this branch · ' + dispName(n.name);"),
+  ("'将导出「' + dispName(n.name) + '」及其全部后代（共 ' + (cnt + 1) + ' 人），不影响当前族谱数据；谱名自动标注（此支）。';",
+   "'Will export “' + dispName(n.name) + '” and all their descendants (' + (cnt + 1) + ' people in total) — the current tree data is untouched; the tree title gets an automatic “(this branch)” suffix.';"),
+  # 导出标题/文件名后缀「（此支）」
+  ("_exportTitle = base + '（此支）';", "_exportTitle = base + ' (this branch)';"),
+  # busy / toast
+  ("exportBusy(true, '正在生成分页 PDF…');", "exportBusy(true, 'Generating paged PDF…');"),
+  ("exportBusy(true, '正在生成导出文件…');", "exportBusy(true, 'Generating export file…');"),
+  ("toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');", "toast('Large tree: split into ' + r.pages + ' pages (A4 landscape, printable)');"),
+  ("toast('树过大，分页将超过 300 页上限：请右键某位成员选择「导出此支…」分批导出');",
+   "toast('Tree too large: paging would exceed the 300-page limit — right-click a member and choose “Export this branch…” to export in batches');"),
+  ("? '已导出整图（名字较小）；建议 文件 ▾ → 导出 PDF 获取分页可读版'",
+   "? 'Whole image exported (names are small); use File ▾ → Export PDF for a paginated, readable version'"),
+  # 分页页眉（图内烘焙）：第 x / N 页
+  ("'第 ' + (i + 1) + ' / ' + plan.total + ' 页', dims.title);", "'Page ' + (i + 1) + ' / ' + plan.total, dims.title);"),
+  # v15.4x 新增的导出失败 catch（分页分支与导出此支共用写法，各 1 处）
+  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('Export failed: ' + ((e && e.message) || e));", 2),
+  ("catch (e){ toast('导出失败：' + e.message); return; }", "catch (e){ toast('Export failed: ' + e.message); return; }"),
 ]
 
 # ============================================================ JA 表
@@ -645,7 +675,7 @@ JA = [
   ('<label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>', '<label>始遷祖<input id="__clQian" placeholder="例：江戸初期に○○へ移住"></label>'),
   ('<label>家族来源<textarea id="__clOrigin" rows="5" placeholder="宗支源流叙述……"></textarea></label>', '<label>家族の由緒<textarea id="__clOrigin" rows="5" placeholder="この家支の由緒…"></textarea></label>'),
   ('<button class="primary" id="__clSave">保存</button>', '<button class="primary" id="__clSave">保存</button>'),
-  ('>取消</button>', '>キャンセル</button>', 7),
+  ('>取消</button>', '>キャンセル</button>', 8),
   # ---- 向导 ----
   ('<h3>欢迎使用家族族谱</h3>', '<h3>家系図へようこそ</h3>'),
   ('这是一个<b>本地优先</b>的单文件应用：数据只存在<b>你的浏览器</b>里，不联网、无账号、编辑即自动保存。',
@@ -864,8 +894,10 @@ JA += [
   # ---- JS：画布 ----
   ("throw new Error('画布尚未渲染');", "throw new Error('キャンバスが未描画です');"),
   # ---- JS：导出文件名 / toast ----
-  ("return (clanOf().ming || '家族族谱') + '-图-'", "return (clanOf().ming || '家系図') + '-図-'"),
-  ("toast('图片已下载（' + cv.width + '×' + cv.height + '）');", "toast('画像をダウンロードしました（' + cv.width + '×' + cv.height + '）');"),
+  # v15.4x：stampName 增加 base 参数（导出此支时以成员名为文件名前缀）
+  ("return (base || clanOf().ming || '家族族谱') + '-图-'", "return (base || clanOf().ming || '家系図') + '-図-'"),
+  # v15.4x：改为三元分支的 else 臂（名字过小时主动引导去分页 PDF）
+  (": '图片已下载（' + cv.width + '×' + cv.height + '）');", ": '画像をダウンロードしました（' + cv.width + '×' + cv.height + '）');"),
   ("toast('PDF 已下载（' + W + '×' + H + ' pt）');", "toast('PDF をダウンロードしました（' + W + '×' + H + ' pt）');"),
   (".catch(e => toast('导出失败：' + ((e && e.message) || e)));", ".catch(e => toast('出力に失敗：' + ((e && e.message) || e)));", 2),
   # ---- JS：打印 ----
@@ -951,6 +983,34 @@ JA += [
    "toast((cnt - bad) + ' 人のメンバーに写真を設定しました（既存の写真は置き換え）'"),
   ("+ (bad ? '，' + bad + ' 张读取失败' : ''));", "+ (bad ? '，' + bad + ' 枚は読み込みに失敗' : ''));"),
   ("? '备份已下载（含 ' + Object.keys(full).length + ' 张照片原图）：' + fname", "? 'バックアップをダウンロードしました（写真オリジナル ' + Object.keys(full).length + ' 枚付き）：' + fname"),
+  # ---- 大譜出力：ページ分割 PDF / この支を出力 / PNG 上限（v15.4x）----
+  # 右クリックメニュー項目（ツールチップ付き）
+  ("ctxMenu.appendChild(mi('导出此支…', '', '', () => openSubtreeExport(n), '导出该成员及其全部后代（大谱可分批导出）'));",
+   "ctxMenu.appendChild(mi('この支を出力…', '', '', () => openSubtreeExport(n), 'このメンバーとその子孫全員を出力します（大きな系図は分割して出力できます）'));"),
+  # モーダルの静的文案
+  ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">この支を出力</h3>'),
+  ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">画像を出力（PNG）</button>'),
+  ('<button id="__subtreePdf">导出 PDF（过大自动分页）</button>', '<button id="__subtreePdf">PDF を出力（大きいときは自動ページ分割）</button>'),
+  # モーダルの動的文案（連結形）
+  ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
+   "document.getElementById('__subtreeTitle').textContent = 'この支を出力 · ' + dispName(n.name);"),
+  ("'将导出「' + dispName(n.name) + '」及其全部后代（共 ' + (cnt + 1) + ' 人），不影响当前族谱数据；谱名自动标注（此支）。';",
+   "'「' + dispName(n.name) + '」とその子孫全員（計 ' + (cnt + 1) + ' 人）を出力します。現在の系図データには影響しません。譜名には自動的に（この支）が付きます。';"),
+  # 出力タイトルの接尾辞「（此支）」
+  ("_exportTitle = base + '（此支）';", "_exportTitle = base + '（この支）';"),
+  # busy / toast
+  ("exportBusy(true, '正在生成分页 PDF…');", "exportBusy(true, 'ページ分割 PDF を生成中…');"),
+  ("exportBusy(true, '正在生成导出文件…');", "exportBusy(true, '出力ファイルを生成中…');"),
+  ("toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');", "toast('系図が大きいため ' + r.pages + ' ページに分割しました（A4 横向き・印刷できます）');"),
+  ("toast('树过大，分页将超过 300 页上限：请右键某位成员选择「导出此支…」分批导出');",
+   "toast('系図が大きすぎて 300 ページの上限を超えます：メンバーを右クリックして「この支を出力…」を選び、分割して書き出してください');"),
+  ("? '已导出整图（名字较小）；建议 文件 ▾ → 导出 PDF 获取分页可读版'",
+   "? '全体図を出力しました（名前が小さめ）。「ファイル ▾ → PDF を出力」でページ分割の読みやすい版を出せます'"),
+  # ページ ヘッダー（図内に焼き込み）：第 x / N ページ
+  ("'第 ' + (i + 1) + ' / ' + plan.total + ' 页', dims.title);", "'第 ' + (i + 1) + ' / ' + plan.total + ' ページ', dims.title);"),
+  # v15.4x で追加された出力失敗 catch（ページ分割分支とこの支を出力で共通の書き方、各 1 件）
+  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('出力に失敗：' + ((e && e.message) || e));", 2),
+  ("catch (e){ toast('导出失败：' + e.message); return; }", "catch (e){ toast('出力に失敗：' + e.message); return; }"),
 ]
 
 # 続きブロック内の None（変更なし）も除去

@@ -15,7 +15,7 @@ def export_and_save(page, menu_text, out_path):
 
 @testcase
 def t_export_png(b):
-    ctx, page, errs, cons = fresh_page(b)
+    ctx, page, errs, cons = fresh_page(b, downloads=True)
     goto(page)
     dlg = DialogRecorder(page)
     fn = export_and_save(page, "导出图片", _os.path.join(LOCAL_OUT, "exp.png"))
@@ -32,7 +32,7 @@ def t_export_png(b):
 
 @testcase
 def t_export_pdf(b):
-    ctx, page, errs, cons = fresh_page(b)
+    ctx, page, errs, cons = fresh_page(b, downloads=True)
     goto(page)
     fn = export_and_save(page, "导出 PDF", _os.path.join(LOCAL_OUT, "exp.pdf"))
     import re as _re
@@ -65,3 +65,9 @@ def t_export_respects_collapsed(b):
     check(size2 > size, "展开后导出内容更多", f"{size} -> {size2}")
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
+
+
+if __name__ == "__main__":
+    import sys as _sys
+    ok = run_module(_sys.modules[__name__], "t_export 图谱导出")
+    _sys.exit(0 if ok else 1)

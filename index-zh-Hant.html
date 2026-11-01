@@ -582,6 +582,16 @@ body{
 #__parentModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
 #__parentModal h3{font-size:14.5px;color:var(--text);margin:0 0 10px}
 #__parentInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box;color:var(--text);background:var(--node-bg)}
+/* 匯出此支（大族譜分批匯出） */
+#__subtreeModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
+#__subtreeModal.open{display:flex}
+#__subtreeModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 8px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__subtreeModal h3{font-size:14.5px;color:var(--text);margin:0 0 8px}
+#__subtreeHint{font-size:12px;color:var(--text-light);margin:0 0 4px;line-height:1.6}
+#__subtreeModal .st-btns{display:flex;flex-direction:column;align-items:stretch;margin-top:10px}
+#__subtreeModal .st-btns button{margin:0 0 8px;padding:8px 14px;border-radius:6px;border:1px solid var(--node-border);background:var(--node-bg);color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
+#__subtreeModal .st-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
+#__subtreeModal .st-btns button:hover{filter:brightness(1.12)}
 #__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
@@ -998,6 +1008,17 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <label class="checkline" style="color:var(--text)"><input type="checkbox" id="__parentSibs"> 同輩一起上移（整輩下移）</label>
     <input id="__parentInput" autocomplete="off" placeholder="父輩姓名">
     <div class="modal-btns"><button id="__parentCancel">取消</button><button class="primary" id="__parentOk">新增</button></div>
+  </div>
+</div>
+<div id="__subtreeModal">
+  <div class="uip-box">
+    <h3 id="__subtreeTitle">匯出此支</h3>
+    <p id="__subtreeHint"></p>
+    <div class="st-btns">
+      <button id="__subtreePng" class="primary">匯出圖片（PNG）</button>
+      <button id="__subtreePdf">匯出 PDF（過大自動分頁）</button>
+      <button id="__subtreeCancel">取消</button>
+    </div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自動儲存在本瀏覽器，編輯即儲存</div>
@@ -1515,6 +1536,8 @@ function deepEq(a, b){
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小紅書容器環境
 var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+/* Safari：匯出畫布物理上限更保守（Chrome 等 UA 也帶 Safari 字樣，先排除） */
+var IS_SAFARI = /^((?!chrome|crios|chromium|edge|edg|opera|opr|firefox|fxios|android|qq|micromessenger).)*safari/i.test(navigator.userAgent);
 const STORAGE_KEY = 'zupu_data_v4_hant';   // 資料真源：本瀏覽器（自動儲存，無感）
 let treeData;
 let _seededFrom = '';        // 'browser' | 'file' | 'legacy-draft' | ''
@@ -1813,6 +1836,7 @@ let _undoStack = [], _redoStack = [];
 let _lastOpKey = '', _lastOpT = 0;
 function historySnapshot(){ return JSON.stringify(sanitize(treeData)); }
 function pushHistory(opKey){
+  if (_exportLock) return;   /* 匯出此支進行中：資料是臨時子樹，絕不進撤銷歷史 */
   const t = Date.now();
   if (opKey && opKey !== 'drag' && opKey === _lastOpKey && t - _lastOpT < 1000){ _lastOpT = t; return; }
   /* 一旦發生真實改動就摘掉 demo 標記：嚮導只打擾「還沒動手」的使用者（v15.31） */
@@ -1824,12 +1848,14 @@ function pushHistory(opKey){
   refreshUndoButtons();
 }
 function undo(){
+  if (_exportLock) return;   /* 匯出中資料是臨時子樹：Ctrl+Z 會把子樹快照推進撤銷棧並毀掉當次匯出 */
   if (!_undoStack.length){ toast('沒有可撤銷的操作'); return; }
   _redoStack.push(historySnapshot());
   treeData = migrate(JSON.parse(_undoStack.pop()));
   afterHistoryJump(); toast('已撤銷');
 }
 function redo(){
+  if (_exportLock) return;   /* 同 undo：匯出期間撤銷/重做一律封鎖 */
   if (!_redoStack.length){ toast('沒有可重做的操作'); return; }
   _undoStack.push(historySnapshot());
   treeData = migrate(JSON.parse(_redoStack.pop()));
@@ -1880,17 +1906,34 @@ function branchSegments(n){
     ...kids.map(c => line(breadth(c), bus, breadth(c), childIn(c)))];
 }
 
+/* 臨時渲染目標：「匯出此支」在隱藏舞臺上為臨時子樹重算佈局時指向臨時元素；
+   平時為 null，render 一律使用主介面元素。_renderSilent 遮蔽渲染尾部的
+   UI 同步（鏡頭/統計/自動儲存/指示燈），保證匯出不碰使用者介面與資料。 */
+let _renderTargets = null;
+let _renderSilent = false;
+let _exportLock = false;      /* 匯出進行中：編輯可發生但絕不進撤銷歷史 */
+function renderEls(){
+  return _renderTargets || {
+    nodesEl: document.getElementById('nodes'),
+    linesG: document.getElementById('linesG'),
+    svg: document.getElementById('lines'),
+    stage: document.getElementById('stage'),
+    scaler: document.getElementById('scaler')
+  };
+}
+
 function render(){
-  const nodesEl = document.getElementById('nodes');
-  const linesG  = document.getElementById('linesG');
-  const svg     = document.getElementById('lines');
-  const stage   = document.getElementById('stage');
+  const T = renderEls();
+  const nodesEl = T.nodesEl;
+  const linesG  = T.linesG;
+  const svg     = T.svg;
+  const stage   = T.stage;
 
   nodesEl.innerHTML = '<div id="__dropMarker"></div>';
   linesG.innerHTML = '';
   nodeRects.clear();
   /* 始終在 1:1 實測，防止 CSS zoom 的畫素取整隨鏡頭改變佈局與匯出。 */
-  const scaler = document.getElementById('scaler');
+  const scaler = T.scaler;
   scaler.style.zoom = '1'; scaler.style.transform = 'none';
   stage.classList.toggle('v', !!cfg.vertical);   // 必須在測量前：豎排 CSS 改變卡片尺寸
 
@@ -2131,6 +2174,8 @@ function render(){
       rowMarkers.push({ x, y, text, horizontal });
     }
   }
+
+  if (_renderSilent) return;   /* 子樹匯出的臨時渲染：鏡頭/統計/搜尋高亮/自動儲存一律不碰 */
 
   /* 恢復搜尋高亮（render 重建了 DOM） */
   if (_lastQuery) applySearchHighlight();
@@ -2560,6 +2605,8 @@ function buildMenuItems(n){
     ctxMenu.appendChild(mi(n.expanded ? '摺疊此支' : '展開此支', '', '', () => toggleExpand(n)));
   }
   if (n.id !== 'root'){
+    ctxMenu.appendChild(msep());
+    ctxMenu.appendChild(mi('匯出此支…', '', '', () => openSubtreeExport(n), '匯出該成員及其全部後代（大譜可分批匯出）'));
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('刪除', 'danger', '', () => deleteNode(n)));
   }
@@ -4000,29 +4047,48 @@ function exportPhotoImages(){
 function exportTreeCanvas(){
   return exportPhotoImages().then(photoImgs => drawTreeCanvas(photoImgs));
 }
-function drawTreeCanvas(photoImgs){
-  const stage = document.getElementById('stage');
-  let W = stage._baseW, H = stage._baseH;
-  if (!W || !H) throw new Error('畫布尚未渲染');
-  {   /* 標題行寬度自適應：譜名（堂號）· 日期 在窄畫布（豎排）下不被裁切 */
-    const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
-    const t0 = puTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
-    W = Math.max(W, Math.min(560, t0.length * 17 + 40));
-  }
-  let S = Math.min(3, 12000 / Math.max(W, H));
+/* 匯出標題：「匯出此支」時臨時覆蓋為 成員名+「（此支）」，平時為譜名（堂號） */
+let _exportTitle = null;
+function exportTitle(){ return _exportTitle || puTitle(); }
+/* 匯出畫布單邊上限：Safari 保守 12000px，其餘桌面 22000px（v15.4x 由 12000 提升） */
+function pngMax(){ return IS_SAFARI ? 12000 : 22000; }
+/* 單圖匯出倍率：≤3x、長邊不超上限、面積守衛 ≤80MP（瀏覽器畫布物理極限保護） */
+function pngScale(W, H){
+  let S = Math.min(3, pngMax() / Math.max(W, H), Math.sqrt(8e7 / (W * H)));
   if (!isFinite(S) || S <= 0) S = 1;
+  return S;
+}
+/* 匯出用的佈局尺寸：baseW/baseH 為舞臺未縮放基準；W 為標題行自適應加寬後的寬 */
+function exportDims(){
+  const stage = renderEls().stage;
+  const baseW = stage._baseW, baseH = stage._baseH;
+  if (!baseW || !baseH) throw new Error('畫布尚未渲染');
+  const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
+  const t0 = exportTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
+  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, Math.min(560, t0.length * 17 + 40)), H: baseH, title: t0 };
+}
+/* 單圖匯出（PNG 與小樹 PDF 共用）：整樹一張畫布 */
+function drawTreeCanvas(photoImgs){
+  const dims = exportDims();
+  const S = pngScale(dims.W, dims.H);
   const cv = document.createElement('canvas');
-  cv.width = Math.round(W * S); cv.height = Math.round(H * S + 46 * S);
+  cv.width = Math.round(dims.W * S); cv.height = Math.round(dims.H * S + 46 * S);
   const ctx = cv.getContext('2d');
   ctx.scale(S, S);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, W, H + 46);
-  const d = new Date(), pad = n => String(n).padStart(2, '0');
+  ctx.fillRect(0, 0, dims.W, dims.H + 46);
   ctx.fillStyle = '#16324f';
   ctx.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
-  ctx.fillText(puTitle() + ' · ' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), 20, 30);
-  ctx.translate((W - stage._baseW) / 2, 46);   /* 加寬出的邊距左右均分，樹居中 */
-
+  ctx.fillText(dims.title, 20, 30);
+  ctx.translate((dims.W - dims.baseW) / 2, 46);   /* 加寬出的邊距左右均分，樹居中 */
+  paintTreeBody(ctx, photoImgs);
+  cv._exportS = S;   /* 有效倍率：PNG 名字過小時 toast 建議分頁 PDF */
+  return cv;
+}
+/* 繪製主體（可傳參）：ctx 已按目標倍率 scale 並平移到世界座標 (0,0)-(baseW,baseH)，
+   單圖與分頁 PDF 每頁共用；讀全域性 treeData/nodeRects/edgeSegments/rowMarkers，
+   「匯出此支」在臨時子樹資料上呼叫（見 withTempRender）。 */
+function paintTreeBody(ctx, photoImgs){
   const P = exportPalette();
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
@@ -4288,11 +4354,10 @@ function drawTreeCanvas(photoImgs){
     for (let i = 0; i < m.text.length; i++) ctx.fillText(m.text[i], m.x + 7, startY + 8 + i * 16);
   });
   ctx.textBaseline = 'alphabetic';
-  return cv;
 }
-function stampName(ext){
+function stampName(ext, base){
   const d = new Date(), pad = n => String(n).padStart(2, '0');
-  return (clanOf().ming || '家族族譜') + '-圖-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
+  return (base || clanOf().ming || '家族族譜') + '-圖-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate())
        + '-' + pad(d.getHours()) + pad(d.getMinutes()) + ext;
 }
 function savePngToAlbum(cv){
@@ -4306,17 +4371,152 @@ function savePngToAlbum(cv){
       .catch(function(e){ toast('儲存失敗：' + ((e && e.errMsg) || e)); });
   } catch(e){ toast('儲存失敗：' + e.message); }
 }
-function exportPNG(){
-  exportTreeCanvas().then(cv => {
+function exportPNG(){ exportPngAs(); }
+function exportPngAs(base){
+  return exportTreeCanvas().then(cv => {
     if (IS_XHS){ savePngToAlbum(cv); return; }
     cv.toBlob(bl => {
-      download(stampName('.png'), bl, 'image/png');
-      toast('圖片已下載（' + cv.width + '×' + cv.height + '）');
+      download(stampName('.png', base), bl, 'image/png');
+      /* 名字有效字號 <8px（S<0.62）：整圖能匯出來但看不清，主動引導去分頁 PDF */
+      toast(cv._exportS && 13 * cv._exportS < 8
+        ? '已匯出整圖（名字較小）；建議 檔案 ▾ → 匯出 PDF 獲取分頁可讀版'
+        : '圖片已下載（' + cv.width + '×' + cv.height + '）');
     }, 'image/png');
   }).catch(e => toast('匯出失敗：' + ((e && e.message) || e)));
 }
-function exportPDF(){
-  exportTreeCanvas().then(cv => {
+/* 分頁判定（純函式）：單頁匯出下名字有效字號 13*S<15（約 max(W,H)>10400px）
+   → 大譜匯出 PDF 自動改為 A4 橫向分頁 */
+function pdfNeedsPaging(W, H){
+  return 13 * Math.min(3, 12000 / Math.max(W, H)) < 15;
+}
+/* 分頁計劃（純函式，__ZP.pagePlan 供測試）：頁 842×595pt，S_tile=clamp(max(595/H,842/W),0.6,2.5)
+   ——短邊整放一頁、長邊切片（寬樹按行分頁、豎排高樹按列分頁，自動取更大倍率的軸） */
+function pagePlan(W, H){
+  const S = Math.max(0.6, Math.min(2.5, Math.max(595 / H, 842 / W)));
+  const cols = Math.ceil(W * S / 842), rows = Math.ceil(H * S / 595);
+  return { S: S, cols: cols, rows: rows, total: cols * rows };
+}
+/* 匯出遮罩：大譜逐頁渲染期間擋住指標操作（資料/佈局可能臨時切換），Esc 仍可關選單 */
+function exportBusy(on, msg){
+  let el = document.getElementById('__exportBusy');
+  if (on){
+    if (!el){
+      el = document.createElement('div');
+      el.id = '__exportBusy';
+      el.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:200;cursor:progress';
+      document.body.appendChild(el);
+    }
+    if (msg) toast(msg);
+  } else if (el) el.parentNode.removeChild(el);
+}
+/* 大譜分頁渲染：每頁獨立 1684×1190 canvas（2x 密度 ≈203dpi）逐頁畫——
+   不先畫巨圖再切（800 人會超畫布物理極限）；相鄰頁重疊 ≥0（通常≈24pt 上下）防切卡片；頁首烘焙進圖 */
+function renderTile(x0, y0, tw, th, S, photoImgs, pageLabel, title){
+  const cv = document.createElement('canvas');
+  cv.width = 1684; cv.height = 1190;
+  const ctx = cv.getContext('2d');
+  /* 底色必須在裝置座標鋪滿整頁：世界座標 (x0,y0) 經 scale/translate 後會落到畫布外 */
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 1684, 1190);
+  ctx.scale(S * 2, S * 2);
+  ctx.translate(-x0, -y0);
+  paintTreeBody(ctx, photoImgs);
+  /* 頁首：譜名·日期 + 第 x / N 頁（裝置座標繪製，與倍率無關，每頁清晰一致）。
+     只在標題/頁碼文字區域性墊白，不鋪整條白帶——橫排（direction 左/右）時頁頂
+     世界 y≈8-16 就有行左世數標，整條墊白會把第一行頁的世數標全部抹掉。 */
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.font = '600 20px "PingFang SC","Microsoft YaHei",sans-serif';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  const titleW = ctx.measureText(title).width, labelW = ctx.measureText(pageLabel).width;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(14, 10, titleW + 20, 30);
+  ctx.fillRect(1684 - 14 - labelW - 20, 10, labelW + 20, 30);
+  ctx.fillStyle = '#16324f';
+  ctx.fillText(title, 24, 31);
+  ctx.textAlign = 'right';
+  ctx.fillText(pageLabel, 1684 - 24, 31);
+  ctx.textAlign = 'left';
+  return cv;
+}
+/* 分頁切片起點（純函式，__ZP.tileStarts 供測試）：均勻分佈、末片強制貼邊——
+   任何 (worldW, count) 組合下各片並集恰好無縫覆蓋 [0, worldW]（相鄰片重疊 ≥0，
+   常規佈局約 24pt+，防切卡片）。不能只用「固定 24pt 步進 + 末片貼邊」：
+   cols≥36 時（如 364 人寬樹）末片右移會與倒數第二片之間留出內洞。 */
+function tileStarts(count, tileW, worldW){
+  const last = Math.max(0, worldW - tileW);
+  const out = [];
+  for (let c = 0; c < count; c++) out.push(count > 1 ? c * last / (count - 1) : 0);
+  return out;
+}
+function buildPagedPdf(dims){
+  const plan = pagePlan(dims.baseW, dims.baseH);
+  if (plan.total > 300){
+    toast('樹過大，分頁將超過 300 頁上限：請右鍵某位成員選擇「匯出此支…」分批匯出');
+    return Promise.resolve(null);
+  }
+  const tw = 842 / plan.S, th = 595 / plan.S;   /* 每頁覆蓋的世界尺寸 */
+  const xs = tileStarts(plan.cols, tw, dims.baseW);
+  const ys = tileStarts(plan.rows, th, dims.baseH);
+  const jpegs = [];
+  return exportPhotoImages().then(photoImgs => {
+    for (let i = 0; i < plan.total; i++){
+      const c = i % plan.cols, r = Math.floor(i / plan.cols);
+      const cv = renderTile(xs[c], ys[r], tw, th, plan.S, photoImgs,
+        '第 ' + (i + 1) + ' / ' + plan.total + ' 頁', dims.title);
+      jpegs.push(atob(cv.toDataURL('image/jpeg', 0.9).split(',')[1]));   /* 二進位制串（單頁路徑同款） */
+    }
+    return { bytes: assemblePdfPages(jpegs), pages: plan.total };
+  });
+}
+/* 手寫 PDF 擴充套件多頁：/Pages Kids 陣列 + 每頁 MediaBox [0 0 842 595] + 每頁獨立 XObject
+  （DCTDecode JPEG q0.9）。物件編號：1=Catalog 2=Pages，頁 i 的 Page/Contents/Image = 3+3i 起。 */
+function assemblePdfPages(jpegs){
+  const n = jpegs.length;
+  const parts = [], offsets = new Array(3 + 3 * n).fill(0);   /* 物件編號到 3n+2，槽位須夠 */
+  let pos = 0;
+  const add = str => { parts.push(str); pos += str.length; };
+  const obj = (num, body) => { offsets[num] = pos; add(num + ' 0 obj\n' + body + '\nendobj\n'); };
+  add('%PDF-1.4\n');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  const kids = [];
+  for (let i = 0; i < n; i++) kids.push((3 + 3 * i) + ' 0 R');
+  obj(2, '<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>');
+  for (let i = 0; i < n; i++){
+    const pNum = 3 + 3 * i, cNum = pNum + 1, iNum = pNum + 2;
+    obj(pNum, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /XObject << /Im1 ' + iNum + ' 0 R >> /ProcSet [/PDF /ImageC] >> /Contents ' + cNum + ' 0 R >>');
+    const content = 'q\n1684 0 0 1190 0 0 cm\n/Im1 Do\nQ\n';
+    obj(cNum, '<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream');
+    offsets[iNum] = pos;
+    add(iNum + ' 0 obj\n<< /Type /XObject /Subtype /Image /Width 1684 /Height 1190' +
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpegs[i].length + ' >>\nstream\n');
+    parts.push(jpegs[i]); pos += jpegs[i].length;
+    add('\nendstream\nendobj\n');
+  }
+  const xref = pos;
+  const size = 3 + 3 * n;   /* /Size = 最高物件號 3n+2 加一（含 0 號 free 條目），末頁 Image 才有 xref 條目 */
+  add('xref\n0 ' + size + '\n0000000000 65535 f\n');
+  for (let i = 1; i < size; i++) add(String(offsets[i]).padStart(10, '0') + ' 00000 n\n');
+  add('trailer\n<< /Size ' + size + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+  const bytes = new Uint8Array(pos);
+  let p = 0;
+  parts.forEach(seg => { for (let i = 0; i < seg.length; i++) bytes[p++] = seg.charCodeAt(i) & 0xff; });
+  return bytes;
+}
+function exportPDF(){ exportPdfAs(); }
+function exportPdfAs(base){
+  let dims;
+  try { dims = exportDims(); }
+  catch (e){ toast('匯出失敗：' + e.message); return; }
+  if (pdfNeedsPaging(dims.W, dims.H)){
+    exportBusy(true, '正在生成分頁 PDF…');
+    return buildPagedPdf(dims).then(r => {
+      exportBusy(false);
+      if (!r) return;   /* 超頁數上限：已 toast 引導「匯出此支」，不產殘缺檔案 */
+      download(stampName('.pdf', base), r.bytes, 'application/pdf');
+      toast('樹較大，已分為 ' + r.pages + ' 頁（A4 橫向，可列印）');
+    }).catch(e => { exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
+  }
+  return exportTreeCanvas().then(cv => {
     const b64 = cv.toDataURL('image/jpeg', 0.95).split(',')[1];
     const img = atob(b64);
     const W = Math.round(cv.width * 0.75), H = Math.round(cv.height * 0.75);
@@ -4342,10 +4542,111 @@ function exportPDF(){
     const bytes = new Uint8Array(pos);
     let p = 0;
     parts.forEach(seg => { for (let i = 0; i < seg.length; i++) bytes[p++] = seg.charCodeAt(i) & 0xff; });
-    download(stampName('.pdf'), bytes, 'application/pdf');
+    download(stampName('.pdf', base), bytes, 'application/pdf');
     toast('PDF 已下載（' + W + '×' + H + ' pt）');
   }).catch(e => toast('匯出失敗：' + ((e && e.message) || e)));
 }
+
+/* ---------- 匯出此支（含後代）：深複製子樹 → 隱藏舞臺重算佈局 → 常規匯出管線 ----------
+ * 鐵律：不改使用者 treeData、不進撤銷歷史、不觸發自動儲存、渲染後原介面完全不變。
+ * 子樹同樣吃 分頁 PDF 閾值（A）與 PNG 上限（C）。 */
+function buildSubtreeData(n){
+  const copy = JSON.parse(JSON.stringify(sanitize(n)));   /* 去掉 _ 佈局欄位，id/名字等全保留 */
+  (function x(d){ d.expanded = true; if (d.children && d.children.length) d.children.forEach(x); })(copy);   /* 整支全展開匯出 */
+  return copy;
+}
+/* 隱藏測量舞臺：類名 ps 與列印克隆共用 #stage.v 的豎排樣式；visibility:hidden 保持可測佈局 */
+function makeTempStage(vertical){
+  const host = document.createElement('div');
+  host.className = 'ps' + (vertical ? ' v' : '');
+  host.setAttribute('aria-hidden', 'true');
+  host.style.cssText = 'position:absolute;left:-99999px;top:0;width:2400px;height:1600px;overflow:visible;visibility:hidden';
+  const scaler = document.createElement('div');
+  scaler.style.cssText = 'position:absolute;top:0;left:0';
+  const stage = document.createElement('div');
+  stage.style.cssText = 'position:absolute;left:0;top:0';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none';
+  const linesG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  svg.appendChild(linesG);
+  const nodes = document.createElement('div');
+  nodes.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;overflow:visible';
+  stage.appendChild(svg); stage.appendChild(nodes);
+  scaler.appendChild(stage); host.appendChild(scaler);
+  document.body.appendChild(host);
+  return { host: host, nodesEl: nodes, linesG: linesG, svg: svg, stage: stage, scaler: scaler };
+}
+/* 在臨時子樹資料上執行 fn（可返回 Promise）：換全域性資料 → 隱藏舞臺 render() →
+   fn 讀取重算出的 nodeRects/edgeSegments/_baseW 跑匯出管線 → finally 恢復一切。
+   主介面 DOM 全程不被觸碰（渲染目標指向臨時舞臺），選中態原樣保留。 */
+function withTempRender(root, fn){
+  const saved = {
+    treeData: treeData,
+    rects: Array.from(nodeRects.entries()),
+    edges: edgeSegments, markers: rowMarkers, lastGens: LAST_GENS, sel: selectedId,
+    fam: FAM_SUR   /* 本譜姓氏：臨時 render 會按子樹重算，漏恢復會讓主介面錯誤剝姓 */
+  };
+  const env = makeTempStage(!!cfg.vertical);
+  _renderTargets = env;
+  _renderSilent = true;
+  _exportLock = true;
+  treeData = root;
+  selectedId = null;
+  function teardown(){
+    _renderTargets = null; _renderSilent = false; _exportLock = false;
+    treeData = saved.treeData; selectedId = saved.sel;
+    nodeRects.clear();
+    saved.rects.forEach(function(kv){ nodeRects.set(kv[0], kv[1]); });
+    edgeSegments = saved.edges; rowMarkers = saved.markers; LAST_GENS = saved.lastGens;
+    FAM_SUR = saved.fam;
+    if (env.host.parentNode) env.host.parentNode.removeChild(env.host);
+  }
+  let out;
+  try { render(); out = fn(); }   /* 隱藏舞臺上為臨時子樹重算佈局（nodeRects/edgeSegments/_baseW） */
+  catch (e){ teardown(); throw e; }
+  if (out && typeof out.then === 'function'){
+    return out.then(v => { teardown(); return v; }, e => { teardown(); throw e; });
+  }
+  teardown();
+  return out;
+}
+let _subtreeNode = null;
+function stmIsOpen(){ return document.getElementById('__subtreeModal').classList.contains('open'); }
+function openSubtreeExport(n){
+  if (!n || n.id === 'root') return;
+  _subtreeNode = n;
+  const cnt = countDescendants(n);
+  document.getElementById('__subtreeTitle').textContent = '匯出此支 · ' + dispName(n.name);
+  document.getElementById('__subtreeHint').textContent =
+    '將匯出「' + dispName(n.name) + '」及其全部後代（共 ' + (cnt + 1) + ' 人），不影響當前族譜資料；譜名自動標註（此支）。';
+  document.getElementById('__subtreeModal').classList.add('open');
+}
+function closeSubtreeExport(){
+  document.getElementById('__subtreeModal').classList.remove('open');
+  _subtreeNode = null;
+}
+function runSubtreeExport(kind){
+  const n = _subtreeNode;
+  if (!n) return;
+  closeSubtreeExport();
+  const base = dispName(n.name);
+  const root = buildSubtreeData(n);
+  exportBusy(true, '正在生成匯出檔案…');
+  withTempRender(root, () => {
+    _exportTitle = base + '（此支）';
+    const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base);
+    return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
+  }).catch(e => { exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
+}
+document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
+document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
+document.getElementById('__subtreePdf').addEventListener('click', () => runSubtreeExport('pdf'));
+document.getElementById('__subtreeModal').addEventListener('mousedown', e => {
+  if (e.target.id === '__subtreeModal') closeSubtreeExport();
+});
+document.getElementById('__subtreeModal').addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ e.stopPropagation(); closeSubtreeExport(); }
+});
 
 /* 譜書豎排列印頁：克隆當前舞臺（卡片/連線/行左世數標），按 A4 縱向可列印區縮放，可裝訂成冊 */
 function buildPrintDomVertical(){
@@ -4467,13 +4768,15 @@ document.addEventListener('keydown', e => {
     if (cmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeClan(); return; }
     if (wmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeWizard(); return; }
     if (pimpIsOpen()){ e.preventDefault(); e.stopPropagation(); closePhotoImpModal(); return; }
+    if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (dmIsOpen()){ return; }            // 彈窗自己的 handler 負責
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
     return;
   }
-  /* 其餘按鍵：輸入中 / 彈窗開著 一律不觸發全域性快捷鍵（v12 洩漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || e.defaultPrevented) return;
+  /* 其餘按鍵：輸入中 / 彈窗開著 / 匯出遮罩在 一律不觸發全域性快捷鍵（v12 洩漏 bug 根因） */
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen()
+      || document.getElementById('__exportBusy') || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;
   if (mod && e.key.toLowerCase() === 'f'){ e.preventDefault(); openSearch(); return; }
@@ -4539,7 +4842,9 @@ window.__ZP = {
   historyLens(){ return [_undoStack.length, _redoStack.length]; },
   rects(){ return nodeRects; },
   storageKey(){ return STORAGE_KEY; },
-  findNode, sanitize, snapshot: historySnapshot
+  findNode, sanitize, snapshot: historySnapshot,
+  /* 大譜匯出純函式（測試/除錯用）：分頁計劃 / 切片起點 / 分頁判定 / 單圖倍率 */
+  pagePlan, tileStarts, pdfNeedsPaging, pngScale
 };
 
 /* 初始化 */
