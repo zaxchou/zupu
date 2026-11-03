@@ -84,6 +84,46 @@ def t_zibei_match_and_infer(b):
 
 
 @testcase
+def t_zibei_ancestors_before_first_character(b):
+    """字辈从第四层开始：祖辈相对序 -2/-1/0 不截断，零也有行标。"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto_zibei(page)
+    original = page.evaluate("""() => {
+      const names = ['周甲', '周乙', '周丙', '周勤', '周修', '周昭'];
+      let children = [];
+      for (let i = names.length - 1; i >= 0; i--)
+        children = [{id: 'a' + i, name: names[i], spouses: [], expanded: true, children}];
+      treeData.zibei = ['勤', '修', '昭']; treeData.children = children;
+      cfg.genBase = 1; cfg.vertical = true; render();
+      return JSON.stringify(sanitize(treeData));
+    }""")
+    relative = page.evaluate("Array.from(computeGenerations().values(), g => g.gen)")
+    check(relative == [-2, -1, 0, 1, 2, 3], "保留完整相对代序", str(relative))
+    expected = ['字辈前3代', '字辈前2代', '字辈前1代', '1代·勤', '2代·修', '3代·昭']
+    actual = [chip_of(page, f'a{i}').inner_text() for i in range(6)]
+    check(actual == expected, "基准前祖辈用人话表示", str(actual))
+    rows = page.locator('.vrow').all_text_contents()
+    check(rows == ['字辈前三代', '字辈前二代', '字辈前一代', '一代·勤', '二代·修', '三代·昭'],
+          "祖辈竖排行标完整，零索引不丢失", str(rows))
+    for i in range(3):
+        tip = chip_of(page, f'a{i}').get_attribute('title')
+        check(expected[i] in tip and not _re.search(r'(?:第?-\d+代|0代|undefined)', tip),
+              "祖辈 tooltip 无零或负代数", tip)
+    stats = page.locator('#statsChip').inner_text()
+    check('字辈前3代–3代' in stats and '6 代' in stats, "统计保留祖辈范围与六代层数", stats)
+    check(page.evaluate("[numToCn(-2), numToCn(0), numToCn(110)]") == ['负二', '零', '一百一十'],
+          "汉字数转换支持负数与超过百世")
+    page.evaluate("cfg.genBase = 10; render()")
+    actual = [chip_of(page, f'a{i}').inner_text() for i in range(6)]
+    check(actual == ['7世', '8世', '9世', '10世·勤', '11世·修', '12世·昭'],
+          "勤从十世起，三祖辈依次七八九世", str(actual))
+    check(page.evaluate("JSON.stringify(sanitize(treeData))") == original,
+          "换算与布局不改族谱原始数据")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
 def t_zibei_conflict_hint(b):
     """名字含其他代字辈字：以世系为准显示，tooltip 提示核对（不再被字辈带偏）"""
     ctx, page, errs, cons = fresh_page(b)

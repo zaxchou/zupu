@@ -330,4 +330,6 @@ with sync_playwright() as p:
 | v15.41 | **画布自由拖动（2026-09-09，漏记补行）**：fit 视图滚动范围为 0 导致拖不动 → 引入恒定 2400px 余量画布平面，任何缩放级别均可拖动；拖动抑制文字误选；新增 t_wheel_mode_persistence_and_burst（滚轮模式持久化/快速滚轮累计/拖动中断缩放动画） |
 | v15.42 | **视觉设置、四向排列与成员照片（2026-10-31，连续四次推送）**：①顶部整理为文件/查看/帮助，查看→视觉设置集中四向排列（真实坐标布局不旋转文字）+三主题+横竖排+滚轮开关，即时保存，镜头保持关注成员；②CSS zoom 排版缩放修放大清晰度（transform 回退），fitToScreen 避让浮动层（availableCanvasRect）；③成员照片第一期：IndexedDB 原图+96px 缩略图随数据、头像/灯箱、文件夹批量导入（确认时才压缩、并发池5）、备份含原图（fullPhotos）、showPhotos 开关、roundRect arcTo 兜底、照片不入撤销栈+惰性 GC；④deep review 修 4 问题（假报保存成功/批量 OOM/头像拖拽/取消竞态）各补回归；⑤示例谱自动补帝王头像：demoPhotoUpgrade 仅 demo:true 且无 photoRev/photoThumb 才注入，用户数据零碰；⑥demo 嵌台北故宫坐像×10（建文/代宗后世摹本、宁国公主剪影，谱序如实标注），EN/JA 种子需单独注入头像（i18n 不携带主本种子照片）；⑦Pages deploy 秒败无描述=GH 队列故障，空提交重触发；⑧17 模块 78 用例（t_photo 12） |
 
+| v15.46 | **单页矢量 PDF 与基准前世代修复（2026-11-03）**：①「导出 PDF」先开模式弹窗：默认单页矢量（文字/连线/形状可缩放可搜索，照片仍位图），可选 A4 横向分页打印；主菜单按当前折叠状态，右键「导出此支…」含全部后代；②手写 Canvas-like PDF 后端 `tools/pdf-vector.js`（TrueType cmap/复合字形/字形子集/ToUnicode/图片 XObject，无库无网络），经 `tools/build_pdf.py` 内联，随附 Apache-2.0 的 DroidSansFallbackFull；缺字明确报错并可在弹窗选本机可嵌 TTF（仅本次）；③修复分页 PDF 内容矩阵 1684×1190 溢出 842×595 页面的裁切；④修复 `computeGenerations` 把相对字辈序 `Math.max(1,…)` 截断导致基准前祖辈全显示同一代：现保留负数/零再换算，基准 10 时 7/8/9 递进，行标、统计、搜索、打印、世系录同步；⑤小红书包剥离字体与 PDF 后端（容器无 PDF 保存通道），保留世代修复。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

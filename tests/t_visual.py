@@ -79,13 +79,28 @@ def t_four_directions_geometry_fit_and_outputs(b):
             for kind in ['PNG', 'PDF']:
                 with page.expect_download() as dl:
                     page.evaluate('export%s()' % kind)
+                    if kind == 'PDF':
+                        check(page.locator('#__pdfModal').is_visible(), 'PDF 模式弹窗出现')
+                        page.locator('input[name="pdfMode"][value="vector"]').check()
+                        page.locator('#__pdfGo').click()
                 path = Path(LOCAL_OUT)/('visual_%s_%s.%s' % (direction, vertical, kind.lower()))
                 dl.value.save_as(str(path))
                 raw = path.read_bytes()
                 check(raw.startswith(b'\x89PNG' if kind == 'PNG' else b'%PDF-'), '方向文件签名')
                 if kind == 'PDF':
-                    m = re.search(rb'/MediaBox \[0 0 (\d+) (\d+)\]', raw)
-                    check(m and abs(int(m[1])-round(size1[0]*.75)) <= 1, 'PDF尺寸来自方向图谱')
+                    import fitz
+                    dims = page.evaluate('() => {const d=exportDims();return [d.W,d.H+46]}')
+                    with fitz.open(str(path)) as doc:
+                        rect = doc[0].rect
+                        check(len(doc) == 1 and max(rect.width, rect.height) <= 14400,
+                              '方向矢量 PDF 单页且不超尺寸上限', str(rect))
+                        check(abs(rect.width / rect.height - dims[0] / dims[1]) < .01,
+                              'PDF 宽高比来自方向布局', str((rect, dims)))
+                        text = ''.join(doc[0].get_text().split())
+                        check(all(n in text for n in ['少群', '雷茂勋', '周新洋']),
+                              '横排/竖排姓名均可提取', str((direction, vertical, text[:100])))
+                        check(b'/FontFile2' in raw and b'/ToUnicode' in raw,
+                              '方向 PDF 嵌入字体与文字映射')
             page.evaluate('buildPrintDomReal()')
             if vertical or direction != 'down':
                 check(page.locator('#printArea .ps .node').count() == 13, '方向打印克隆完整图谱')

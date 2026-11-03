@@ -472,7 +472,12 @@ body{
 .modal-btns button.primary{background:var(--root-bg);border-color:var(--root-bg);color:#fff}
 .modal-btns button:hover{filter:brightness(1.12)}
 /* 集中视觉设置：选中即生效，详细显示项按需展开 */
-#__setModal .modal{width:460px;max-height:86vh;overflow:auto}
+#__setModal .modal,#__pdfModal .modal{width:460px;max-height:86vh;overflow:auto}
+#__pdfModal h3{color:var(--text)}
+#__pdfModal details{font-size:12px;margin:12px 0}
+#__pdfModal summary{cursor:pointer;margin-bottom:10px}
+#__pdfModal label.checkline{align-items:flex-start;line-height:1.6}
+#__pdfModal label.checkline input{margin:3px 8px 0 0;flex-shrink:0}
 .visual-heading{display:flex;align-items:center;justify-content:space-between}
 .visual-heading h3{margin:0;color:var(--text)}
 #__setModal .modal-btns button{color:var(--text)}
@@ -836,9 +841,23 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p id="__subtreeHint"></p>
     <div class="st-btns">
       <button id="__subtreePng" class="primary">导出图片（PNG）</button>
-      <button id="__subtreePdf">导出 PDF（过大自动分页）</button>
+      <button id="__subtreePdf">导出 PDF…</button>
       <button id="__subtreeCancel">取消</button>
     </div>
+  </div>
+</div>
+<div class="modal-mask" id="__pdfModal" role="dialog" aria-modal="true" aria-labelledby="__pdfTitle">
+  <div class="modal">
+    <h3 id="__pdfTitle">导出 PDF</h3>
+    <p class="help-note">按当前排列导出，已折叠的分支保持折叠；导出此支时包含全部后代。</p>
+    <label class="checkline"><input type="radio" name="pdfMode" value="vector" checked> 单页高清：整棵树一张，文字与线条放大仍清晰</label>
+    <label class="checkline"><input type="radio" name="pdfMode" value="paged"> A4 分页：横向多页，适合打印</label>
+    <p class="help-note">照片清晰度取决于原图片。单页模式内嵌字体，离线查看也能正常显示。</p>
+    <details><summary>生僻字与其他文字</summary>
+      <label>字体文件（可选，TTF，仅供本次导出）<input id="__pdfFont" type="file" accept=".ttf,font/ttf"></label>
+      <p class="help-note">缺字时可选择包含该字、允许嵌入的本机 TrueType 字体。字体不会上传。</p>
+    </details>
+    <div class="modal-btns"><button id="__pdfCancel">关闭</button><button class="primary" id="__pdfGo">导出</button></div>
   </div>
 </div>
 <div id="__toast" role="status" style="opacity: 0;">已自动保存在本浏览器，编辑即保存</div>

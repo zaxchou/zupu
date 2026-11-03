@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""图谱导出：PNG / PDF 直下载（零弹窗）。断言文件签名、命名、尺寸合理。"""
+"""图谱导出：PNG 直下载、PDF 模式确认后下载；校验真实文字与嵌入字体。"""
 from helper import *
 import os as _os
 import shutil as _shutil
@@ -9,6 +9,10 @@ def export_and_save(page, menu_text, out_path):
     with page.expect_download() as di:
         page.locator("#btnFile").click()
         page.locator('#__ctxMenu .mi', has_text=menu_text).click()
+        if menu_text == "导出 PDF":
+            check(page.locator('#__pdfModal').is_visible(), "PDF 模式弹窗出现")
+            check(page.locator('input[name="pdfMode"][value="vector"]').is_checked(), "默认矢量模式")
+            page.locator('#__pdfGo').click()
     _shutil.copyfile(di.value.path(), out_path)
     return di.value.suggested_filename
 
@@ -39,7 +43,13 @@ def t_export_pdf(b):
     check(_re.match(r"^家族族谱-图-\d{8}-\d{4}\.pdf$", fn), "pdf 文件名", fn)
     raw = open(_os.path.join(LOCAL_OUT, "exp.pdf"), "rb").read()
     check(raw[:5] == b"%PDF-", "PDF 签名", str(raw[:8]))
-    check(b"/DCTDecode" in raw and b"/MediaBox" in raw, "PDF 结构（内嵌图像+页面）")
+    check(b"/FontFile2" in raw and b"/ToUnicode" in raw, "PDF 嵌入 TrueType 字体与 Unicode 映射")
+    import fitz
+    with fitz.open(_os.path.join(LOCAL_OUT, "exp.pdf")) as doc:
+        check(len(doc) == 1, "默认矢量 PDF 单页")
+        text = "".join(doc[0].get_text().split())
+        check(all(n in text for n in ["少群", "雷茂勋", "周新洋"]), "姓名为可提取文字", text[:160])
+        check(not doc[0].get_images(full=True), "无照片时无整图 JPEG")
     size = _os.path.getsize(_os.path.join(LOCAL_OUT, "exp.pdf"))
     check(size > 15000, "pdf 有实际内容", str(size))
     check(not errs, "无 JS 错误", str(errs))

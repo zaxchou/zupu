@@ -484,6 +484,88 @@ def t_shixilu_export(b):
 
 
 @testcase
+def t_genbase_ancestors_across_book_outputs(b):
+    """谱书基准之前的祖辈在搜索、行标、打印、画布及五世分表中一致。"""
+    ctx, page, errs, cons = fresh_page(b, downloads=True)
+    goto_book(page)
+    page.evaluate("""() => {
+      const names = ['周甲', '周乙', '周丙', '周勤', '周修', '周昭'];
+      let children = [];
+      for (let i = names.length - 1; i >= 0; i--)
+        children = [{id: 'a' + i, name: names[i], spouses: [], expanded: true, children}];
+      treeData.zibei = ['勤', '修', '昭']; treeData.children = children; render();
+    }""")
+    open_settings(page, base=10)
+    page.locator('#__setDone').click()
+    stats = page.locator('#statsChip').inner_text()
+    check('字辈第7–12世' in stats and '6 代' in stats, "统计为七至十二世、实际六代", stats)
+    # 截获实际绘制文字，验证 PNG/PDF 共用画布使用相同世次。
+    drawn = page.evaluate("""async () => {
+      const texts = [], original = CanvasRenderingContext2D.prototype.fillText;
+      CanvasRenderingContext2D.prototype.fillText = function(text, ...args){
+        texts.push(String(text)); return original.call(this, text, ...args);
+      };
+      try { await exportTreeCanvas(); return texts; }
+      finally { CanvasRenderingContext2D.prototype.fillText = original; }
+    }""")
+    expected = ['7世', '8世', '9世', '10世·勤', '11世·修', '12世·昭']
+    check(all(x in drawn for x in expected), "画布绘制七至十二世", str(drawn))
+    page.evaluate('buildPrintDomReal()')
+    check(page.locator('#printArea .pgen').all_text_contents() == expected,
+          "大纲打印与成员卡世次一致", page.locator('#printArea .pgen').all_text_contents())
+    page.evaluate('cfg.cnNum = true; cfg.vertical = true; render()')
+    expected_cn = ['七世', '八世', '九世', '十世·勤', '十一世·修', '十二世·昭']
+    check(page.locator('.vrow').all_text_contents() == expected_cn,
+          "汉字行标保留零相对索引的九世", page.locator('.vrow').all_text_contents())
+    page.evaluate('buildPrintDomReal()')
+    check(page.locator('#printArea .vrow').all_text_contents() == expected_cn,
+          "竖排打印保留全部祖辈行标")
+    page.evaluate('openSearch()')
+    page.fill('#sbInput', '周丙')
+    check(page.locator('.sb-item .g').inner_text() == '九世', "搜索零相对索引显示九世")
+    page.evaluate('closeSearch()')
+
+    def exported_generations(suffix):
+        with page.expect_download() as dl:
+            page.evaluate('exportShixilu()')
+        path = os.path.join(LOCAL_OUT, 'shixilu_ancestors_' + suffix + '.html')
+        dl.value.save_as(path)
+        html = open(path, encoding='utf-8').read()
+        rows = _re.findall(r'<tr><td class="c">([^<]*)</td><td><b>([^<]*)</b>', html)
+        return html, dict((name, generation) for generation, name in rows)
+
+    html, rows = exported_generations('base10')
+    check([rows[name] for name in ['周甲', '周乙', '周丙', '周勤', '周修', '周昭']] == expected_cn,
+          "世系录含七八九世，不把相对零当未定", str(rows))
+    check('第六世至第十世' in html and '第十一世至第十五世' in html and '未定世次' not in html,
+          "祖辈按实际谱世进入五世分表")
+    # 小基准跨越零：不能把已知祖辈混入未定世次，也不能输出零/负数。
+    page.evaluate('cfg.genBase = 2; render()')
+    check(page.locator('#stage .vrow').all_text_contents() ==
+          ['字辈前三代', '字辈前二代', '一世', '二世·勤', '三世·修', '四世·昭'],
+          "跨零行标用字辈前代数，正数继续按谱世")
+    html, rows = exported_generations('base2')
+    check([rows[name] for name in ['周甲', '周乙', '周丙', '周勤']] ==
+          ['字辈前三代', '字辈前二代', '一世', '二世·勤'], "零以下用字辈前代数，零索引正常换算", str(rows))
+    check('字辈前三代至字辈前二代' in html and '未定世次' not in html,
+          "字辈之前分表有可读范围")
+    page.evaluate('openSearch()')
+    page.fill('#sbInput', '周甲')
+    check(page.locator('.sb-item .g').inner_text() == '字辈前三代', "搜索同样使用字辈前代数")
+    page.evaluate('closeSearch()')
+    stats = page.locator('#statsChip').inner_text()
+    check('字辈前三代–四世' in stats and '六 代' in stats, "跨零统计可读且总代数稳定", stats)
+    for i in range(3):
+        tip = page.locator(f'#stage .node[data-id="a{i}"] .gen').get_attribute('title')
+        check(not _re.search(r'(?:第?-\d+[代世]|[零0]世|第[零0]代|undefined)', tip),
+              "谱书基准下 tooltip 无负数与零代数", tip)
+    check('undefined' not in html and not _re.search(r'(?:[零0]|负[一二三])世', html),
+          "世系录不输出零世、负世或 undefined")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
 def t_jian_tiao(b):
     ctx, page, errs, cons = fresh_page(b, downloads=True)
     goto_book(page)

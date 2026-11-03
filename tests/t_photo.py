@@ -533,6 +533,8 @@ def t_export_four_directions_vertical_and_pixels(b):
             check(raw.startswith(b"\x89PNG"), "PNG 签名 %s/%s" % (direction, vertical))
     with page.expect_download() as dl2:
         page.evaluate("exportPDF()")
+        page.locator('input[name="pdfMode"][value="vector"]').check()
+        page.locator('#__pdfGo').click()
     raw2 = Path(dl2.value.path()).read_bytes()
     check(raw2.startswith(b"%PDF-"), "PDF 签名")
     check(not errs, "四向+竖排导出全程无 JS 错误", str(errs))

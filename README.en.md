@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.42" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.46" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
 **A double-click electronic genealogy: record your family, auto-number generations, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.42-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-78%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.46-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-101%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![Try online](https://img.shields.io/badge/try%20it-online-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -52,10 +52,18 @@ top-to-bottom (right to left) — print it / export it to PDF and **bind it into
   Visual settings (wheel scrolls the page, Ctrl+scroll zooms)
 - **Names in, generations out** — paste your generation-char list (e.g. the real Ming imperial poem “高瞻祁见祐”) and
   everyone's generation is numbered automatically; align it with your old book, so “the 23rd
-  generation” there reads “the 23rd generation” here
+  generation” there reads “the 23rd generation” here. v15.46 fixes clipped ancestor numbers:
+  with a base of 10, the three earlier generations read 7, 8, 9, followed by 10, 11, 12
 - **Print a real genealogy book** — vertical text, generations as rows, five generations per
   table; export to PDF and take it straight to the print shop for binding. Tree name, hall
   name, lineage and founder record print up front
+- **Keep the whole tree on one searchable page** — “File ▾ → Export PDF” defaults to a vector
+  PDF: text, connectors and shapes stay sharp as you zoom, and text is searchable. Choose A4
+  landscape pages for printing. The main export keeps current folds; “Export this branch…”
+  in a member’s context menu includes all descendants, including folded ones
+- **Bring Markdown back in** — “File ▾ → Export Markdown (re-importable)” produces readable
+  preface, generation-char and member information; import this tool’s `.md` format through
+  “Restore backup”. Use JSON with original photos for a complete backup
 - **Spouse terms follow the old books** — first spouse / remarried, adopted heir / adopted
   out / dual heir, no-issue mark — the classic conventions are all here
 - **Your data stays yours** — offline, no account, nothing uploaded; one-click json backup,
@@ -87,8 +95,26 @@ make it entirely yours.
 ## ❓ FAQ
 
 **Where is my data stored? Can it be lost?**
-In this browser on this computer (localStorage). Nothing is ever uploaded. Export a json
-backup regularly via “File ▾ → Back up to file”; restore it anywhere via “Restore backup”.
+Tree data stays in this browser’s localStorage; original photos stay in its IndexedDB.
+Nothing is uploaded. Use “File ▾ → Backup (with original photos)” regularly for a complete
+JSON backup; “Back up to file” includes only photo thumbnails. Import on another computer
+via “Restore backup”. The user data structure is unchanged; existing JSON backups still work.
+
+**Can I zoom and search a PDF? What about missing characters?**
+The default single-page mode embeds a subset of the DroidSansFallbackFull TrueType font.
+Text is searchable; connectors and shapes remain vectors. Photos remain images, so their
+sharpness depends on the source. In the PDF dialog, choose a local TTF with the required
+characters and permission to embed it if needed. It is used only for this single-page export,
+never uploaded or saved in the tree. Missing glyphs produce an explicit error; neither the
+bundled font nor a custom font guarantees full Unicode coverage. A4 landscape paged printing
+remains available, with a coordinate-transform (CTM) clipping fix in v15.46. Paged output is a continuous slice: a card crossing a page edge is split across the two pages and is complete once the pages are joined.
+The Xiaohongshu mini-tool cannot save PDFs; its package omits the font and PDF backend but
+includes the generation-number fix.
+
+**Does Markdown replace a complete backup?**
+Use “Restore backup” to re-import `.md` files exported by this tool. This does not promise
+lossless preservation of every field in arbitrary Markdown text. Markdown excludes photos
+and fold state; use JSON from “Backup (with original photos)” for a complete backup.
 
 **Multi-user editing / online sync?**
 No — by design. Genealogy data is private and edited rarely; a local single file is the
@@ -112,4 +138,5 @@ The English and Japanese builds are generated from the Chinese master via
 
 ## 📄 License
 
-[MIT](LICENSE) © zaxchou
+[MIT](LICENSE) © zaxchou. The bundled PDF font is licensed under Apache-2.0; see its
+[source and NOTICE](third_party/droid-sans/README.md).

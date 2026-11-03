@@ -2,14 +2,14 @@
 
 **中文（简体）** | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover.jpg?v=15.42" alt="家族族谱 · 传代树" width="100%">
+<img src="docs/cover.jpg?v=15.46" alt="家族族谱 · 传代树" width="100%">
 
 # 家族族谱 · 传代树 (Zupu)
 
 **双击就能用的电子族谱：录入家人、自动算辈分、打印装订成册**
 
-[![Version](https://img.shields.io/badge/version-v15.42-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-78%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.46-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-101%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![在线试用](https://img.shields.io/badge/在线试用-点击演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -38,9 +38,14 @@
 - **滚轮直接缩放、拖空白平移** — 像看地图一样顺手；不习惯可在视觉设置里关掉，
   改回滚轮滚动页面、Ctrl＋滚轮才缩放
 - **名字写上，辈分自动算** — 把你家的字辈贴进去（如明朝皇室字辈诗“高瞻祁见祐”），每个人是第几代自动标出来；
-  还能对齐老谱：老谱记“廿三世”，这里也显示“廿三世”
+  还能对齐老谱：老谱记“廿三世”，这里也显示“廿三世”。v15.46 修复祖辈代数被截断的问题：
+  基准为 10 时，前三祖辈依次为 7、8、9，随后为 10、11、12
 - **打印出来是一本老谱的样子** — 竖排文字、世代成行、五代一张表，导出 PDF 直接送打印店装订成册；
   谱名、堂号、源流、始祖记都自动印在谱前
+- **整树一页，放大还能搜名字** — 「文件 ▾ → 导出 PDF」默认单页矢量：文字、连线、形状放大仍清晰，
+  文字可搜索；也可选 A4 横向分页打印。主菜单按当前折叠状态导出，右键「导出此支…」则包含全部后代
+- **Markdown 也能导回来** — 「文件 ▾ → 导出 Markdown（可导回）」生成可读的谱序、字辈和成员信息，
+  从「恢复备份」可导回本工具格式的 `.md`；完整备份请用含照片原图的 JSON
 - **配偶写法跟着老谱走** — 「丁嘉」显示成「丁氏嘉」；
   配 / 继配 / 嗣子 / 嗣出 / 兼祧 / 止，老谱的体例这里都有
 - **数据只在你自己手里** — 不联网、无账号、不上传任何服务器；
@@ -74,8 +79,20 @@
 ## ❓ 常见问题
 
 **数据存在哪里？会不会丢？**
-存在你电脑的浏览器里（localStorage），不上传任何服务器。定期用「文件 ▾ → 备份到文件」
-导出 json 即可万无一失；换电脑用「恢复备份」导入。
+族谱数据存在本机浏览器的 localStorage，照片原图存在本机 IndexedDB，不上传任何服务器。
+定期用「文件 ▾ → 备份（含照片原图）」导出 JSON 完整备份；普通「备份到文件」只含照片缩略图。
+换电脑用「恢复备份」导入。本次用户数据结构不变，原有 JSON 备份继续可用。
+
+**PDF 能放大、搜索吗？生僻字怎么办？**
+默认单页模式内嵌 DroidSansFallbackFull TrueType 的所用字形子集，文字可搜索，连线与形状保持矢量；
+照片仍是图片，清晰度取决于原图。弹窗的「生僻字与其他文字」可选含所需字形、允许嵌入的本机 TTF，
+仅用于本次单页导出，不上传、不保存到族谱。缺字会明确报错；默认字体与自选字体都不保证覆盖全部 Unicode。
+A4 横向分页打印仍可选，v15.46 修复了坐标变换（CTM）造成的分页裁切问题。分页是连续切片：跨页边的卡片会在相邻两页各显示一部分，拼接后完整。
+小红书小工具不支持保存 PDF，包内剥离字体与 PDF 后端，但包含本次世代显示修复。
+
+**Markdown 能代替完整备份吗？**
+本工具导出的 `.md` 可从「恢复备份」导回；这不是任意 Markdown 文本、所有字段都无损的承诺。
+Markdown 不含照片和折叠状态，完整备份请用「备份（含照片原图）」导出的 JSON。
 
 **支持多人协作 / 在线同步吗？**
 不支持，这是刻意的设计选择：族谱数据私密且低频编辑，本地单文件是最稳妥的形态。
@@ -94,4 +111,4 @@ Issue / PR 都欢迎：`handoff.md` 里有完整的架构说明与踩坑记录�
 
 ## 📄 License
 
-[MIT](LICENSE) © zaxchou
+[MIT](LICENSE) © zaxchou。内置 PDF 字体采用 Apache-2.0，见[来源与 NOTICE](third_party/droid-sans/README.md)。

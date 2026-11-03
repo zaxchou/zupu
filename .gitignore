@@ -13,3 +13,6 @@ tests/_p*.py
 Thumbs.db
 .DS_Store
 *-备份-*.json
+
+# Playwright MCP 临时日志
+.playwright-mcp/

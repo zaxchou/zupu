@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""大族谱导出三功能：A 大谱自动 A4 横向分页 PDF；B 导出此支（含后代，不动原数据）；
-C PNG 上限 12000→22000（桌面）+ 80MP 面积守卫。小树行为保持现状。
-页数断言用中小树 + __ZP.pagePlan 纯公式（不真渲 300 页）。"""
+"""大族谱导出：显式选择 A4 分页 PDF、导出此支、PNG 上限回归。
+页数断言用中小树 + __ZP.pagePlan 纯公式（不真渲 300 页）；PDF 实际渲染验证页图矩阵。"""
 from helper import *
 import os as _os
 import re as _re
@@ -58,10 +57,14 @@ def open_big(page, url):
     page.wait_for_load_state("domcontentloaded")
 
 
-def export_via_file_menu(page, menu_text, out_path):
-    with page.expect_download() as di:
+def export_via_file_menu(page, menu_text, out_path, mode="vector"):
+    with page.expect_download(timeout=90000) as di:
         page.locator("#btnFile").click()
         page.locator('#__ctxMenu .mi', has_text=menu_text).click()
+        if menu_text == "导出 PDF":
+            check(page.locator('#__pdfModal').is_visible(), "PDF 模式弹窗出现")
+            page.locator('input[name="pdfMode"][value="%s"]' % mode).check()
+            page.locator('#__pdfGo').click()
     _shutil.copyfile(di.value.path(), out_path)
     return di.value.suggested_filename
 
@@ -88,16 +91,18 @@ def check_xref(raw, label):
     cnt = int(m_cnt.group(1))
     check(cnt == size, label + "：xref 条目数==/Size（末对象不缺条目）", "%d vs %d" % (cnt, size))
     sec = raw[xs:m_sx.start()]
-    entries = sec.split(b"\n")[2:2 + cnt]
+    # 规范固定 20 字节条目，EOL 可为 " \n" / " \r" / "\r\n"；剥离行尾再断言
+    entries = [e.rstrip(b" \r") for e in sec.split(b"\n")[2:2 + cnt]]
     check(all(e.endswith(b" n") or e.endswith(b" f") for e in entries),
           label + "：xref 条目格式", str(entries[:2]))
     check(entries[0] == b"0000000000 65535 f", label + "：对象 0 为 free 条目", str(entries[0]))
+    bad = []
     for num in range(1, cnt):
         off = int(entries[num].split()[0])
         expect = ("%d 0 obj" % num).encode()
-        check(raw[off:off + len(expect)] == expect,
-              label + "：xref[%d] 偏移指向 %d 0 obj" % (num, num),
-              str(raw[off:off + 16]))
+        if raw[off:off + len(expect)] != expect:
+            bad.append((num, off, raw[off:off + 16]))
+    check(not bad, label + "：所有 xref 偏移指向对应对象", str(bad[:5]))
     nums = [int(x) for x in _re.findall(rb"(\d+) 0 obj\r?\n", raw[:xs])]
     check(max(nums) == size - 1, label + "：最高对象号==Size-1", "%s vs %d" % (max(nums), size - 1))
 
@@ -115,7 +120,11 @@ def t_small_pdf_still_single(b):
     check(f["tail"] == b"%%EOF", "PDF 文件尾", str(f["tail"]))
     check(f["counts"] == [1], "小树单页 /Count 1", str(f["counts"]))
     check(b"/MediaBox [0 0 842 595]" not in raw, "小树页面=图谱尺寸而非 A4 分页规格")
-    check(b"/DCTDecode" in raw, "内嵌 JPEG 结构保留")
+    check(b"/FontFile2" in raw and b"/ToUnicode" in raw, "默认矢量 PDF 嵌入字体与 Unicode 映射")
+    import fitz
+    with fitz.open(PDF_OUT) as doc:
+        check("少群" in "".join(doc[0].get_text().split()), "小树文字可提取")
+        check(not doc[0].get_images(full=True), "无照片时不嵌入整页图")
     check_xref(raw, "小树单页 PDF")
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
@@ -123,7 +132,7 @@ def t_small_pdf_still_single(b):
 
 @testcase
 def t_big_pdf_paged(b):
-    """2. ~130 人合成树：PDF 自动 A4 横向分页（页数=ceil 公式，每页 842×595pt）"""
+    """2. ~130 人合成树：显式 paged，页数=ceil 公式，每页图正确铺满 842×595pt。"""
     tree, n = big_tree(130)
     ctx, page, errs, cons = fresh_page(b, downloads=True)
     open_big(page, big_fixture_url(tree, "fixture_big130.html"))
@@ -134,7 +143,7 @@ def t_big_pdf_paged(b):
     }""")
     check(dims["paging"], "130 人树触发分页阈值（max(W,H)>约10400）", str(dims))
     t0 = _time.time()
-    fn = export_via_file_menu(page, "导出 PDF", PDF_OUT)
+    fn = export_via_file_menu(page, "导出 PDF", PDF_OUT, mode="paged")
     took = _time.time() - t0
     check(took < 60, "分页导出耗时可接受", "%.1fs" % took)
     check(fn.endswith(".pdf"), "文件名 .pdf", fn)
@@ -179,6 +188,32 @@ def t_big_pdf_paged(b):
     }""", _b64.b64encode(jpegs[-1]).decode())
     check(px["w"] == 1684 and px["h"] == 1190, "页图像 1684×1190（2x 密度）", str(px))
     check(px["darkPct"] < 20, "末页白底为主（无整页发黑）", str(px))
+    # 2x 是 JPEG 像素密度，PDF 绘图矩阵必须使用物理页尺寸，否则右/下半页会被裁掉。
+    import fitz
+    from PIL import Image, ImageChops, ImageStat
+    import io
+    with fitz.open(PDF_OUT) as doc:
+        bad_matrices = []
+        for i, pdf_page in enumerate(doc):
+            content = b"\n".join(doc.xref_stream(x) for x in pdf_page.get_contents())
+            matrices = _re.findall(rb"([\d.]+)\s+0\s+0\s+([\d.]+)\s+0\s+0\s+cm", content)
+            if not matrices or any(abs(float(w) - 842) > .01 or abs(float(h) - 595) > .01
+                                   for w, h in matrices):
+                bad_matrices.append((i + 1, matrices))
+            rects = pdf_page.get_image_rects(pdf_page.get_images()[0][0])
+            if len(rects) != 1 or max(abs(a - b) for a, b in zip(rects[0], pdf_page.rect)) > .01:
+                bad_matrices.append((i + 1, str(rects)))
+        check(not bad_matrices, "全部页图矩阵为 842×595pt 且铺满 MediaBox", str(bad_matrices[:5]))
+        # 首/末页用真实 PDF 渲染对照原 JPEG 的 1/2 缩图，覆盖内容不同的切片。
+        diffs = []
+        for i in sorted({0, len(doc) - 1}):
+            pix = doc[i].get_pixmap(matrix=fitz.Matrix(1, 1), alpha=False)
+            rendered = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+            source = Image.open(io.BytesIO(jpegs[i])).convert("RGB").resize(
+                (842, 595), Image.Resampling.BOX)
+            diff = max(ImageStat.Stat(ImageChops.difference(rendered, source)).mean)
+            diffs.append((i + 1, round(diff, 3)))
+            check(diff < 4, "实际 PDF 渲染与整幅页图缩小一致", str(diffs))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -316,10 +351,8 @@ def t_page_formula(b):
                paging: window.__ZP.pdfNeedsPaging(st._baseW, st._baseH) };
     }""")
     check(dims["paging"], "100 人树已过分页阈值", str(dims))
-    with page.expect_download() as di:
-        page.locator("#btnFile").click()
-        page.locator('#__ctxMenu .mi', has_text="导出 PDF").click()
-    f = pdf_facts(open(di.value.path(), "rb").read())
+    export_via_file_menu(page, "导出 PDF", PDF_OUT, mode="paged")
+    f = pdf_facts(open(PDF_OUT, "rb").read())
     check(f["counts"][0] == dims["plan"]["total"], "100 人树页数与公式一致",
           "pdf=%s plan=%s dims=%sx%s" % (f["counts"], dims["plan"], dims["w"], dims["h"]))
     check(not errs, "无 JS 错误", str(errs))
@@ -334,8 +367,11 @@ def t_export_journey_no_errors(b):
     export_via_file_menu(page, "导出图片", _os.path.join(LOCAL_OUT, "journey.png"))
     page.locator('.node[data-id="b1"]').click(button="right")
     page.locator('#__ctxMenu .mi', has_text="导出此支").click()
+    page.locator("#__subtreePdf").click()
+    check(page.locator("#__pdfModal").is_visible(), "此支 PDF 先选择模式")
+    page.locator('input[name="pdfMode"][value="vector"]').check()
     with page.expect_download() as di:
-        page.locator("#__subtreePdf").click()
+        page.locator("#__pdfGo").click()
     fn = di.value.suggested_filename
     check(fn.startswith("少秀") and fn.endswith(".pdf"), "此支 PDF 文件名", fn)
     f = pdf_facts(open(di.value.path(), "rb").read())

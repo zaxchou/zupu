@@ -7,7 +7,7 @@
 - 母本演进后重跑本脚本即可发现漏翻（drift detector）。
 - 代码注释保持中文（面向贡献者）；只有用户可见文案翻译。
 """
-import io, os, re, sys
+import copy, io, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'index.html')
@@ -205,10 +205,27 @@ EN = [
   ("return n.heir === 'in' ? '嗣子：过继来继承此支（谱书式「过继TA为子」）'\n       : n.heir === 'out' ? '嗣出：过继给他人为子（谱书式「TA过继某某为子」）'\n       : n.heir === 'jian' ? '兼祧（兼嗣）：一子兼继两房' : '';",
    "return n.heir === 'in' ? 'Heir: adopted in to continue this branch'\n       : n.heir === 'out' ? 'Adopted out: became the heir of another branch'\n       : n.heir === 'jian' ? 'Dual heir: one son continues two branches' : '';"),
   ("function genUnit(){ return genOffset() ? '世' : '代'; }", "function genUnit(){ return 'gens'; }"),
-  ("const CN_D = ['零','一','二','三','四','五','六','七','八','九'];\nfunction numToCn(n){\n  n = Math.round(n);\n  if (n < 10) return CN_D[n];\n  if (n === 10) return '十';\n  if (n < 20) return '十' + CN_D[n % 10];\n  if (n < 50){\n    const t = ['','','廿','卅','卌'][Math.floor(n / 10)];\n    return t + (n % 10 ? CN_D[n % 10] : '');\n  }\n  return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');\n}",
-   "function numToCn(n){ return String(Math.round(n)); }"),
-  ("function genLabel(g){ const v = g + genOffset(); return (cfg.cnNum ? numToCn(v) : v) + genUnit(); }",
-   "function genLabel(g){ return 'Gen ' + (g + genOffset()); }"),
+  # 数字算法原样保留；只转义字面常量，不能把负数/百千逻辑改成显示翻译。
+  ("const CN_D = ['零','一','二','三','四','五','六','七','八','九'];",
+   "const CN_D = ['零','一','二','三','四','五','六','七','八','九'];".encode('unicode_escape').decode('ascii')),
+  ("if (n < 0) return '负' + numToCn(-n);", r"if (n < 0) return '\u8d1f' + numToCn(-n);"),
+  ("(unit === 1000 ? '千' : '百')", r"(unit === 1000 ? '\u5343' : '\u767e')"),
+  ("(rest < unit / 10 ? '零' : '') + (rest >= 10 && rest < 20 ? '一' : '')",
+   r"(rest < unit / 10 ? '\u96f6' : '') + (rest >= 10 && rest < 20 ? '\u4e00' : '')"),
+  ("if (n === 10) return '十';", r"if (n === 10) return '\u5341';"),
+  ("if (n < 20) return '十' + CN_D[n % 10];", r"if (n < 20) return '\u5341' + CN_D[n % 10];"),
+  ("const t = ['','','廿','卅','卌'][Math.floor(n / 10)];",
+   r"const t = ['','','\u5eff','\u5345','\u534c'][Math.floor(n / 10)];"),
+  ("return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');",
+   r"return CN_D[Math.floor(n / 10)] + '\u5341' + (n % 10 ? CN_D[n % 10] : '');"),
+  ("function beforeZibeiLabel(g, cn = cfg.cnNum){ return '字辈前' + (cn ? numToCn(1 - g) : 1 - g) + '代'; }",
+   "function beforeZibeiLabel(g, cn = cfg.cnNum){ return (1 - g) + ' gen(s) before zibei'; }"),
+  ("function genLabel(g, cn = cfg.cnNum, unit = genUnit()){\n  const v = g + genOffset();\n  return v <= 0 ? beforeZibeiLabel(g, cn) : (cn ? numToCn(v) : v) + unit;\n}",
+   "function genLabel(g, cn = cfg.cnNum, unit = genUnit()){\n  const v = g + genOffset();\n  return v <= 0 ? beforeZibeiLabel(g, cn) : 'Gen ' + v;\n}"),
+  ("function genRangeLabel(lo, hi, unit){ return genLabel(lo, true, unit) + '至' + genLabel(hi, true, unit); }",
+   "function genRangeLabel(lo, hi, unit){ return 'Generations ' + (1 - hi) + '–' + (1 - lo) + ' before zibei'; }"),
+  ("function genReportLabel(g){ return genLabel(g, true, '世'); }",
+   "function genReportLabel(g){ return genLabel(g, true); }"),
   ("const RANK_WORDS = ['长','次','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五'];",
    "const RANK_WORDS = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th','13th','14th','15th'];"),
   ("migrate({ id:'root', name:'家族族谱', spouses:[], expanded:true, children:[] })",
@@ -217,8 +234,8 @@ EN = [
   # v15.44：字辈定代改为「结构优先+字辈整体票选校准」，genTitle 重写（match/depth 两分支，无 parent/sibling）
   ("t += ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';",
    "t += ziOfGen ? ' (this name does not use this generation’s zibei char “' + ziOfGen + '”)' : ' (name does not use a zibei char)';"),
-  ("const base = genOffset() ? '（谱书世数，应用自算第' + g.gen + '代）' : '';",
-   "const base = genOffset() ? ' (book generations; app-computed: Gen ' + g.gen + ')' : '';"),
+  ("? '（谱书世数，' + (g.gen > 0 ? '应用自算第' + g.gen + '代' : beforeZibeiLabel(g.gen)) + '）' : '';",
+   "? ' (book generations; ' + (g.gen > 0 ? 'app-computed: Gen ' + g.gen : beforeZibeiLabel(g.gen)) + ')' : '';"),
   ("return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base",
    "return 'Zibei char “' + g.zi + '” = ' + genLabel(g.gen) + base"),
   ("let t = '按世系推算：' + genLabel(g.gen) + base;",
@@ -246,12 +263,12 @@ EN = [
   ("pill.title = '此支已折叠，共 ' + cnt + ' 位后代 —— 点击展开';", "pill.title = 'Branch collapsed — ' + cnt + ' descendants. Click to expand';"),
   ("qa.title = '打开操作菜单';", "qa.title = 'Open action menu';"),
   # ---- JS：竖排行标 ----
-  ("const text = numToCn(g + genOffset()) + genUnit() + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');", "const text = 'Gen ' + (g + genOffset()) + (zbRows[g - 1] ? ' · ' + zbRows[g - 1] : '');"),
+  ("const text = genLabel(g, true) + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');", "const text = genLabel(g, true) + (zbRows[g - 1] ? ' · ' + zbRows[g - 1] : '');"),
   # ---- JS：统计条 / 保存灯 ----
-  ("extra = ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();",
-   "extra = ' · zibei range <b>' + loV + '–' + hiV + '</b>';"),
-  ("'<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(totV) : totV) + ' ' + genUnit() + extra;",
-   "'<b>' + persons + '</b> members · spouses <b>' + sp + '</b> · ' + totV + ' ' + genUnit() + extra;"),
+  (": ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();",
+   ": ' · zibei range <b>' + loV + '–' + hiV + '</b>';"),
+  ("'<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(gens) : gens) + ' 代' + extra;",
+   "'<b>' + persons + '</b> members · spouses <b>' + sp + '</b> · ' + gens + ' gens' + extra;"),
   ("el.innerHTML = '<span class=\"dot\"></span>未能保存';", "el.innerHTML = '<span class=\"dot\"></span>Not saved';"),
   ("el.title = '此浏览器环境不允许写入本地存储（如无痕模式/配额已满）——'\n             + '本次修改不会被记住，请立即用「文件 ▾ → 备份到文件」导出 json！';",
    "el.title = 'This browser cannot write local storage (private mode / quota full) — '\n             + 'changes will be lost. Export a json backup now via “File ▾ → Backup to file”!';"),
@@ -287,7 +304,7 @@ EN = [
   ("mi('粘贴导入备份', '', '', pasteImport));", "mi('Paste to restore', '', '', pasteImport));"),
   ("mi('备份到文件', '', 'json', backupToFile, '导出 json 备份（含成员照片缩略图）：换电脑 / 防清缓存'));", "mi('Back up to file', '', 'json', backupToFile, 'Export a JSON backup (with member photo thumbnails): move computers / guard against cleared storage'));"),
   ("mi('恢复备份', '', 'json', () => document.getElementById('__importFile').click(), '导入 json / Markdown 备份（也支持旧版 HTML）'));", "mi('Restore backup', '', 'json', () => document.getElementById('__importFile').click(), 'Import json / Markdown backup (legacy HTML also supported)'));"),
-  ("mi('导出 PDF', '', '', exportPDF, '图谱排版，单页'));", "mi('Export PDF', '', '', exportPDF, 'Chart layout, single page'));"),
+  ("mi('导出 PDF', '', '', exportPDF, '单页高清 / A4 分页'));", "mi('Export PDF', '', '', exportPDF, 'Single page / A4 pages'));"),
   ("mi('导出世系录', '', '五世一表', exportShixilu, '欧式表格：浏览器打开即可打印'));", "mi('Export lineage tables', '', '5 gens each', exportShixilu, 'Classic grid: open in browser and print'));"),
   ("mi('导出 Markdown（可导回）', '', 'md', exportMarkdown, '导出 .md 纯文本（谱序 / 字辈 / 成员信息）：「恢复备份」可直接原样导回'));", "mi('Export Markdown (re-importable)', '', 'md', exportMarkdown, 'Export plain-text .md (preface / zibei / member info): re-import it as-is via “Restore backup”'));"),
   ("mi('打印', '', '', () => window.print(), '跟随当前视图排版'));", "mi('Print', '', '', () => window.print(), 'Follows the current view layout'));"),
@@ -423,11 +440,11 @@ EN = [
   ("|| '始迁祖'", "|| 'Migrating ancestor'", 2),
   ("if (c.origin) html += '<div class=\"pre\"><b>家族来源：</b>' + esc(c.origin) + '</div>';", "if (c.origin) html += '<div class=\"pre\"><b>Family origin:</b>' + esc(c.origin) + '</div>';"),
   ("html += '<h2>未定世次</h2>';", "html += '<h2>Generation unplaced</h2>';"),
-  ("html += '<h2>第' + numToCn(s0) + '世至第' + numToCn(s1) + '世</h2>';", "html += '<h2>Generations ' + numToCn(s0) + '–' + numToCn(s1) + '</h2>';"),
+  ("html += '<h2>第' + numToCn(s0) + '世至第' + numToCn(s1) + '世</h2>';", "html += '<h2>Generations ' + s0 + '–' + s1 + '</h2>';"),
   ("'<table><tr><th>世次</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>'",
    "'<table><tr><th>Gen</th><th>Name</th><th>Zi</th><th>Hao</th><th>Order</th><th>Born</th><th>Died</th><th>Spouse</th><th>Children</th><th>Notes</th></tr>'"),
-  ("'<td class=\"c\">' + (r.gen ? numToCn(r.gen + genOffset()) + '世' + (r.zi ? '·' + r.zi : '') : '—') + '</td>'",
-   "'<td class=\"c\">' + (r.gen ? 'Gen ' + numToCn(r.gen + genOffset()) + (r.zi ? ' · ' + r.zi : '') : '—') + '</td>'"),
+  ("'<td class=\"c\">' + (r.gen !== null ? genReportLabel(r.gen) + (r.zi ? '·' + r.zi : '') : '—') + '</td>'",
+   "'<td class=\"c\">' + (r.gen !== null ? genReportLabel(r.gen) + (r.zi ? ' · ' + r.zi : '') : '—') + '</td>'"),
   ("download((clanOf().ming || '家族族谱') + '-世系录-'", "download((clanOf().ming || 'Family Tree') + '-genealogy-'"),
   ("toast('世系录已下载（五世一表）：浏览器打开即可查阅或打印');", "toast('Genealogy tables downloaded (five generations per table): open in a browser to view or print');"),
   # ---- JS：导入/重置/备份 ----
@@ -463,8 +480,7 @@ EN = [
   ("return (base || clanOf().ming || '家族族谱') + '-图-'", "return (base || clanOf().ming || 'Family Tree') + '-tree-'"),
   # v15.4x：改为三元分支的 else 臂（名字过小时主动引导去分页 PDF）
   (": '图片已下载（' + cv.width + '×' + cv.height + '）');", ": 'Image downloaded (' + cv.width + '×' + cv.height + ')');"),
-  ("toast('PDF 已下载（' + W + '×' + H + ' pt）');", "toast('PDF downloaded (' + W + '×' + H + ' pt)');"),
-  (".catch(e => toast('导出失败：' + ((e && e.message) || e)));", ".catch(e => toast('Export failed: ' + ((e && e.message) || e)));", 2),
+  (".catch(e => toast('导出失败：' + ((e && e.message) || e)))", ".catch(e => toast('Export failed: ' + ((e && e.message) || e)))", 3),
   # ---- JS：打印 ----
   ("note.textContent = (cfg.vertical ? '谱书竖排' : '常规横排') + ' · 共 ' + cnt + ' 人' + (s < 1 ? '（整图已按页面缩放 ' + Math.round(s * 100) + '%）' : '');", "note.textContent = (cfg.vertical ? 'Vertical book layout' : 'Horizontal text') + ' · ' + cnt + ' people' + (s < 1 ? ' (scaled to ' + Math.round(s * 100) + '% for the page)' : '');"),
   ("if (n.gender === 'f') core += '（女）';", "if (n.gender === 'f') core += ' (f)';"),
@@ -565,7 +581,7 @@ EN = [
   # 弹窗静态文案
   ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">Export this branch</h3>'),
   ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">Export image (PNG)</button>'),
-  ('<button id="__subtreePdf">导出 PDF（过大自动分页）</button>', '<button id="__subtreePdf">Export PDF (auto-paginates when large)</button>'),
+  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">Export PDF (auto-paginates when large)</button>'),
   # 弹窗动态文案（拼接形式）
   ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
    "document.getElementById('__subtreeTitle').textContent = 'Export this branch · ' + dispName(n.name);"),
@@ -574,7 +590,7 @@ EN = [
   # 导出标题/文件名后缀「（此支）」
   ("_exportTitle = base + '（此支）';", "_exportTitle = base + ' (this branch)';"),
   # busy / toast
-  ("exportBusy(true, '正在生成分页 PDF…');", "exportBusy(true, 'Generating paged PDF…');"),
+  ("'正在生成分页 PDF…' : '正在生成单页高清 PDF…'", "'Generating paged PDF…' : 'Generating single-page high-resolution PDF…'"),
   ("exportBusy(true, '正在生成导出文件…');", "exportBusy(true, 'Generating export file…');"),
   ("toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');", "toast('Large tree: split into ' + r.pages + ' pages (A4 landscape, printable)');"),
   ("toast('树过大，分页将超过 300 页上限：请右键某位成员选择「导出此支…」分批导出');",
@@ -584,8 +600,8 @@ EN = [
   # 分页页眉（图内烘焙）：第 x / N 页
   ("'第 ' + (i + 1) + ' / ' + plan.total + ' 页', dims.title);", "'Page ' + (i + 1) + ' / ' + plan.total, dims.title);"),
   # v15.4x 新增的导出失败 catch（分页分支与导出此支共用写法，各 1 处）
-  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('Export failed: ' + ((e && e.message) || e));", 2),
-  ("catch (e){ toast('导出失败：' + e.message); return; }", "catch (e){ toast('Export failed: ' + e.message); return; }"),
+  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('Export failed: ' + ((e && e.message) || e));"),
+  ("catch (e){ toast('导出失败：' + e.message); return Promise.resolve(); }", "catch (e){ toast('Export failed: ' + e.message); return Promise.resolve(); }"),
 ]
 
 # ============================================================ JA 表
@@ -783,8 +799,12 @@ JA = [
   # v15.44：字辈定代改为「结构优先+字辈整体票选校准」，genTitle 重写（match/depth 两分支，无 parent/sibling）
   ("t += ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';",
    "t += ziOfGen ? '（この名は本世代の字輩「' + ziOfGen + '」を使用していません）' : '（名前に字輩なし）';"),
-  ("const base = genOffset() ? '（谱书世数，应用自算第' + g.gen + '代）' : '';",
-   "const base = genOffset() ? '（譜書の世数。アプリ計算では第' + g.gen + '代）' : '';"),
+  ("function beforeZibeiLabel(g, cn = cfg.cnNum){ return '字辈前' + (cn ? numToCn(1 - g) : 1 - g) + '代'; }",
+   "function beforeZibeiLabel(g, cn = cfg.cnNum){ return '字輩開始の' + (cn ? numToCn(1 - g) : 1 - g) + '代前'; }"),
+  ("function genRangeLabel(lo, hi, unit){ return genLabel(lo, true, unit) + '至' + genLabel(hi, true, unit); }",
+   "function genRangeLabel(lo, hi, unit){ return '字輩開始前' + (1 - hi) + '〜' + (1 - lo) + '代'; }"),
+  ("? '（谱书世数，' + (g.gen > 0 ? '应用自算第' + g.gen + '代' : beforeZibeiLabel(g.gen)) + '）' : '';",
+   "? '（譜書の世数。' + (g.gen > 0 ? 'アプリ計算では第' + g.gen + '代' : beforeZibeiLabel(g.gen)) + '）' : '';"),
   ("return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base",
    "return '字輩「' + g.zi + '」= ' + genLabel(g.gen) + base"),
   ("let t = '按世系推算：' + genLabel(g.gen) + base;",
@@ -814,11 +834,11 @@ EN = [t for t in EN if t[1] is not None]
 # ---- JA 続き：カード以降（URN：日文 UI の残り半分）----
 JA += [
   # ---- JS：竖排行标 / 统计条 / 保存灯 ----
-  ("const text = numToCn(g + genOffset()) + genUnit() + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');", "const text = numToCn(g + genOffset()) + genUnit() + (zbRows[g - 1] ? '・' + zbRows[g - 1] : '');"),
-  ("extra = ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();",
-   "extra = ' · 字輩第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();"),
-  ("'<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(totV) : totV) + ' ' + genUnit() + extra;",
-   "'<b>' + persons + '</b>人 · 配偶者 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(totV) : totV) + genUnit() + extra;"),
+  ("const text = genLabel(g, true) + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');", "const text = genLabel(g, true) + (zbRows[g - 1] ? '・' + zbRows[g - 1] : '');"),
+  (": ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();",
+   ": ' · 字輩第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();"),
+  ("'<b>' + persons + '</b> 位成员 · 配偶 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(gens) : gens) + ' 代' + extra;",
+   "'<b>' + persons + '</b>人 · 配偶者 <b>' + sp + '</b> · ' + (cfg.cnNum ? numToCn(gens) : gens) + '代' + extra;"),
   ("el.innerHTML = '<span class=\"dot\"></span>未能保存';", "el.innerHTML = '<span class=\"dot\"></span>保存できず';"),
   ("el.title = '此浏览器环境不允许写入本地存储（如无痕模式/配额已满）——'\n             + '本次修改不会被记住，请立即用「文件 ▾ → 备份到文件」导出 json！';",
    "el.title = 'このブラウザはローカルストレージに書き込めません（シークレットモード／容量不足）——'\n             + '変更は保存されません。「ファイル ▾ → バックアップ保存」ですぐ json を書き出してください！';"),
@@ -854,7 +874,7 @@ JA += [
   ("mi('粘贴导入备份', '', '', pasteImport));", "mi('貼り付けで復元', '', '', pasteImport));"),
   ("mi('备份到文件', '', 'json', backupToFile, '导出 json 备份（含成员照片缩略图）：换电脑 / 防清缓存'));", "mi('バックアップ保存', '', 'json', backupToFile, 'json バックアップを書き出す（メンバー写真のサムネイル付き。機種変更 / キャッシュ消去対策）'));"),
   ("mi('恢复备份', '', 'json', () => document.getElementById('__importFile').click(), '导入 json / Markdown 备份（也支持旧版 HTML）'));", "mi('バックアップ復元', '', 'json', () => document.getElementById('__importFile').click(), 'json / Markdown バックアップを読み込む（旧 HTML も対応）'));"),
-  ("mi('导出 PDF', '', '', exportPDF, '图谱排版，单页'));", "mi('PDF を出力', '', '', exportPDF, '図表レイアウト、1 ページ'));"),
+  ("mi('导出 PDF', '', '', exportPDF, '单页高清 / A4 分页'));", "mi('PDF を出力', '', '', exportPDF, '1 ページ / A4 分割'));"),
   ("mi('导出世系录', '', '五世一表', exportShixilu, '欧式表格：浏览器打开即可打印'));", "mi('世系録を出力', '', '五世一表', exportShixilu, '欧式表：ブラウザで開いてそのまま印刷'));"),
   ("mi('导出 Markdown（可导回）', '', 'md', exportMarkdown, '导出 .md 纯文本（谱序 / 字辈 / 成员信息）：「恢复备份」可直接原样导回'));", "mi('Markdown を出力（再取り込み可）', '', 'md', exportMarkdown, '.md プレーンテキストを出力（譜序 / 字輩 / メンバー情報）：「バックアップ復元」からそのまま再取り込みできます'));"),
   ("mi('打印', '', '', () => window.print(), '跟随当前视图排版'));", "mi('印刷', '', '', () => window.print(), '現在のビューのレイアウトで印刷'));"),
@@ -968,8 +988,7 @@ JA += [
   ("return (base || clanOf().ming || '家族族谱') + '-图-'", "return (base || clanOf().ming || '家系図') + '-図-'"),
   # v15.4x：改为三元分支的 else 臂（名字过小时主动引导去分页 PDF）
   (": '图片已下载（' + cv.width + '×' + cv.height + '）');", ": '画像をダウンロードしました（' + cv.width + '×' + cv.height + '）');"),
-  ("toast('PDF 已下载（' + W + '×' + H + ' pt）');", "toast('PDF をダウンロードしました（' + W + '×' + H + ' pt）');"),
-  (".catch(e => toast('导出失败：' + ((e && e.message) || e)));", ".catch(e => toast('出力に失敗：' + ((e && e.message) || e)));", 2),
+  (".catch(e => toast('导出失败：' + ((e && e.message) || e)))", ".catch(e => toast('出力に失敗：' + ((e && e.message) || e)))", 3),
   # ---- JS：打印 ----
   ("note.textContent = (cfg.vertical ? '谱书竖排' : '常规横排') + ' · 共 ' + cnt + ' 人' + (s < 1 ? '（整图已按页面缩放 ' + Math.round(s * 100) + '%）' : '');", "note.textContent = (cfg.vertical ? '譜書縦書き' : '通常の横書き') + ' · 計 ' + cnt + ' 人' + (s < 1 ? '（ページに合わせて ' + Math.round(s * 100) + '% に縮小）' : '');"),
   ("if (c.chain)  xuHtml += '<div><b>源流世系：</b>' + esc(c.chain) + '</div>';", "if (c.chain)  xuHtml += '<div><b>系統：</b>' + esc(c.chain) + '</div>';"),
@@ -1060,7 +1079,7 @@ JA += [
   # モーダルの静的文案
   ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">この支を出力</h3>'),
   ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">画像を出力（PNG）</button>'),
-  ('<button id="__subtreePdf">导出 PDF（过大自动分页）</button>', '<button id="__subtreePdf">PDF を出力（大きいときは自動ページ分割）</button>'),
+  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">PDF を出力（大きいときは自動ページ分割）</button>'),
   # モーダルの動的文案（連結形）
   ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
    "document.getElementById('__subtreeTitle').textContent = 'この支を出力 · ' + dispName(n.name);"),
@@ -1069,7 +1088,7 @@ JA += [
   # 出力タイトルの接尾辞「（此支）」
   ("_exportTitle = base + '（此支）';", "_exportTitle = base + '（この支）';"),
   # busy / toast
-  ("exportBusy(true, '正在生成分页 PDF…');", "exportBusy(true, 'ページ分割 PDF を生成中…');"),
+  ("'正在生成分页 PDF…' : '正在生成单页高清 PDF…'", "'ページ分割 PDF を生成中…' : '高精細な単一ページ PDF を生成中…'"),
   ("exportBusy(true, '正在生成导出文件…');", "exportBusy(true, '出力ファイルを生成中…');"),
   ("toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');", "toast('系図が大きいため ' + r.pages + ' ページに分割しました（A4 横向き・印刷できます）');"),
   ("toast('树过大，分页将超过 300 页上限：请右键某位成员选择「导出此支…」分批导出');",
@@ -1079,12 +1098,41 @@ JA += [
   # ページ ヘッダー（図内に焼き込み）：第 x / N ページ
   ("'第 ' + (i + 1) + ' / ' + plan.total + ' 页', dims.title);", "'第 ' + (i + 1) + ' / ' + plan.total + ' ページ', dims.title);"),
   # v15.4x で追加された出力失敗 catch（ページ分割分支とこの支を出力で共通の書き方、各 1 件）
-  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('出力に失敗：' + ((e && e.message) || e));", 2),
-  ("catch (e){ toast('导出失败：' + e.message); return; }", "catch (e){ toast('出力に失敗：' + e.message); return; }"),
+  ("exportBusy(false); toast('导出失败：' + ((e && e.message) || e));", "exportBusy(false); toast('出力に失敗：' + ((e && e.message) || e));"),
+  ("catch (e){ toast('导出失败：' + e.message); return Promise.resolve(); }", "catch (e){ toast('出力に失敗：' + e.message); return Promise.resolve(); }"),
 ]
 
 # 続きブロック内の None（変更なし）も除去
 JA = [t for t in JA if t[1] is not None]
+
+# ---- PDF 导出选项与模块文案（与 tools/pdf-export.js inline 母本同步）----
+# 每项依次为母本 / EN / JA，仍通过 apply_table 严格校验出现次数。
+PDF_TEXT = [
+  ('<h3 id="__pdfTitle">导出 PDF</h3>', '<h3 id="__pdfTitle">Export PDF</h3>', '<h3 id="__pdfTitle">PDF を出力</h3>'),
+  ('按当前排列导出，已折叠的分支保持折叠；导出此支时包含全部后代。',
+   'Exports the current layout; collapsed branches stay collapsed. Exporting a branch includes all its descendants.',
+   '現在の配置で出力し、折りたたんだ支はそのままにします。この支の出力では子孫全員を含みます。'),
+  ('单页高清：整棵树一张，文字与线条放大仍清晰',
+   'Single-page high resolution: the whole tree on one page, with sharp text and lines when zoomed in',
+   '高精細な単一ページ：系図全体を1ページに。拡大しても文字や線が鮮明'),
+  ('A4 分页：横向多页，适合打印', 'A4 pages: multiple landscape pages for printing', 'A4 ページ分割：印刷向けの横向き複数ページ'),
+  ('照片清晰度取决于原图片。单页模式内嵌字体，离线查看也能正常显示。',
+   'Photo quality depends on the original image. Single-page mode embeds fonts for offline viewing.',
+   '写真の鮮明さは元画像によります。単一ページではフォントを埋め込むため、オフラインでも表示できます。'),
+  ('<summary>生僻字与其他文字</summary>', '<summary>Rare characters and other scripts</summary>', '<summary>異体字・珍しい漢字・他言語の文字</summary>'),
+  ('字体文件（可选，TTF，仅供本次导出）', 'Font file (optional TTF, used only for this export)', 'フォントファイル（任意、TTF、今回の出力のみ）'),
+  ('缺字时可选择包含该字、允许嵌入的本机 TrueType 字体。字体不会上传。',
+   'For missing characters, choose a local TrueType font that includes them and permits embedding. The font stays on your device.',
+   '不足する文字がある場合、その文字を含む埋め込み可能な本体の TrueType フォントを選択できます。フォントはアップロードされません。'),
+  ('id="__pdfCancel">关闭</button>', 'id="__pdfCancel">Close</button>', 'id="__pdfCancel">閉じる</button>'),
+  ('id="__pdfGo">导出</button>', 'id="__pdfGo">Export</button>', 'id="__pdfGo">出力</button>'),
+  ("'字体文件超过 40 MB，请选择较小的 TrueType 字体'", "'Font file exceeds 40 MB; choose a smaller TrueType font'", "'フォントファイルが 40 MB を超えています。より小さい TrueType フォントを選んでください'"),
+  ("'无法读取字体文件'", "'Could not read the font file'", "'フォントファイルを読み込めません'"),
+  ("'正在准备 PDF…'", "'Preparing PDF…'", "'PDF を準備中…'"),
+  ("'单页高清 PDF 已下载（文字与线条可放大查看）'", "'Single-page high-resolution PDF downloaded (zoom in to view text and lines)'", "'高精細な単一ページ PDF をダウンロードしました（文字や線を拡大できます）'"),
+]
+EN += [(old, en) for old, en, ja in PDF_TEXT]
+JA += [(old, ja) for old, en, ja in PDF_TEXT]
 
 # ============================================================ 种子数据
 SEED_EN = {
@@ -1134,7 +1182,30 @@ SEED_JA = {
 }
 
 # 母本种子块（正则整体替换）
-SEED_RE = re.compile(r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)')
+SEED_RE = re.compile(r'(<script id="__treeData" type="application/json">)([\s\S]*?)(\n</script>)')
+
+
+def inherit_seed_photos(seed, master):
+    """仅按稳定 ID 同步母本照片，不覆盖本地化的姓名、字辈与说明。"""
+    photos = {}
+
+    def collect(node):
+        photos[node['id']] = {key: node[key] for key in ('photoThumb', 'photoRev') if key in node}
+        for child in node.get('children', []):
+            collect(child)
+
+    collect(master)
+    localized = copy.deepcopy(seed)
+
+    def inherit(node):
+        for key in ('photoThumb', 'photoRev'):
+            node.pop(key, None)
+        node.update(photos.get(node['id'], {}))
+        for child in node.get('children', []):
+            inherit(child)
+
+    inherit(localized)
+    return localized
 
 # ============================================================ 构建
 def apply_table(src, table, label, errs):
@@ -1158,6 +1229,12 @@ def apply_table(src, table, label, errs):
 def build(lang, table, seed, out_name, extra):
     src = io.open(SRC, encoding='utf-8').read()
     errs = []
+    # 翻译前从母本读 seed，避免翻译表影响数据；每次再生自动继承头像。
+    master_seed = SEED_RE.search(src)
+    if not master_seed:
+        print('[%s] seed block not found' % lang)
+        return False
+    seed = inherit_seed_photos(seed, json.loads(master_seed.group(2)))
     # 1) 翻译表
     src = apply_table(src, table, lang, errs)
     # 2) 结构性替换
@@ -1216,7 +1293,7 @@ def _dump(obj):
 
 def _seed_sub(seed):
     def r(m):
-        return m.group(1) + '\n' + _dump(seed) + '\n' + m.group(2)
+        return m.group(1) + '\n' + _dump(seed) + '\n' + m.group(3)
     return r
 
 # ============================================================ 繁体中文（OpenCC 全文件转换）
