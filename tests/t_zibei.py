@@ -202,6 +202,45 @@ def t_zibei_cousins_always_same_gen(b):
 
 
 @testcase
+def t_zibei_tie_prefers_non_negative_shift(b):
+    """票数并列时不得把整谱推到「字辈前」：早期名字含后代字辈字、后辈名字含前代字辈字，
+    两种解释同分，应取非负偏移（3代·昭 / 4代），而不是 0/1 代。"""
+    ctx, page, errs, cons = fresh_page(b)
+    data = {
+        "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
+        "zibei": ["勤", "修", "昭", "厚"],
+        "children": [
+            { "id": "a", "name": "周昭", "spouses": [], "expanded": True, "children": [
+                { "id": "b", "name": "周勤", "spouses": [], "expanded": True, "children": [] } ] }
+        ]
+    }
+    app = open(LOCAL_HTML, encoding="utf-8").read()
+    sample_json = _json.dumps(data, ensure_ascii=False, indent=2)
+    fixture, n = _re.subn(
+        r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+        lambda m: m.group(1) + "\n" + sample_json + "\n" + m.group(2),
+        app, count=1)
+    assert n == 1
+    path = os.path.join(LOCAL_OUT, "fixture_zibei_tie.html")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(fixture)
+    page.goto(OUT_DIR + "/fixture_zibei_tie.html")
+    page.wait_for_load_state("domcontentloaded")
+    page.evaluate("() => { localStorage.clear(); }")
+    page.reload()
+    page.wait_for_load_state("domcontentloaded")
+    check(chip_of(page, "a").inner_text().replace("\n", "") == "3代·昭",
+          "并列时取非负偏移：周昭=3代·昭", chip_of(page, "a").inner_text())
+    check(chip_of(page, "b").inner_text().replace("\n", "") == "4代·厚",
+          "后代按世系：周勤=4代·厚", chip_of(page, "b").inner_text())
+    page.evaluate("() => { cfg.genBase = 10; render(); }")
+    check(chip_of(page, "a").inner_text().replace("\n", "") == "12世·昭",
+          "基准10时同偏移换算：12世·昭", chip_of(page, "a").inner_text())
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
 def t_zibei_rescued_draft_no_injection(b):
     """v15.31 新契约：旧草稿（无 zibei）成员更多而胜出播种时，成员被恢复，
     但字辈表不再从内嵌/其他草稿「补齐」——内嵌已是通用演示数据，注入即污染"""

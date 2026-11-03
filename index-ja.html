@@ -1488,6 +1488,9 @@ function computeGenerations(){
     if (n.children) n.children.forEach(c => walk(c, d + 1));
   })(treeData, 0);
   if (!zb.length) return map;
+  /* 「导出此支」的临时子树携带根节点在原谱中的绝对代数：
+     子树按 根代数+层级 定位，不再靠子树内名字重新票选（缺锚点时会从 1 代错起） */
+  const fixedRoot = Number.isFinite(treeData._genRoot) ? treeData._genRoot : null;
   /* 结构优先 + 字辈整体校准（v15.44）：
      ① 父子链（父+1）是骨架——堂/亲兄弟必然同代，任何名字都不能推翻；
      ② 很多谱从字辈诗中间开始记（如从「勤」=第11字起），所以用票选求整体偏移：
@@ -1501,16 +1504,22 @@ function computeGenerations(){
       if (zb[i] && s.includes(zb[i])) votes.add(i + 1 - d);
   });
   let bestOff = 0, bestScore = -1;
-  votes.forEach(o => {
+  if (fixedRoot === null) votes.forEach(o => {
     let consistent = 0;
     depths.forEach((d, id) => {
       const gi = d + o - 1;
       if (gi >= 0 && gi < zb.length && zb[gi] && names.get(id).includes(zb[gi])) consistent++;
     });
-    if (consistent > bestScore || (consistent === bestScore && o < bestOff)){ bestScore = consistent; bestOff = o; }
+    /* 票数并列时优先非负偏移：负偏移会把整谱标成「字辈前」，必须有多数证据才接受 */
+    const better = consistent > bestScore ||
+      (consistent === bestScore && (
+        (bestOff < 0 && o >= 0) ||
+        (bestOff >= 0 && o >= 0 && o < bestOff) ||
+        (bestOff < 0 && o < 0 && o > bestOff)));
+    if (better){ bestScore = consistent; bestOff = o; }
   });
   depths.forEach((d, id) => {
-    const gen = d + bestOff;   // 保留字辈之前的相对序（含零/负数），显示时再加谱书基准
+    const gen = fixedRoot === null ? d + bestOff : fixedRoot + d;   // 保留字辈之前的相对序（含零/负数），显示时再加谱书基准
     const e = { gen: gen, src: 'depth' };
     const s = names.get(id);
     const here = zb[gen - 1];
@@ -1560,6 +1569,7 @@ function deepEq(a, b){
 }
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小红书容器环境
+var NO_PDF = !!window.__ZUPU_NO_PDF__;   // 小红书包构建标记：剥离了 PDF 引擎，普通浏览器预览也不得露出 PDF 入口
 var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 /* Safari：导出画布物理上限更保守（Chrome 等 UA 也带 Safari 字样，先排除） */
 var IS_SAFARI = /^((?!chrome|crios|chromium|edge|edg|opera|opr|firefox|fxios|android|qq|micromessenger).)*safari/i.test(navigator.userAgent);
@@ -2708,7 +2718,7 @@ document.getElementById('btnFile').addEventListener('click', e => {
       m.appendChild(mi('バックアップ復元', '', 'json', () => document.getElementById('__importFile').click(), 'json / Markdown バックアップを読み込む（旧 HTML も対応）'));
       m.appendChild(mi('写真フォルダを取り込む…', '', '', () => document.getElementById('__photoDirInput').click(), 'ファイル名でメンバー名を照合し、写真を一括設定'));
       m.appendChild(msep());
-      m.appendChild(mi('PDF を出力', '', '', exportPDF, '1 ページ / A4 分割'));
+      if (!NO_PDF) m.appendChild(mi('PDF を出力', '', '', exportPDF, '1 ページ / A4 分割'));
       m.appendChild(mi('世系録を出力', '', '五世一表', exportShixilu, '欧式表：ブラウザで開いてそのまま印刷'));
       m.appendChild(mi('Markdown を出力（再取り込み可）', '', 'md', exportMarkdown, '.md プレーンテキストを出力（譜序 / 字輩 / メンバー情報）：「バックアップ復元」からそのまま再取り込みできます'));
       m.appendChild(msep());
@@ -6255,7 +6265,12 @@ function exportDims(){
   if (!baseW || !baseH) throw new Error('キャンバスが未描画です');
   const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
   const t0 = exportTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
-  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, Math.min(560, t0.length * 17 + 40)), H: baseH, title: t0 };
+  /* 标题宽度按真实字体测量（旧实现封顶 560px，长谱名会被页边裁掉）；
+     矢量子集字体可能比系统字体略宽，留 15% 余量。 */
+  const mc = document.createElement('canvas').getContext('2d');
+  mc.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
+  const tw = Math.ceil(mc.measureText(t0).width * 1.15) + 40;
+  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, tw), H: baseH, title: t0 };
 }
 /* 单图导出（PNG 与小树 PDF 共用）：整树一张画布 */
 function drawTreeCanvas(photoImgs){
@@ -6300,8 +6315,10 @@ function paintTreeBody(ctx, photoImgs){
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function ellipText(t, maxW){
     if (ctx.measureText(t).width <= maxW) return t;
-    while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
-    return t + '…';
+    /* 按码点截断：slice 可能把代理对（生僻字）切成半个，PDF 会报缺字 */
+    const cs = Array.from(t);
+    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxW) cs.pop();
+    return cs.join('') + '…';
   }
   /* 头像绘制：圆形裁剪画缩略图 + 细环；无照片时矢量剪影（与 DOM 内联 SVG 同款构图） */
   function drawAvatarImg(img, cx, cy, r){
@@ -6617,12 +6634,20 @@ function renderTile(x0, y0, tw, th, S, photoImgs, pageLabel, title){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.font = '600 20px "PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  const titleW = ctx.measureText(title).width, labelW = ctx.measureText(pageLabel).width;
+  let t2 = title, titleW = ctx.measureText(t2).width;
+  const labelW = ctx.measureText(pageLabel).width;
+  const maxTitle = 1684 - 48 - labelW - 20;   /* 给右侧页码留位，长谱名不压页码 */
+  if (titleW > maxTitle){
+    const cs = Array.from(t2);
+    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxTitle) cs.pop();
+    t2 = cs.join('') + '…';
+    titleW = ctx.measureText(t2).width;
+  }
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(14, 10, titleW + 20, 30);
   ctx.fillRect(1684 - 14 - labelW - 20, 10, labelW + 20, 30);
   ctx.fillStyle = '#16324f';
-  ctx.fillText(title, 24, 31);
+  ctx.fillText(t2, 24, 31);
   ctx.textAlign = 'right';
   ctx.fillText(pageLabel, 1684 - 24, 31);
   ctx.textAlign = 'left';
@@ -6699,6 +6724,7 @@ function pdfIsOpen(){ return document.getElementById('__pdfModal').classList.con
 function exportPDF(){ openPdfExport(null); }
 function openPdfExport(n){
   if (IS_XHS) return;
+  if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
   document.getElementById('__pdfFont').value = '';
@@ -6753,6 +6779,7 @@ function buildVectorPdf(dims, fontBase64){
 }
 function exportPdfAs(base, mode, fontBase64){
   if (IS_XHS) return Promise.resolve();
+  if (NO_PDF) return Promise.resolve();
   let dims;
   try { dims = exportDims(); }
   catch (e){ toast('出力に失敗：' + e.message); return Promise.resolve(); }
@@ -6777,6 +6804,11 @@ function exportPdfAs(base, mode, fontBase64){
 function buildSubtreeData(n){
   const copy = JSON.parse(JSON.stringify(sanitize(n)));   /* 去掉 _ 布局字段，id/名字等全保留 */
   (function x(d){ d.expanded = true; if (d.children && d.children.length) d.children.forEach(x); })(copy);   /* 整支全展开导出 */
+  /* 字辈表挂在总根上，子树默认带不走；不补则分支导出会整片丢失世代角标 */
+  if (Array.isArray(treeData.zibei) && treeData.zibei.length) copy.zibei = treeData.zibei.slice();
+  /* 原谱中的绝对代数（临时字段，sanitize 不会落盘）：保证无名字锚点也能从正确世代起算 */
+  const g = LAST_GENS.get(n.id);
+  if (g && Number.isFinite(g.gen)) copy._genRoot = g.gen;
   return copy;
 }
 /* 隐藏测量舞台：类名 ps 与打印克隆共用 #stage.v 的竖排样式；visibility:hidden 保持可测布局 */
@@ -6860,7 +6892,7 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
     _exportTitle = base + '（この支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
-  }).catch(e => { exportBusy(false); toast('出力に失敗：' + ((e && e.message) || e)); });
+  }).catch(e => { _exportTitle = null; exportBusy(false); toast('出力に失敗：' + ((e && e.message) || e)); });
 }
 document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
 document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
@@ -6869,7 +6901,7 @@ document.getElementById('__subtreePdf').addEventListener('click', () => {
   closeSubtreeExport();
   if (n) openPdfExport(n);
 });
-if (IS_XHS) document.getElementById('__subtreePdf').hidden = true;
+if (IS_XHS || NO_PDF) document.getElementById('__subtreePdf').hidden = true;
 document.getElementById('__subtreeModal').addEventListener('mousedown', e => {
   if (e.target.id === '__subtreeModal') closeSubtreeExport();
 });

@@ -228,7 +228,8 @@ def main():
     require(not attrs.get('src') and re.match(r'\s*/\* =+', app_js), '主脚本架构锚点异常')
     require(len(app_js) > 50000, 'app.js 体积异常，可能抓错脚本块')
     s = s[:a] + '<script src="./app.js"></script>' + s[b:]
-    app_js = 'window.__SEED_JSON = ' + json.dumps(seed, ensure_ascii=False) + ';\n' + app_js
+    app_js = ('window.__ZUPU_NO_PDF__ = true;\n'
+              'window.__SEED_JSON = ' + json.dumps(seed, ensure_ascii=False) + ';\n' + app_js)
     s = s.replace(
         'width=device-width, initial-scale=1.0, viewport-fit=cover',
         'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover', 1)

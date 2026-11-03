@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.46" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.47" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、自動算輩分、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.46-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-101%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.47-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-104%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![線上試用](https://img.shields.io/badge/線上試用-點擊演示-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -89,7 +89,7 @@
 預設單頁模式內嵌 DroidSansFallbackFull TrueType 的所用字形子集，文字可搜尋，連線與形狀保持向量；
 照片仍是圖片，清晰度取決於原圖。彈窗的「生僻字與其他文字」可選含所需字形、允許嵌入的本機 TTF，
 僅用於本次單頁匯出，不上傳、不儲存到族譜。缺字會明確報錯；預設字型與自選字型都不保證涵蓋全部 Unicode。
-A4 橫向分頁列印仍可選，v15.46 修正了座標轉換（CTM）造成的分頁裁切問題。分頁是連續切片：跨頁邊的卡片會在相鄰兩頁各顯示一部分，拼接後完整。
+A4 橫向分頁列印仍可選，v15.46 修正了座標轉換（CTM）造成的分頁裁切問題。分頁是連續切片：跨頁邊的卡片會在相鄰兩頁各顯示一部分，拼接後完整。單頁 PDF 的橫向排版可整名搜尋；直排為逐字排印，整名搜尋可能只命中單字。
 小紅書小工具不支援儲存 PDF，套件內移除字型與 PDF 後端，但包含本次世代顯示修正。
 
 **Markdown 能代替完整備份嗎？**

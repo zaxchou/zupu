@@ -198,6 +198,95 @@ def t_vector_four_directions_and_vertical_text_bounds(b):
 
 
 @testcase
+def t_vector_long_clan_title_not_clipped(b):
+    """长谱名标题不得被 PDF 页边裁掉（旧实现把导出宽度封顶 560px）。"""
+    import json as _json
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        tree = {
+            "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
+            "clan": {"ming": "潮阳泗水周氏大家族族谱重修总谱甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥"},
+            "children": [{"id": "a", "name": "周勤", "spouses": [], "expanded": True, "children": []}],
+        }
+        app = open(LOCAL_HTML, encoding="utf-8").read()
+        seed = _json.dumps(tree, ensure_ascii=False)
+        fixture, n = re.subn(
+            r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+            lambda m: m.group(1) + "\n" + seed + "\n" + m.group(2), app, count=1)
+        assert n == 1
+        path = Path(LOCAL_OUT) / "fixture_long_title.html"
+        path.write_text(fixture, encoding="utf-8")
+        page.goto(OUT_DIR + "/fixture_long_title.html")
+        page.wait_for_load_state("domcontentloaded")
+        page.evaluate("() => { localStorage.clear(); }")
+        page.reload()
+        page.wait_for_load_state("domcontentloaded")
+        page.wait_for_timeout(300)
+        open_pdf_menu(page)
+        with page.expect_download(timeout=90000) as dl:
+            page.locator('#__pdfGo').click()
+        out = Path(LOCAL_OUT) / "long_title.pdf"
+        dl.value.save_as(str(out))
+        doc = fitz.open(out)
+        pg = doc[0]
+        first = sorted(pg.get_text("words"), key=lambda w: w[1])[0]
+        check(first[2] <= pg.rect.width - 4, "长谱名标题完整落在页内",
+              "%s <= %s" % (first[2], pg.rect.width))
+        check("潮阳泗水周氏大家族族谱" in "".join(pg.get_text().split()), "标题文字可提取")
+        doc.close()
+        check(not errs, "长标题导出无 JS 错误", str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
+def t_vector_branch_export_keeps_absolute_generations(b):
+    """导出此支：字辈表挂在总根，子树必须补字辈表与原谱绝对代数；
+    分支内没有名字锚点也不能从 1 代重新起算。"""
+    import json as _json
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        tree = {
+            "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
+            "zibei": list("多士敬宏毓勤修昭厚德"),
+            "children": [
+                {"id": "a", "name": "周勤", "spouses": [], "expanded": True, "children": [
+                    {"id": "a1", "name": "周修", "spouses": [], "expanded": True, "children": []}]},
+                {"id": "b", "name": "周甲", "spouses": [], "expanded": True, "children": [
+                    {"id": "b1", "name": "周乙", "spouses": [], "expanded": True, "children": []}]},
+            ],
+        }
+        app = open(LOCAL_HTML, encoding="utf-8").read()
+        seed = _json.dumps(tree, ensure_ascii=False)
+        fixture, n = re.subn(
+            r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+            lambda m: m.group(1) + "\n" + seed + "\n" + m.group(2), app, count=1)
+        assert n == 1
+        path = Path(LOCAL_OUT) / "fixture_branch_gen.html"
+        path.write_text(fixture, encoding="utf-8")
+        page.goto(OUT_DIR + "/fixture_branch_gen.html")
+        page.wait_for_load_state("domcontentloaded")
+        page.evaluate("() => { localStorage.clear(); }")
+        page.reload()
+        page.wait_for_load_state("domcontentloaded")
+        page.wait_for_timeout(300)
+        page.locator('.node[data-id="b"]').click(button='right')
+        page.locator('#__ctxMenu .mi', has_text='导出此支').click()
+        page.locator('#__subtreePdf').click()
+        with page.expect_download(timeout=90000) as dl:
+            page.locator('#__pdfGo').click()
+        out = Path(LOCAL_OUT) / "branch_gen.pdf"
+        dl.value.save_as(str(out))
+        text = "".join(fitz.open(out)[0].get_text().split())
+        check("6代" in text, "分支根沿用原谱第6代（而非1代）", text[:120])
+        check("7代" in text, "分支子代沿用第7代", text[:120])
+        check("1代" not in text.replace("11代", ""), "分支不从1代重新编号", text[:120])
+        check(not errs, "分支世代导出无 JS 错误", str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
 def t_vector_fold_marker_and_circular_photo_crop(b):
     ctx, page, errs, _ = fresh_page(b, downloads=True)
     try:

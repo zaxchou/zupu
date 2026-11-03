@@ -4,6 +4,7 @@ function pdfIsOpen(){ return document.getElementById('__pdfModal').classList.con
 function exportPDF(){ openPdfExport(null); }
 function openPdfExport(n){
   if (IS_XHS) return;
+  if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
   document.getElementById('__pdfFont').value = '';
@@ -58,6 +59,7 @@ function buildVectorPdf(dims, fontBase64){
 }
 function exportPdfAs(base, mode, fontBase64){
   if (IS_XHS) return Promise.resolve();
+  if (NO_PDF) return Promise.resolve();
   let dims;
   try { dims = exportDims(); }
   catch (e){ toast('导出失败：' + e.message); return Promise.resolve(); }

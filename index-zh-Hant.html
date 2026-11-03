@@ -1487,6 +1487,9 @@ function computeGenerations(){
     if (n.children) n.children.forEach(c => walk(c, d + 1));
   })(treeData, 0);
   if (!zb.length) return map;
+  /* 「匯出此支」的臨時子樹攜帶根節點在原譜中的絕對代數：
+     子樹按 根代數+層級 定位，不再靠子樹內名字重新票選（缺錨點時會從 1 代錯起） */
+  const fixedRoot = Number.isFinite(treeData._genRoot) ? treeData._genRoot : null;
   /* 結構優先 + 字輩整體校準（v15.44）：
      ① 父子鏈（父+1）是骨架——堂/親兄弟必然同代，任何名字都不能推翻；
      ② 很多譜從字輩詩中間開始記（如從「勤」=第11字起），所以用票選求整體偏移：
@@ -1500,16 +1503,22 @@ function computeGenerations(){
       if (zb[i] && s.includes(zb[i])) votes.add(i + 1 - d);
   });
   let bestOff = 0, bestScore = -1;
-  votes.forEach(o => {
+  if (fixedRoot === null) votes.forEach(o => {
     let consistent = 0;
     depths.forEach((d, id) => {
       const gi = d + o - 1;
       if (gi >= 0 && gi < zb.length && zb[gi] && names.get(id).includes(zb[gi])) consistent++;
     });
-    if (consistent > bestScore || (consistent === bestScore && o < bestOff)){ bestScore = consistent; bestOff = o; }
+    /* 票數並列時優先非負偏移：負偏移會把整譜標成「字輩前」，必須有多數證據才接受 */
+    const better = consistent > bestScore ||
+      (consistent === bestScore && (
+        (bestOff < 0 && o >= 0) ||
+        (bestOff >= 0 && o >= 0 && o < bestOff) ||
+        (bestOff < 0 && o < 0 && o > bestOff)));
+    if (better){ bestScore = consistent; bestOff = o; }
   });
   depths.forEach((d, id) => {
-    const gen = d + bestOff;   // 保留字輩之前的相對序（含零/負數），顯示時再加譜書基準
+    const gen = fixedRoot === null ? d + bestOff : fixedRoot + d;   // 保留字輩之前的相對序（含零/負數），顯示時再加譜書基準
     const e = { gen: gen, src: 'depth' };
     const s = names.get(id);
     const here = zb[gen - 1];
@@ -1559,6 +1568,7 @@ function deepEq(a, b){
 }
 
 var IS_XHS = !!(window.xhs && window.xhs.miniTool);   // 小紅書容器環境
+var NO_PDF = !!window.__ZUPU_NO_PDF__;   // 小紅書包構建標記：剝離了 PDF 引擎，普通瀏覽器預覽也不得露出 PDF 入口
 var IS_TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 /* Safari：匯出畫布物理上限更保守（Chrome 等 UA 也帶 Safari 字樣，先排除） */
 var IS_SAFARI = /^((?!chrome|crios|chromium|edge|edg|opera|opr|firefox|fxios|android|qq|micromessenger).)*safari/i.test(navigator.userAgent);
@@ -2707,7 +2717,7 @@ document.getElementById('btnFile').addEventListener('click', e => {
       m.appendChild(mi('恢復備份', '', 'json', () => document.getElementById('__importFile').click(), '匯入 json / Markdown 備份（也支援舊版 HTML）'));
       m.appendChild(mi('匯入照片資料夾…', '', '', () => document.getElementById('__photoDirInput').click(), '按檔名匹配成員姓名，批次設定照片'));
       m.appendChild(msep());
-      m.appendChild(mi('匯出 PDF', '', '', exportPDF, '單頁高畫質 / A4 分頁'));
+      if (!NO_PDF) m.appendChild(mi('匯出 PDF', '', '', exportPDF, '單頁高畫質 / A4 分頁'));
       m.appendChild(mi('匯出世系錄', '', '五世一表', exportShixilu, '歐式表格：瀏覽器開啟即可列印'));
       m.appendChild(mi('匯出 Markdown（可導回）', '', 'md', exportMarkdown, '匯出 .md 純文字（譜序 / 字輩 / 成員資訊）：「恢復備份」可直接原樣導回'));
       m.appendChild(msep());
@@ -6254,7 +6264,12 @@ function exportDims(){
   if (!baseW || !baseH) throw new Error('畫布尚未渲染');
   const d0 = new Date(), p0 = n => String(n).padStart(2, '0');
   const t0 = exportTitle() + ' · ' + d0.getFullYear() + '-' + p0(d0.getMonth() + 1) + '-' + p0(d0.getDate());
-  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, Math.min(560, t0.length * 17 + 40)), H: baseH, title: t0 };
+  /* 標題寬度按真實字型測量（舊實現封頂 560px，長譜名會被頁邊裁掉）；
+     向量子集字型可能比系統字型略寬，留 15% 餘量。 */
+  const mc = document.createElement('canvas').getContext('2d');
+  mc.font = '600 16px "PingFang SC","Microsoft YaHei",sans-serif';
+  const tw = Math.ceil(mc.measureText(t0).width * 1.15) + 40;
+  return { baseW: baseW, baseH: baseH, W: Math.max(baseW, tw), H: baseH, title: t0 };
 }
 /* 單圖匯出（PNG 與小樹 PDF 共用）：整樹一張畫布 */
 function drawTreeCanvas(photoImgs){
@@ -6299,8 +6314,10 @@ function paintTreeBody(ctx, photoImgs){
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function ellipText(t, maxW){
     if (ctx.measureText(t).width <= maxW) return t;
-    while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
-    return t + '…';
+    /* 按碼點截斷：slice 可能把代理對（生僻字）切成半個，PDF 會報缺字 */
+    const cs = Array.from(t);
+    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxW) cs.pop();
+    return cs.join('') + '…';
   }
   /* 頭像繪製：圓形裁剪畫縮圖 + 細環；無照片時向量剪影（與 DOM 內聯 SVG 同款構圖） */
   function drawAvatarImg(img, cx, cy, r){
@@ -6616,12 +6633,20 @@ function renderTile(x0, y0, tw, th, S, photoImgs, pageLabel, title){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.font = '600 20px "PingFang SC","Microsoft YaHei",sans-serif';
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-  const titleW = ctx.measureText(title).width, labelW = ctx.measureText(pageLabel).width;
+  let t2 = title, titleW = ctx.measureText(t2).width;
+  const labelW = ctx.measureText(pageLabel).width;
+  const maxTitle = 1684 - 48 - labelW - 20;   /* 給右側頁碼留位，長譜名不壓頁碼 */
+  if (titleW > maxTitle){
+    const cs = Array.from(t2);
+    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxTitle) cs.pop();
+    t2 = cs.join('') + '…';
+    titleW = ctx.measureText(t2).width;
+  }
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(14, 10, titleW + 20, 30);
   ctx.fillRect(1684 - 14 - labelW - 20, 10, labelW + 20, 30);
   ctx.fillStyle = '#16324f';
-  ctx.fillText(title, 24, 31);
+  ctx.fillText(t2, 24, 31);
   ctx.textAlign = 'right';
   ctx.fillText(pageLabel, 1684 - 24, 31);
   ctx.textAlign = 'left';
@@ -6698,6 +6723,7 @@ function pdfIsOpen(){ return document.getElementById('__pdfModal').classList.con
 function exportPDF(){ openPdfExport(null); }
 function openPdfExport(n){
   if (IS_XHS) return;
+  if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
   document.getElementById('__pdfFont').value = '';
@@ -6752,6 +6778,7 @@ function buildVectorPdf(dims, fontBase64){
 }
 function exportPdfAs(base, mode, fontBase64){
   if (IS_XHS) return Promise.resolve();
+  if (NO_PDF) return Promise.resolve();
   let dims;
   try { dims = exportDims(); }
   catch (e){ toast('匯出失敗：' + e.message); return Promise.resolve(); }
@@ -6776,6 +6803,11 @@ function exportPdfAs(base, mode, fontBase64){
 function buildSubtreeData(n){
   const copy = JSON.parse(JSON.stringify(sanitize(n)));   /* 去掉 _ 佈局欄位，id/名字等全保留 */
   (function x(d){ d.expanded = true; if (d.children && d.children.length) d.children.forEach(x); })(copy);   /* 整支全展開匯出 */
+  /* 字輩表掛在總根上，子樹預設帶不走；不補則分支匯出會整片丟失世代角標 */
+  if (Array.isArray(treeData.zibei) && treeData.zibei.length) copy.zibei = treeData.zibei.slice();
+  /* 原譜中的絕對代數（臨時欄位，sanitize 不會落盤）：保證無名字錨點也能從正確世代起算 */
+  const g = LAST_GENS.get(n.id);
+  if (g && Number.isFinite(g.gen)) copy._genRoot = g.gen;
   return copy;
 }
 /* 隱藏測量舞臺：類名 ps 與列印克隆共用 #stage.v 的豎排樣式；visibility:hidden 保持可測佈局 */
@@ -6859,7 +6891,7 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
     _exportTitle = base + '（此支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
-  }).catch(e => { exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
+  }).catch(e => { _exportTitle = null; exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
 }
 document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
 document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
@@ -6868,7 +6900,7 @@ document.getElementById('__subtreePdf').addEventListener('click', () => {
   closeSubtreeExport();
   if (n) openPdfExport(n);
 });
-if (IS_XHS) document.getElementById('__subtreePdf').hidden = true;
+if (IS_XHS || NO_PDF) document.getElementById('__subtreePdf').hidden = true;
 document.getElementById('__subtreeModal').addEventListener('mousedown', e => {
   if (e.target.id === '__subtreeModal') closeSubtreeExport();
 });

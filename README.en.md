@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.46" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.47" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
 **A double-click electronic genealogy: record your family, auto-number generations, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.46-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-101%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.47-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-104%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![Try online](https://img.shields.io/badge/try%20it-online-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -107,7 +107,7 @@ sharpness depends on the source. In the PDF dialog, choose a local TTF with the 
 characters and permission to embed it if needed. It is used only for this single-page export,
 never uploaded or saved in the tree. Missing glyphs produce an explicit error; neither the
 bundled font nor a custom font guarantees full Unicode coverage. A4 landscape paged printing
-remains available, with a coordinate-transform (CTM) clipping fix in v15.46. Paged output is a continuous slice: a card crossing a page edge is split across the two pages and is complete once the pages are joined.
+remains available, with a coordinate-transform (CTM) clipping fix in v15.46. Paged output is a continuous slice: a card crossing a page edge is split across the two pages and is complete once the pages are joined. In single-page PDFs, horizontal layouts are searchable by full name; vertical layouts set each character separately, so a full-name search may match only single characters.
 The Xiaohongshu mini-tool cannot save PDFs; its package omits the font and PDF backend but
 includes the generation-number fix.
 

@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | **日本語**
 
-<img src="docs/cover-ja.jpg?v=15.46" alt="家系図・伝代ツリー" width="100%">
+<img src="docs/cover-ja.jpg?v=15.47" alt="家系図・伝代ツリー" width="100%">
 
 # 家系図・伝代ツリー (Zupu)
 
 **ダブルクリックで使える電子家系図：家族を記録し、世代を自動判定、印刷して製本**
 
-[![Version](https://img.shields.io/badge/version-v15.46-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-101%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.47-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-104%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![オンラインで試す](https://img.shields.io/badge/オンライン-デモ-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -95,7 +95,7 @@
 PDF ダイアログでは、必要な字形を持ち、埋め込みが許可されたローカルの TTF を選べます。
 この単一ページ出力にだけ使用し、アップロードや家系図への保存は行いません。字形が不足すると明確なエラーを
 表示します。内蔵・指定フォントとも Unicode 全体への対応は保証しません。A4 横向きのページ分割印刷も
-引き続き選べ、v15.46 では座標変換（CTM）による切り抜きの不具合を修正しました。ページ分割は連続したスライスで、ページ境界にまたがるカードは隣り合う 2 ページに分かれて表示され、貼り合わせると完全になります。
+引き続き選べ、v15.46 では座標変換（CTM）による切り抜きの不具合を修正しました。ページ分割は連続したスライスで、ページ境界にまたがるカードは隣り合う 2 ページに分かれて表示され、貼り合わせると完全になります。単一ページ PDF の横書きは氏名全体で検索できますが、縦書きは 1 文字ずつ配置するため、氏名全体の検索は 1 文字ずつしか一致しない場合があります。
 小紅書（Xiaohongshu）小工具は PDF 保存に対応しないため、パッケージからフォントと PDF バックエンドを
 除きますが、今回の世代表示の修正は含みます。
 

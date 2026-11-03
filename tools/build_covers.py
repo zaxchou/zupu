@@ -11,11 +11,11 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-VERSION = 'v15.46'
-OLD_VERSION = 'v15.42'
+VERSION = 'v15.47'
+OLD_VERSION = 'v15.46'
 SUFFIXES = {'': '-v4', '-en': '-en-v4', '-ja': '-ja-v4', '-zh-Hant': '-zh-Hant-v4'}
-OLD_TAGS = {'': '78 测试用例', '-en': '78 tests', '-ja': '78 テスト', '-zh-Hant': '78 測試用例'}
-NEW_TAGS = {'': '101 测试用例', '-en': '101 tests', '-ja': '101 テスト', '-zh-Hant': '101 測試用例'}
+OLD_TAGS = {'': '101 测试用例', '-en': '101 tests', '-ja': '101 テスト', '-zh-Hant': '101 測試用例'}
+NEW_TAGS = {'': '104 测试用例', '-en': '104 tests', '-ja': '104 テスト', '-zh-Hant': '104 測試用例'}
 
 
 def update_template(suffix):
