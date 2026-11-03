@@ -204,8 +204,8 @@ def t_export_book_style(b):
     path = os.path.join(LOCAL_OUT, "md_export.md")
     d.save_as(path)
     txt = open(path, encoding="utf-8").read()
-    check("周少群（女）" in txt, "MD 含（女）标记", txt[:80])
-    check("丁氏嘉" in txt, "MD 配偶用谱书式", "丁氏嘉" in txt and txt[:120])
+    check("- 周少群 | 性别：女" in txt, "MD 含性别：女段（v2）", txt)
+    check("配：丁嘉" in txt, "MD 配偶段用原始名（谱书式只属显示层，不入文件）", txt[:200])
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -285,8 +285,8 @@ def t_heir_zihao_fields(b):
     path = os.path.join(LOCAL_OUT, "md_heir.md")
     dl.value.save_as(path)
     txt = open(path, encoding="utf-8").read()
-    check("（嗣出）" in txt, "MD 含嗣出", "嗣出" in txt)
-    check("字子明" in txt and "号竹溪" in txt, "MD 含字/号", "字号" in txt)
+    check(" | 嗣出" in txt, "MD 含嗣出段（v2）", "嗣出" in txt)
+    check("字：子明" in txt and "号：竹溪" in txt, "MD 含字/号段", "字号" in txt)
     # 搜索按字/号命中
     page.evaluate("openSearch()")
     page.fill("#sbInput", "竹溪")
@@ -309,7 +309,7 @@ def t_heir_zihao_fields(b):
     path2 = os.path.join(LOCAL_OUT, "md_heir2.md")
     dl.value.save_as(path2)
     txt2 = open(path2, encoding="utf-8").read()
-    check("（嗣子）" in txt2, "MD 含嗣子", "嗣子" in txt2)
+    check(" | 嗣子" in txt2, "MD 含嗣子段（v2）", "嗣子" in txt2)
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -438,7 +438,7 @@ def t_clan_xu(b):
     path = os.path.join(LOCAL_OUT, "md_clan.md")
     dl.value.save_as(path)
     txt = open(path, encoding="utf-8").read()
-    check(txt.startswith("# 潮阳泗水周氏族谱（爱莲堂）"), "MD 标题带谱名堂号", txt[:40])
+    check(txt.startswith("# 潮阳泗水周氏族谱\n") and "堂号：爱莲堂" in txt, "MD 标题=谱名，堂号独立成行（v2）", txt[:40])
     # 撤销恢复申锡堂
     page.keyboard.press("Control+z")
     page.wait_for_timeout(120)
@@ -505,7 +505,7 @@ def t_jian_tiao(b):
         page.evaluate("exportMarkdown()")
     path = os.path.join(LOCAL_OUT, "md_jian.md")
     dl.value.save_as(path)
-    check("（兼祧）" in open(path, encoding="utf-8").read(), "MD 含（兼祧）")
+    check(" | 兼祧" in open(path, encoding="utf-8").read(), "MD 含兼祧段（v2）")
     # 画布可渲染（横排徽标分支）
     size = page.evaluate("() => exportTreeCanvas().then(c => c.width > 0)")
     check(size, "横排画布含兼祧徽标可渲染")
@@ -539,7 +539,7 @@ def t_zhi_mark(b):
         page.evaluate("exportMarkdown()")
     path = os.path.join(LOCAL_OUT, "md_zhi.md")
     dl.value.save_as(path)
-    check("（止）" in open(path, encoding="utf-8").read(), "MD 含（止）")
+    check("  - 周昭凤 | 性别：女 | 止\n" in open(path, encoding="utf-8").read(), "MD 含止段（v2）")
     # 世系录「记」列含止
     with page.expect_download() as dl2:
         page.evaluate("exportShixilu()")
@@ -614,7 +614,7 @@ def t_spouse_terms(b):
     path = os.path.join(LOCAL_OUT, "md_term.md")
     dl.value.save_as(path)
     txt = open(path, encoding="utf-8").read()
-    check("娶 王氏秀兰" in txt, "MD 称谓同步（配偶名走谱书式）", "娶 王氏秀兰" in txt)
+    check("配：翁秀英、王秀兰" in txt, "MD 配偶段原始名保序（称谓属显示层，v2 不入文件）", "娶 王氏秀兰" in txt)
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 

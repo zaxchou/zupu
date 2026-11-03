@@ -751,7 +751,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <button class="btn icon" data-act="reset" title="恢复 1:1"><span style="font-size:11.5px;font-weight:600">1:1</span></button>
   <span id="statsChip"><b>4</b> 位成员 · 配偶 <b>2</b> · 4 代</span>
   <button class="btn is-saved" id="saveState" title="编辑即自动保存（存于本浏览器），无需手动操作"><span class="dot"></span>已保存</button>
-  <input type="file" id="__importFile" accept=".json,.html,.htm,application/json,text/html" style="display:none">
+  <input type="file" id="__importFile" accept=".json,.html,.htm,.md,.markdown,application/json,text/html,text/markdown" style="display:none">
   <input type="file" id="__photoDirInput" webkitdirectory multiple style="display:none">
 </header>
 
@@ -866,7 +866,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <b>保存是无感的</b>：所有修改即时自动保存在本浏览器（和 Gmail 草稿一样），没有保存按钮、没有弹窗、不需要任何操作。顶栏绿灯「已保存」常亮即安心。
     </p>
     <p class="help-note">
-      数据存在<b>这台电脑的这个浏览器</b>里。两件事需要记得：<b>换电脑/换浏览器</b>时先「文件 ▾ → 备份到文件」下载 json，到新机器「恢复备份」；<b>清理浏览器数据</b>前也先备份。旧版 html 里若有数据，「恢复备份」可直接读出。
+      数据存在<b>这台电脑的这个浏览器</b>里。两件事需要记得：<b>换电脑/换浏览器</b>时先「文件 ▾ → 备份到文件」下载 json，到新机器「恢复备份」；<b>清理浏览器数据</b>前也先备份。旧版 html 里若有数据，「恢复备份」可直接读出。导出的 Markdown（文件 ▾ → 导出 Markdown（可导回））是纯文本，也能从「恢复备份」原样导回：谱序、字辈、成员的性别字号嗣继配偶生卒备注都在，不含照片。
     </p>
     <h4>编辑</h4>
     <table class="hk-table">

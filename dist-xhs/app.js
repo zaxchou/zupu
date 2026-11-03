@@ -1472,12 +1472,12 @@ document.getElementById('btnFile').addEventListener('click', e => {
   } else {
       m.appendChild(mi('备份到文件', '', 'json', backupToFile, '导出 json 备份（含成员照片缩略图）：换电脑 / 防清缓存'));
       m.appendChild(mi('备份（含照片原图）', '', 'json', () => backupToFile(true), '在备份 json 里附上全部原图，换电脑后点头像仍可看大图（文件更大）'));
-      m.appendChild(mi('恢复备份', '', 'json', () => document.getElementById('__importFile').click(), '导入 json 备份（也支持旧版 HTML）'));
+      m.appendChild(mi('恢复备份', '', 'json', () => document.getElementById('__importFile').click(), '导入 json / Markdown 备份（也支持旧版 HTML）'));
       m.appendChild(mi('导入照片文件夹…', '', '', () => document.getElementById('__photoDirInput').click(), '按文件名匹配成员姓名，批量设置照片'));
       m.appendChild(msep());
       m.appendChild(mi('导出 PDF', '', '', exportPDF, '图谱排版，单页'));
       m.appendChild(mi('导出世系录', '', '五世一表', exportShixilu, '欧式表格：浏览器打开即可打印'));
-      m.appendChild(mi('导出 Markdown', '', 'md', exportMarkdown));
+      m.appendChild(mi('导出 Markdown（可导回）', '', 'md', exportMarkdown, '导出 .md 纯文本（谱序 / 字辈 / 成员信息）：「恢复备份」可直接原样导回'));
       m.appendChild(msep());
       m.appendChild(mi('打印', '', '', () => window.print(), '跟随当前视图排版'));
       m.appendChild(mi('按出生年重排', '', '', actSortByBirth));
@@ -2477,25 +2477,165 @@ document.getElementById('sbNext').onclick = () => stepHit(1);
 document.getElementById('sbPrev').onclick = () => stepHit(-1);
 document.getElementById('sbClose').onclick = () => { closeSearch(); };
 
-/* ---------- ⑫ 导入 / 导出 / 保存到文件 / 打印 ---------- */
+/* ---------- ⑫ 导入 / 导出 / 保存到文件 / 打印 ----------
+   Markdown v2（机器可解析的往返格式）：头部字段行 + 空行 + 「- 」缩进树。
+   人员行 = 「- 原始全名」+ 若干「|」分隔段（性别：女 / 字： / 号： / 嗣子 / 嗣出 /
+   兼祧 / 止 / 配： / 生： / 卒： / 注：；不认识的段一律并入备注，保证不丢字）。
+   名字不受「姓氏显示」等设置影响；段内除备注外不出现半角「|」；多行备注 /
+   谱序的续行以 2 空格缩进原样输出。导出的 .md 可从「恢复备份」原样导回。 */
 function exportMarkdown(){
-  let s = '# ' + puTitle() + '\n\n';
+  const c = clanOf();
+  let s = '# ' + (c.ming || '家族族谱') + '\n';
+  /* 头部字段：多行值的首行跟在前缀后，续行 2 空格缩进（导入并回，换行原样保留） */
+  const headField = (label, val) => {
+    if (!val) return;
+    const ls = String(val).split('\n');
+    s += label + ls[0] + '\n';
+    for (let i = 1; i < ls.length; i++) s += '  ' + ls[i] + '\n';
+  };
+  headField('堂号：', c.tang);
+  headField('始祖：', c.yuanzu);
+  headField('始祖记：', c.shizu);
+  headField('始迁祖：', c.qianzu);
+  headField('源流：', c.chain);
+  const zb = Array.isArray(treeData.zibei) ? treeData.zibei.filter(z => z) : [];
+  if (zb.length) s += '字辈：' + zb.join(' ') + '\n';
+  headField('谱序：', c.origin);
+  s += '\n';
   (function md(n, d){
-    let line = dispName(n.name) + (n.gender === 'f' ? '（女）' : '');
-    if (n.zi) line += '（字' + n.zi + '）';
-    if (n.hao) line += '（号' + n.hao + '）';
-    if (n.heir === 'in') line += '（嗣子）';
-    if (n.heir === 'out') line += '（嗣出）';
-    if (n.heir === 'jian') line += '（兼祧）';
-    if (n.zhi) line += '（止）';
-    line += (n.spouses && n.spouses.length ? '（' + spousesText(n) + '）' : '');
+    const segs = [];
+    if (n.gender === 'f') segs.push('性别：女');
+    if (n.zi) segs.push('字：' + n.zi);
+    if (n.hao) segs.push('号：' + n.hao);
+    if (n.heir === 'in') segs.push('嗣子');
+    if (n.heir === 'out') segs.push('嗣出');
+    if (n.heir === 'jian') segs.push('兼祧');
+    if (n.zhi) segs.push('止');
+    if (n.spouses && n.spouses.length) segs.push('配：' + n.spouses.join('、'));
     const b = (n.birth || '').trim(), de = (n.death || '').trim();
-    if (b || de) line += '（' + [b, de].filter(Boolean).join(' – ') + '）';
-    if (n.note) line += ' — ' + n.note;
-    s += '  '.repeat(d) + '- ' + line + '\n';
-    if (n.children) n.children.forEach(c => md(c, d + 1));
+    if (b) segs.push('生：' + b);
+    if (de) segs.push('卒：' + de);
+    const noteLines = String(n.note || '').trim().split('\n');
+    if (noteLines[0]) segs.push('注：' + noteLines[0]);
+    let pad = '';
+    for (let i = 0; i < d; i++) pad += '  ';
+    s += pad + '- ' + String(n.name || '').trim() + (segs.length ? ' | ' + segs.join(' | ') : '') + '\n';
+    for (let i = 1; i < noteLines.length; i++) s += pad + '  ' + noteLines[i] + '\n';
+    if (n.children) n.children.forEach(ch => md(ch, d + 1));
   })(treeData, 0);
-  download((clanOf().ming || '家族族谱') + '.md', s, 'text/markdown;charset=utf-8');
+  download((c.ming || '家族族谱') + '.md', s, 'text/markdown;charset=utf-8');
+}
+
+/* Markdown v2 解析：exportMarkdown 的逆过程（也接受手写的同格式文件）。
+   语法错误 throw Error（带 mdLine = 1 起始行号），由恢复备份入口统一 alert。
+   成功返回树根：clan / zibei 挂在根上，与 json 备份同构，走同一条 migrate 入库。 */
+function importMarkdown(text){
+  const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/);   /* 剥 BOM：记事本保存的 UTF-8 常带 */
+  function err(no, msg){ const e = new Error(msg); e.mdLine = no + 1; return e; }
+  /* 头部：顶格「字段前缀：」行 + 2 空格缩进续行（多行谱序 / 始祖记等原样保留换行） */
+  const TEXT_FIELDS = { '堂号：': 'tang', '始祖记：': 'shizu', '始祖：': 'yuanzu', '始迁祖：': 'qianzu', '源流：': 'chain', '谱序：': 'origin' };
+  const clan = {};
+  let zibei = null;
+  let lastField = '';
+  let treeStart = -1;
+  let i = 0;
+  for (; i < lines.length; i++){
+    const ln = lines[i];
+    if (/^- /.test(ln)){ treeStart = i; break; }
+    if (!ln.trim()) continue;
+    if (/^[ \t]/.test(ln)){
+      if (lastField) clan[lastField] += '\n' + ln.replace(/^[ \t]{1,2}/, '');
+      continue;
+    }
+    if (ln[0] === '#'){
+      const t = ln.slice(1).trim();
+      if (t && t !== '家族族谱') clan.ming = t;   /* 标题 = fallback 本身时不落库（保持与无谱名树往返一致） */
+      continue;
+    }
+    let hit = '';
+    Object.keys(TEXT_FIELDS).forEach(k => { if (!hit && ln.indexOf(k) === 0) hit = k; });
+    if (hit){
+      lastField = TEXT_FIELDS[hit];
+      clan[lastField] = ln.slice(hit.length).trim();
+      continue;
+    }
+    if (/^字辈：/.test(ln)){
+      zibei = ln.slice(3).trim().split(/\s+/).filter(Boolean);
+      lastField = '';
+      continue;
+    }
+    /* 顶格的非字段、非树行：并入谱序（保留换行） */
+    if (lastField === 'origin') clan.origin += '\n' + ln.trim();
+    else if (!lastField){ clan.origin = ln.trim(); lastField = 'origin'; }
+  }
+  if (treeStart < 0) throw err(0, '找不到以「- 」开头的成员行（族谱树缺失）');
+  /* 树：栈式解析。深度 = 前导空格数 / 2（tab 记 2，零头 floor）；跳级 / 多根即报错 */
+  const stack = [];
+  let root = null, lastNode = null, lastIndent = 0;
+  for (i = treeStart; i < lines.length; i++){
+    const raw = lines[i];
+    if (!raw.trim()) continue;
+    if (!/^[\t ]*- /.test(raw)){
+      /* 树区续行：上一成员备注的换行内容（导出时缩进 = 成员行缩进 + 2）。
+         顶格杂行（如页脚「——完——」）不静默并入备注——诚实报错，避免污染数据 */
+      if (!/^[\t ]/.test(raw)) throw err(i, '树区出现无法识别的行（应为成员行或缩进的备注续行）：' + raw.trim().slice(0, 30));
+      if (!lastNode) throw err(i, '树区出现无归属的续行');
+      let cut = 0;
+      const marker = lastIndent + 2;
+      while (cut < marker && raw[cut] === ' ') cut++;
+      const cont = raw.slice(cut);
+      lastNode.note = lastNode.note ? lastNode.note + '\n' + cont : cont;
+      continue;
+    }
+    let indent = 0, k = 0;
+    for (; k < raw.length; k++){
+      if (raw[k] === ' ') indent += 1;
+      else if (raw[k] === '\t') indent += 2;
+      else break;
+    }
+    const depth = Math.floor(indent / 2);
+    lastIndent = indent;
+    const body = raw.slice(k + 2).trim();
+    if (!body) throw err(i, '成员行缺少名字');
+    const parts = body.split('|');
+    const name = parts[0].trim();
+    if (!name) throw err(i, '成员名字为空');
+    const node = { id: genId('r'), name: name, spouses: [], children: [] };
+    if (depth === 0){
+      if (root) throw err(i, '顶格成员行（根）只能有一行，这里又出现了「' + name + '」');
+      root = node;
+      stack.length = 0;
+      stack.push(node);
+    } else {
+      if (!root) throw err(i, '首个成员行必须顶格（「- 」前不能有缩进）');
+      if (depth > stack.length) throw err(i, '缩进跳级：这一行比上一行深超过一层');
+      stack.length = depth;
+      stack[depth - 1].children.push(node);
+      stack.push(node);
+    }
+    for (let p = 1; p < parts.length; p++){
+      const seg = parts[p].trim();
+      if (!seg) continue;
+      if (seg === '嗣子') node.heir = 'in';
+      else if (seg === '嗣出') node.heir = 'out';
+      else if (seg === '兼祧') node.heir = 'jian';
+      else if (seg === '止') node.zhi = true;
+      else if (/^性别：/.test(seg) && seg.slice(3).trim() === '女') node.gender = 'f';
+      else if (/^字：/.test(seg)) node.zi = seg.slice(2).trim();
+      else if (/^号：/.test(seg)) node.hao = seg.slice(2).trim();
+      else if (/^配：/.test(seg)) node.spouses = seg.slice(2).split('、').map(x => x.trim()).filter(Boolean);
+      else if (/^生：/.test(seg)) node.birth = seg.slice(2).trim();
+      else if (/^卒：/.test(seg)) node.death = seg.slice(2).trim();
+      else if (/^注：/.test(seg)) node.note = node.note ? node.note + '\n' + seg.slice(2) : seg.slice(2);
+      else node.note = node.note ? node.note + '\n' + seg : seg;   /* 不认识的段并入备注 */
+    }
+    lastNode = node;
+  }
+  if (!root) throw err(treeStart, '未找到根成员');
+  if (!validTree(root)) throw err(treeStart, '树结构校验未通过');
+  if (Object.keys(clan).length) root.clan = clan;
+  if (zibei && zibei.length) root.zibei = zibei;
+  return root;
 }
 
 /* ---------- 世系录（欧式：五世一表，每人一行行传） ---------- */
@@ -2616,10 +2756,22 @@ document.getElementById('__importFile').addEventListener('change', function(){
   const f = this.files && this.files[0];
   this.value = '';
   if (!f) return;
+  const isMd = /\.(md|markdown)$/i.test(f.name);
   const reader = new FileReader();
   reader.onload = () => {
     try {
       let txt = reader.result;
+      if (isMd){
+        /* Markdown 往返：导出的 .md 从这里原样导回（无照片 / 折叠态，照片库不动） */
+        const root = importMarkdown(txt);
+        pushHistory('import');
+        treeData = migrate(root);
+        selectedId = null;
+        render();
+        fitToScreen();
+        toast('已导入「' + f.name + '」，数据已自动保存');
+        return;
+      }
       if (/\.html?$/i.test(f.name)){
         const m = txt.match(/<script id="__treeData"[^>]*>([\s\S]*?)<\/script>/);
         if (!m) throw new Error('这个 HTML 里没有族谱数据');
@@ -2646,7 +2798,8 @@ document.getElementById('__importFile').addEventListener('change', function(){
           : '已导入「' + f.name + '」，数据已自动保存，照片库不可用，仅缩略图可用');
       });
     } catch(e){
-      alert('导入失败：不是有效的族谱 JSON 文件\n' + e.message);
+      if (isMd) alert('导入失败：Markdown 第 ' + (e.mdLine || 1) + ' 行无法解析\n' + e.message);
+      else alert('导入失败：不是有效的族谱 JSON 文件\n' + e.message);
     }
   };
   reader.readAsText(f, 'utf-8');

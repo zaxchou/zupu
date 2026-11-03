@@ -930,7 +930,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <button class="btn icon" data-act="reset" title="Actual size"><span style="font-size:11.5px;font-weight:600">1:1</span></button>
   <span id="statsChip"><b>4</b> members · spouses <b>2</b> · 4 gens</span>
   <button class="btn is-saved" id="saveState" title="Edits are saved automatically in this browser — no action needed"><span class="dot"></span>Saved</button>
-  <input type="file" id="__importFile" accept=".json,.html,.htm,application/json,text/html" style="display:none">
+  <input type="file" id="__importFile" accept=".json,.html,.htm,.md,.markdown,application/json,text/html,text/markdown" style="display:none">
   <input type="file" id="__photoDirInput" webkitdirectory multiple style="display:none">
 </header>
 
@@ -1045,7 +1045,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <b>Saving is automatic</b>: every change is saved to this browser instantly (like Gmail drafts) — no save button, no dialogs, nothing to do. The green “Saved” light in the top bar means you are safe.
     </p>
     <p class="help-note">
-      Data lives in <b>this browser on this computer</b>. Two things to remember: when <b>switching computers/browsers</b>, first use “File ▾ → Backup to file” to download the json and “Restore backup” on the new machine; also back up <b>before clearing browser data</b>. Data inside an old html export can be read directly via “Restore backup”.
+      Data lives in <b>this browser on this computer</b>. Two things to remember: when <b>switching computers/browsers</b>, first use “File ▾ → Backup to file” to download the json and “Restore backup” on the new machine; also back up <b>before clearing browser data</b>. Data inside an old html export can be read directly via “Restore backup”.The exported Markdown (File ▾ → Export Markdown (re-importable)) is plain text and can be re-imported as-is via “Restore backup”: the preface, zibei, and member info (sex, zi, hao, heir/adoption, spouses, birth/death, notes) are all included — photos are not.
     </p>
     <h4>Editing</h4>
     <table class="hk-table">
@@ -2655,12 +2655,12 @@ document.getElementById('btnFile').addEventListener('click', e => {
   } else {
       m.appendChild(mi('Back up to file', '', 'json', backupToFile, 'Export a JSON backup (with member photo thumbnails): move computers / guard against cleared storage'));
       m.appendChild(mi('Backup (with original photos)', '', 'json', () => backupToFile(true), 'Attach all original photos to the backup json — photos still open large after switching computers (larger file)'));
-      m.appendChild(mi('Restore backup', '', 'json', () => document.getElementById('__importFile').click(), 'Import a JSON backup (old HTML files also supported)'));
+      m.appendChild(mi('Restore backup', '', 'json', () => document.getElementById('__importFile').click(), 'Import json / Markdown backup (legacy HTML also supported)'));
       m.appendChild(mi('Import photo folder…', '', '', () => document.getElementById('__photoDirInput').click(), 'Match members by file name and set photos in bulk'));
       m.appendChild(msep());
       m.appendChild(mi('Export PDF', '', '', exportPDF, 'Chart layout, single page'));
       m.appendChild(mi('Export lineage tables', '', '5 gens each', exportShixilu, 'Classic grid: open in browser and print'));
-      m.appendChild(mi('Export Markdown', '', 'md', exportMarkdown));
+      m.appendChild(mi('Export Markdown (re-importable)', '', 'md', exportMarkdown, 'Export plain-text .md (preface / zibei / member info): re-import it as-is via “Restore backup”'));
       m.appendChild(msep());
       m.appendChild(mi('Print', '', '', () => window.print(), 'Follows the current view layout'));
       m.appendChild(mi('Sort by birth year', '', '', actSortByBirth));
@@ -3660,25 +3660,165 @@ document.getElementById('sbNext').onclick = () => stepHit(1);
 document.getElementById('sbPrev').onclick = () => stepHit(-1);
 document.getElementById('sbClose').onclick = () => { closeSearch(); };
 
-/* ---------- ⑫ 导入 / 导出 / 保存到文件 / 打印 ---------- */
+/* ---------- ⑫ 导入 / 导出 / 保存到文件 / 打印 ----------
+   Markdown v2（机器可解析的往返格式）：头部字段行 + 空行 + 「- 」缩进树。
+   人员行 = 「- 原始全名」+ 若干「|」分隔段（性别：女 / 字： / 号： / 嗣子 / 嗣出 /
+   兼祧 / 止 / 配： / 生： / 卒： / 注：；不认识的段一律并入备注，保证不丢字）。
+   名字不受「姓氏显示」等设置影响；段内除备注外不出现半角「|」；多行备注 /
+   谱序的续行以 2 空格缩进原样输出。导出的 .md 可从「恢复备份」原样导回。 */
 function exportMarkdown(){
-  let s = '# ' + puTitle() + '\n\n';
+  const c = clanOf();
+  let s = '# ' + (c.ming || 'Family Tree') + '\n';
+  /* 头部字段：多行值的首行跟在前缀后，续行 2 空格缩进（导入并回，换行原样保留） */
+  const headField = (label, val) => {
+    if (!val) return;
+    const ls = String(val).split('\n');
+    s += label + ls[0] + '\n';
+    for (let i = 1; i < ls.length; i++) s += '  ' + ls[i] + '\n';
+  };
+  headField('\u5802\u53f7\uff1a', c.tang);
+  headField('\u59cb\u7956\uff1a', c.yuanzu);
+  headField('\u59cb\u7956\u8bb0\uff1a', c.shizu);
+  headField('\u59cb\u8fc1\u7956\uff1a', c.qianzu);
+  headField('\u6e90\u6d41\uff1a', c.chain);
+  const zb = Array.isArray(treeData.zibei) ? treeData.zibei.filter(z => z) : [];
+  if (zb.length) s += '\u5b57\u8f88\uff1a' + zb.join(' ') + '\n';
+  headField('\u8c31\u5e8f\uff1a', c.origin);
+  s += '\n';
   (function md(n, d){
-    let line = dispName(n.name) + (n.gender === 'f' ? ' (f)' : '');
-    if (n.zi) line += ' (zi ' + n.zi + ')';
-    if (n.hao) line += ' (hao ' + n.hao + ')';
-    if (n.heir === 'in') line += ' (heir)';
-    if (n.heir === 'out') line += ' (adopted out)';
-    if (n.heir === 'jian') line += ' (dual heir)';
-    if (n.zhi) line += ' (dsp)';
-    line += (n.spouses && n.spouses.length ? '（' + spousesText(n) + '）' : '');
+    const segs = [];
+    if (n.gender === 'f') segs.push('\u6027\u522b\uff1a\u5973');
+    if (n.zi) segs.push('\u5b57\uff1a' + n.zi);
+    if (n.hao) segs.push('\u53f7\uff1a' + n.hao);
+    if (n.heir === 'in') segs.push('\u55e3\u5b50');
+    if (n.heir === 'out') segs.push('\u55e3\u51fa');
+    if (n.heir === 'jian') segs.push('\u517c\u7967');
+    if (n.zhi) segs.push('\u6b62');
+    if (n.spouses && n.spouses.length) segs.push('\u914d\uff1a' + n.spouses.join('、'));
     const b = (n.birth || '').trim(), de = (n.death || '').trim();
-    if (b || de) line += '（' + [b, de].filter(Boolean).join(' – ') + '）';
-    if (n.note) line += ' — ' + n.note;
-    s += '  '.repeat(d) + '- ' + line + '\n';
-    if (n.children) n.children.forEach(c => md(c, d + 1));
+    if (b) segs.push('\u751f\uff1a' + b);
+    if (de) segs.push('\u5352\uff1a' + de);
+    const noteLines = String(n.note || '').trim().split('\n');
+    if (noteLines[0]) segs.push('\u6ce8\uff1a' + noteLines[0]);
+    let pad = '';
+    for (let i = 0; i < d; i++) pad += '  ';
+    s += pad + '- ' + String(n.name || '').trim() + (segs.length ? ' | ' + segs.join(' | ') : '') + '\n';
+    for (let i = 1; i < noteLines.length; i++) s += pad + '  ' + noteLines[i] + '\n';
+    if (n.children) n.children.forEach(ch => md(ch, d + 1));
   })(treeData, 0);
-  download((clanOf().ming || 'Family Tree') + '.md', s, 'text/markdown;charset=utf-8');
+  download((c.ming || 'Family Tree') + '.md', s, 'text/markdown;charset=utf-8');
+}
+
+/* Markdown v2 解析：exportMarkdown 的逆过程（也接受手写的同格式文件）。
+   语法错误 throw Error（带 mdLine = 1 起始行号），由恢复备份入口统一 alert。
+   成功返回树根：clan / zibei 挂在根上，与 json 备份同构，走同一条 migrate 入库。 */
+function importMarkdown(text){
+  const lines = String(text).replace(/^\uFEFF/, '').split(/\r?\n/);   /* 剥 BOM：记事本保存的 UTF-8 常带 */
+  function err(no, msg){ const e = new Error(msg); e.mdLine = no + 1; return e; }
+  /* 头部：顶格「字段前缀：」行 + 2 空格缩进续行（多行谱序 / 始祖记等原样保留换行） */
+  const TEXT_FIELDS = { '\u5802\u53f7\uff1a': 'tang', '\u59cb\u7956\u8bb0\uff1a': 'shizu', '\u59cb\u7956\uff1a': 'yuanzu', '\u59cb\u8fc1\u7956\uff1a': 'qianzu', '\u6e90\u6d41\uff1a': 'chain', '\u8c31\u5e8f\uff1a': 'origin' };
+  const clan = {};
+  let zibei = null;
+  let lastField = '';
+  let treeStart = -1;
+  let i = 0;
+  for (; i < lines.length; i++){
+    const ln = lines[i];
+    if (/^- /.test(ln)){ treeStart = i; break; }
+    if (!ln.trim()) continue;
+    if (/^[ \t]/.test(ln)){
+      if (lastField) clan[lastField] += '\n' + ln.replace(/^[ \t]{1,2}/, '');
+      continue;
+    }
+    if (ln[0] === '#'){
+      const t = ln.slice(1).trim();
+      if (t && t !== 'Family Tree') clan.ming = t;   /* 标题 = fallback 本身时不落库（保持与无谱名树往返一致） */
+      continue;
+    }
+    let hit = '';
+    Object.keys(TEXT_FIELDS).forEach(k => { if (!hit && ln.indexOf(k) === 0) hit = k; });
+    if (hit){
+      lastField = TEXT_FIELDS[hit];
+      clan[lastField] = ln.slice(hit.length).trim();
+      continue;
+    }
+    if (/\u5b57\u8f88\uff1a/.test(ln)){
+      zibei = ln.slice(3).trim().split(/\s+/).filter(Boolean);
+      lastField = '';
+      continue;
+    }
+    /* 顶格的非字段、非树行：并入谱序（保留换行） */
+    if (lastField === 'origin') clan.origin += '\n' + ln.trim();
+    else if (!lastField){ clan.origin = ln.trim(); lastField = 'origin'; }
+  }
+  if (treeStart < 0) throw err(0, 'No member line starting with “- ” found (family tree missing)');
+  /* 树：栈式解析。深度 = 前导空格数 / 2（tab 记 2，零头 floor）；跳级 / 多根即报错 */
+  const stack = [];
+  let root = null, lastNode = null, lastIndent = 0;
+  for (i = treeStart; i < lines.length; i++){
+    const raw = lines[i];
+    if (!raw.trim()) continue;
+    if (!/^[\t ]*- /.test(raw)){
+      /* 树区续行：上一成员备注的换行内容（导出时缩进 = 成员行缩进 + 2）。
+         顶格杂行（如页脚「——完——」）不静默并入备注——诚实报错，避免污染数据 */
+      if (!/^[	 ]/.test(raw)) throw err(i, 'Unrecognized line in the tree section (expected a member line or an indented note continuation): ' + raw.trim().slice(0, 30));
+      if (!lastNode) throw err(i, 'Orphan continuation line inside the tree section');
+      let cut = 0;
+      const marker = lastIndent + 2;
+      while (cut < marker && raw[cut] === ' ') cut++;
+      const cont = raw.slice(cut);
+      lastNode.note = lastNode.note ? lastNode.note + '\n' + cont : cont;
+      continue;
+    }
+    let indent = 0, k = 0;
+    for (; k < raw.length; k++){
+      if (raw[k] === ' ') indent += 1;
+      else if (raw[k] === '\t') indent += 2;
+      else break;
+    }
+    const depth = Math.floor(indent / 2);
+    lastIndent = indent;
+    const body = raw.slice(k + 2).trim();
+    if (!body) throw err(i, 'Member line is missing a name');
+    const parts = body.split('|');
+    const name = parts[0].trim();
+    if (!name) throw err(i, 'Member name is empty');
+    const node = { id: genId('r'), name: name, spouses: [], children: [] };
+    if (depth === 0){
+      if (root) throw err(i, 'Only one top-level member line (root) is allowed — another appeared here: “' + name + '”');
+      root = node;
+      stack.length = 0;
+      stack.push(node);
+    } else {
+      if (!root) throw err(i, 'The first member line must start at column 0 (no indent before “- ”)');
+      if (depth > stack.length) throw err(i, 'Indent skips a level: this line is more than one level deeper than the previous one');
+      stack.length = depth;
+      stack[depth - 1].children.push(node);
+      stack.push(node);
+    }
+    for (let p = 1; p < parts.length; p++){
+      const seg = parts[p].trim();
+      if (!seg) continue;
+      if (seg === '\u55e3\u5b50') node.heir = 'in';
+      else if (seg === '\u55e3\u51fa') node.heir = 'out';
+      else if (seg === '\u517c\u7967') node.heir = 'jian';
+      else if (seg === '\u6b62') node.zhi = true;
+      else if (/\u6027\u522b\uff1a/.test(seg) && seg.slice(3).trim() === '\u5973') node.gender = 'f';
+      else if (/\u5b57\uff1a/.test(seg)) node.zi = seg.slice(2).trim();
+      else if (/\u53f7\uff1a/.test(seg)) node.hao = seg.slice(2).trim();
+      else if (/\u914d\uff1a/.test(seg)) node.spouses = seg.slice(2).split('、').map(x => x.trim()).filter(Boolean);
+      else if (/\u751f\uff1a/.test(seg)) node.birth = seg.slice(2).trim();
+      else if (/\u5352\uff1a/.test(seg)) node.death = seg.slice(2).trim();
+      else if (/\u6ce8\uff1a/.test(seg)) node.note = node.note ? node.note + '\n' + seg.slice(2) : seg.slice(2);
+      else node.note = node.note ? node.note + '\n' + seg : seg;   /* 不认识的段并入备注 */
+    }
+    lastNode = node;
+  }
+  if (!root) throw err(treeStart, 'No root member found');
+  if (!validTree(root)) throw err(treeStart, 'Tree structure validation failed');
+  if (Object.keys(clan).length) root.clan = clan;
+  if (zibei && zibei.length) root.zibei = zibei;
+  return root;
 }
 
 /* ---------- 世系录（欧式：五世一表，每人一行行传） ---------- */
@@ -3799,10 +3939,22 @@ document.getElementById('__importFile').addEventListener('change', function(){
   const f = this.files && this.files[0];
   this.value = '';
   if (!f) return;
+  const isMd = /\.(md|markdown)$/i.test(f.name);
   const reader = new FileReader();
   reader.onload = () => {
     try {
       let txt = reader.result;
+      if (isMd){
+        /* Markdown 往返：导出的 .md 从这里原样导回（无照片 / 折叠态，照片库不动） */
+        const root = importMarkdown(txt);
+        pushHistory('import');
+        treeData = migrate(root);
+        selectedId = null;
+        render();
+        fitToScreen();
+        toast('Imported “' + f.name + '” — data saved automatically');
+        return;
+      }
       if (/\.html?$/i.test(f.name)){
         const m = txt.match(/<script id="__treeData"[^>]*>([\s\S]*?)<\/script>/);
         if (!m) throw new Error('No genealogy data found in this HTML');
@@ -3829,7 +3981,8 @@ document.getElementById('__importFile').addEventListener('change', function(){
           : 'Imported “' + f.name + '” — data saved automatically; photo library unavailable — thumbnails only');
       });
     } catch(e){
-      alert('Import failed: not a valid genealogy JSON file\n' + e.message);
+      if (isMd) alert('Import failed: Markdown line ' + (e.mdLine || 1) + ' could not be parsed\n' + e.message);
+      else alert('Import failed: not a valid genealogy JSON file\n' + e.message);
     }
   };
   reader.readAsText(f, 'utf-8');
