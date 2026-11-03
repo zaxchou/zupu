@@ -1022,7 +1022,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p id="__subtreeHint"></p>
     <div class="st-btns">
       <button id="__subtreePng" class="primary">画像を出力（PNG）</button>
-      <button id="__subtreePdf">PDF を出力（大きいときは自動ページ分割）</button>
+      <button id="__subtreePdf">PDF を出力…</button>
       <button id="__subtreeCancel">キャンセル</button>
     </div>
   </div>
@@ -5684,8 +5684,10 @@ const ZUPU_PDF_FONT_BASE64 = [
 ].join('');
 /* Standalone Canvas-like PDF backend for paintTreeBody. Inline before its caller.
  * Dependency: ZUPU_PDF_FONT_BASE64, a base64-encoded static TrueType (glyf) font.
+ * Optional third argument overrides it; null/undefined use the embedded font.
  * No shaping/kerning or weight synthesis: all sizes/families use this one font.
- * Only drawImage rasterizes (individual photos); everything else stays vector/text.
+ * Only drawImage (3/5-argument form) rasterizes individual photos. Text stays text;
+ * a missing U+25B8 UI disclosure marker alone falls back to a vector triangle.
  */
 function createVectorPdfContext(width, height, fontBase64) {
   'use strict';
@@ -6888,7 +6890,9 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
   const base = dispName(n.name);
   const root = buildSubtreeData(n);
   exportBusy(true, '出力ファイルを生成中…');
-  withTempRender(root, () => {
+  /* 必须把 Promise 交回调用方：PDF 弹窗的 busy 收尾依赖它；
+     否则遮罩会在临时子树仍生效时提前消失，用户此刻的编辑会随 teardown 丢掉 */
+  return withTempRender(root, () => {
     _exportTitle = base + '（この支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });

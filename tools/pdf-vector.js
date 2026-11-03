@@ -1,7 +1,9 @@
 /* Standalone Canvas-like PDF backend for paintTreeBody. Inline before its caller.
  * Dependency: ZUPU_PDF_FONT_BASE64, a base64-encoded static TrueType (glyf) font.
+ * Optional third argument overrides it; null/undefined use the embedded font.
  * No shaping/kerning or weight synthesis: all sizes/families use this one font.
- * Only drawImage rasterizes (individual photos); everything else stays vector/text.
+ * Only drawImage (3/5-argument form) rasterizes individual photos. Text stays text;
+ * a missing U+25B8 UI disclosure marker alone falls back to a vector triangle.
  */
 function createVectorPdfContext(width, height, fontBase64) {
   'use strict';

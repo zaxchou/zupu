@@ -581,7 +581,7 @@ EN = [
   # 弹窗静态文案
   ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">Export this branch</h3>'),
   ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">Export image (PNG)</button>'),
-  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">Export PDF (auto-paginates when large)</button>'),
+  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">Export PDF…</button>'),
   # 弹窗动态文案（拼接形式）
   ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
    "document.getElementById('__subtreeTitle').textContent = 'Export this branch · ' + dispName(n.name);"),
@@ -1079,7 +1079,7 @@ JA += [
   # モーダルの静的文案
   ('<h3 id="__subtreeTitle">导出此支</h3>', '<h3 id="__subtreeTitle">この支を出力</h3>'),
   ('<button id="__subtreePng" class="primary">导出图片（PNG）</button>', '<button id="__subtreePng" class="primary">画像を出力（PNG）</button>'),
-  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">PDF を出力（大きいときは自動ページ分割）</button>'),
+  ('<button id="__subtreePdf">导出 PDF…</button>', '<button id="__subtreePdf">PDF を出力…</button>'),
   # モーダルの動的文案（連結形）
   ("document.getElementById('__subtreeTitle').textContent = '导出此支 · ' + dispName(n.name);",
    "document.getElementById('__subtreeTitle').textContent = 'この支を出力 · ' + dispName(n.name);"),
@@ -1252,7 +1252,6 @@ def build(lang, table, seed, out_name, extra):
         print('==== %s: %d 处失配 ====' % (lang, len(errs)))
         for e in errs: print('  ' + e)
         return False
-    io.open(os.path.join(ROOT, out_name), 'w', encoding='utf-8', newline='').write(src)
     # 校验：EN 不应再有用户可见的 CJK（注释一律豁免——代码注释保持中文）
     if lang == 'en':
         left = []
@@ -1284,6 +1283,8 @@ def build(lang, table, seed, out_name, extra):
         for x in left[:40]: print('  ' + x)
         if left:
             return False
+    # 残留检查通过后才落盘：失败时绝不留下半成品语言页
+    io.open(os.path.join(ROOT, out_name), 'w', encoding='utf-8', newline='').write(src)
     print('%s -> %s OK' % (lang, out_name))
     return True
 

@@ -3668,7 +3668,9 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
   const base = dispName(n.name);
   const root = buildSubtreeData(n);
   exportBusy(true, '正在生成导出文件…');
-  withTempRender(root, () => {
+  /* 必须把 Promise 交回调用方：PDF 弹窗的 busy 收尾依赖它；
+     否则遮罩会在临时子树仍生效时提前消失，用户此刻的编辑会随 teardown 丢掉 */
+  return withTempRender(root, () => {
     _exportTitle = base + '（此支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });

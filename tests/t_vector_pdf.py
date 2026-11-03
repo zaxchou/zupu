@@ -198,6 +198,31 @@ def t_vector_four_directions_and_vertical_text_bounds(b):
 
 
 @testcase
+def t_branch_export_returns_completion_promise(b):
+    """分支导出必须把 withTempRender 的 Promise 交回调用方：
+    否则 PDF 弹窗的 busy 收尾会在临时子树仍生效时提前执行，用户编辑会丢。"""
+    ctx, page, errs, _ = fresh_page(b)
+    try:
+        goto(page)
+        r = page.evaluate("""() => {
+          const real = withTempRender;
+          let called = false;
+          withTempRender = function(){ called = true; return new Promise(function(){}); };
+          const p = runSubtreeExport('png', null, null, findNode('b1'));
+          withTempRender = real;
+          const busy = !!document.getElementById('__exportBusy');
+          exportBusy(false);
+          return { promise: p instanceof Promise, called: called, busy: busy };
+        }""")
+        check(r["called"], "导出进入临时渲染", str(r))
+        check(r["promise"], "runSubtreeExport 返回完成 Promise（遮罩可等到恢复后收尾）", str(r))
+        check(r["busy"], "调用方返回到手时导出遮罩仍在", str(r))
+        check(not errs, "无 JS 错误", str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
 def t_vector_long_clan_title_not_clipped(b):
     """长谱名标题不得被 PDF 页边裁掉（旧实现把导出宽度封顶 560px）。"""
     import json as _json
