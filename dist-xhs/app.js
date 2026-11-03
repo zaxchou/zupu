@@ -1526,7 +1526,7 @@ document.getElementById('btnHelp').addEventListener('click', e => {
 function hmIsOpen(){ return document.getElementById('__helpModal').classList.contains('open'); }
 function openHelp(){
   /* 字辈表网格：蓝框 = 族谱中有人用这个字辈 */
-  const lo = 1 + genOffset(), hi2 = lo + 39;
+  const lo = 1 + genOffset(), hi2 = lo + (Array.isArray(treeData.zibei) ? treeData.zibei.length : 40) - 1;   /* 标题范围跟实际表长，勿写死 40 */
   const range = cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi2) : lo + '–' + hi2;
   document.getElementById('__zbTitle').textContent =
     '字辈表（第' + range + genUnit() + '，蓝框 = 族谱中已出现）';
@@ -2993,6 +2993,8 @@ function backupToFile(withOrig){
  * exportTreeCanvas 异步：先等全部头像 Image 解码完成再绘制（数据 URL 不污染画布）。 */
 /* PDF engine omitted in XHS package. */
 function exportPalette(){
+  /* 刻意读 :root 而不是 body：主题变量挂在 body[data-theme] 上，
+     这样晴空/暗色下导出的图和 PDF 仍是纸面配色（v15.38 的承诺），不会白底白字 */
   const cs = getComputedStyle(document.documentElement);
   const v = k => cs.getPropertyValue(k).trim();
   return {
@@ -3095,10 +3097,15 @@ function paintTreeBody(ctx, photoImgs){
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function ellipText(t, maxW){
     if (ctx.measureText(t).width <= maxW) return t;
-    /* 按码点截断：slice 可能把代理对（生僻字）切成半个，PDF 会报缺字 */
+    /* 宽度可加：逐码点量一次再单遍找截断点。旧实现每弹一字全文重测，
+       万字备注卡 14 秒。按码点切，避免把代理对（生僻字）切成半个报缺字 */
     const cs = Array.from(t);
-    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxW) cs.pop();
-    return cs.join('') + '…';
+    const ell = ctx.measureText('…').width;
+    const widths = cs.map(ch => ctx.measureText(ch).width);
+    let total = widths.reduce((a, b) => a + b, 0);
+    let cut = cs.length;
+    while (cut > 1 && total + ell > maxW){ cut--; total -= widths[cut]; }
+    return cs.slice(0, cut).join('') + '…';
   }
   /* 头像绘制：圆形裁剪画缩略图 + 细环；无照片时矢量剪影（与 DOM 内联 SVG 同款构图） */
   function drawAvatarImg(img, cx, cy, r){
@@ -3358,11 +3365,16 @@ function savePngToAlbum(cv){
       .catch(function(e){ toast('保存失败：' + ((e && e.errMsg) || e)); });
   } catch(e){ toast('保存失败：' + e.message); }
 }
-function exportPNG(){ exportPngAs(); }
+function exportPNG(){
+  /* 整树 PNG 与分支导出同样加遮罩：多照片解码窗口里编辑会让图和界面不一致 */
+  exportBusy(true, '正在生成图片…');
+  Promise.resolve(exportPngAs()).then(() => exportBusy(false));
+}
 function exportPngAs(base){
   return exportTreeCanvas().then(cv => {
     if (IS_XHS){ savePngToAlbum(cv); return; }
     cv.toBlob(bl => {
+      if (!bl){ toast('导出失败：图片编码失败（画布可能超出本机内存限制）'); return; }
       download(stampName('.png', base), bl, 'image/png');
       /* 名字有效字号 <8px（S<0.62）：整图能导出来但看不清，主动引导去分页 PDF */
       toast(cv._exportS && 13 * cv._exportS < 8
@@ -3371,8 +3383,9 @@ function exportPngAs(base){
     }, 'image/png');
   }).catch(e => toast('导出失败：' + ((e && e.message) || e)));
 }
-/* 分页判定（纯函数）：单页导出下名字有效字号 13*S<15（约 max(W,H)>10400px）
-   → 大谱导出 PDF 自动改为 A4 横向分页 */
+/* 分页判定（纯函数）：单页导出下名字有效字号 13*S<15（约 max(W,H)>10400px）。
+   v15.43–v15.45 曾据此自动分页；v15.46 起默认单页矢量，此判定改为在导出弹窗
+   预选「A4 分页」供超大谱使用（用户仍可改回单页高清） */
 function pdfNeedsPaging(W, H){
   return 13 * Math.min(3, 12000 / Math.max(W, H)) < 15;
 }
@@ -3507,6 +3520,15 @@ function openPdfExport(n){
   if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
+  /* 超大谱预选「A4 分页」：矢量页上限 14400pt，布局超过 ~13000px 时单页名字
+     会小于 13pt，预选分页更实用；用户仍可改回单页高清。不用 pdfNeedsPaging——
+     那是旧 12000px 栅格启发式，对矢量页过于激进 */
+  try {
+    const dims = exportDims();
+    if (Math.max(dims.W, dims.H) > 13000) {
+      document.querySelector('input[name="pdfMode"][value="paged"]').checked = true;
+    }
+  } catch (e) { /* 画布尚未渲染时保持默认单页 */ }
   document.getElementById('__pdfFont').value = '';
   document.getElementById('__pdfModal').classList.add('open');
   document.getElementById('__pdfGo').focus();
@@ -3622,12 +3644,9 @@ function withTempRender(root, fn){
     edges: edgeSegments, markers: rowMarkers, lastGens: LAST_GENS, sel: selectedId,
     fam: FAM_SUR   /* 本谱姓氏：临时 render 会按子树重算，漏恢复会让主界面错误剥姓 */
   };
-  const env = makeTempStage(!!cfg.vertical);
-  _renderTargets = env;
+  let env = null;
   _renderSilent = true;
   _exportLock = true;
-  treeData = root;
-  selectedId = null;
   function teardown(){
     _renderTargets = null; _renderSilent = false; _exportLock = false;
     treeData = saved.treeData; selectedId = saved.sel;
@@ -3635,10 +3654,19 @@ function withTempRender(root, fn){
     saved.rects.forEach(function(kv){ nodeRects.set(kv[0], kv[1]); });
     edgeSegments = saved.edges; rowMarkers = saved.markers; LAST_GENS = saved.lastGens;
     FAM_SUR = saved.fam;
-    if (env.host.parentNode) env.host.parentNode.removeChild(env.host);
+    if (env && env.host.parentNode) env.host.parentNode.removeChild(env.host);
   }
   let out;
-  try { render(); out = fn(); }   /* 隐藏舞台上为临时子树重算布局（nodeRects/edgeSegments/_baseW） */
+  /* makeTempStage 也在 try 内：同步抛出时 globals（_renderSilent/_exportLock）已复原，
+     调用方的 catch 能可靠收尾遮罩（v15.49：遮罩卡死类问题的第二道保险） */
+  try {
+    env = makeTempStage(!!cfg.vertical);
+    _renderTargets = env;
+    treeData = root;
+    selectedId = null;
+    render();
+    out = fn();   /* 隐藏舞台上为临时子树重算布局（nodeRects/edgeSegments/_baseW） */
+  }
   catch (e){ teardown(); throw e; }
   if (out && typeof out.then === 'function'){
     return out.then(v => { teardown(); return v; }, e => { teardown(); throw e; });
@@ -3669,12 +3697,14 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
   const root = buildSubtreeData(n);
   exportBusy(true, '正在生成导出文件…');
   /* 必须把 Promise 交回调用方：PDF 弹窗的 busy 收尾依赖它；
-     否则遮罩会在临时子树仍生效时提前消失，用户此刻的编辑会随 teardown 丢掉 */
-  return withTempRender(root, () => {
+     否则遮罩会在临时子树仍生效时提前消失，用户此刻的编辑会随 teardown 丢掉。
+     先落一个微任务再进 withTempRender：它同步抛出（病态数据让 render 出错）时
+     catch 也能挂上，遮罩永不卡死 */
+  return Promise.resolve().then(() => withTempRender(root, () => {
     _exportTitle = base + '（此支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
-  }).catch(e => { _exportTitle = null; exportBusy(false); toast('导出失败：' + ((e && e.message) || e)); });
+  })).catch(e => { _exportTitle = null; exportBusy(false); toast('导出失败：' + ((e && e.message) || e)); });
 }
 document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
 document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
@@ -3748,7 +3778,10 @@ function printMemberRow(n, gen, rank){
   const b = (n.birth || '').trim(), de = (n.death || '').trim();
   if (b || de) extra += '<span class="pmeta">（' + esc([b, de].filter(Boolean).join(' – ')) + '）</span>';
   if (n.note) extra += '<span class="pmeta">— ' + esc(n.note) + '</span>';
-  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (gen.zi ? '·' + gen.zi : '')) + '</span>'
+  /* 字辈字与卡片/搜索/竖排同规则：推算代回退到本代字辈字，打印书不缺「·X」 */
+  const zbP = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  const ziShow = gen ? (gen.zi || zbP[gen.gen - 1] || '') : '';
+  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (ziShow ? '·' + ziShow : '')) + '</span>'
                       : (rank ? '<span class="pgen">' + esc(rank) + '</span>' : '');
   return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
 }
@@ -3795,7 +3828,8 @@ function buildPrintDomReal(){
   })(treeData, rootUl);
   area.appendChild(rootUl);
 }
-window.addEventListener('beforeprint', buildPrintDomReal);
+/* 导出进行中全局数据是临时子树：此时打印会输出分支内容，跳过本次打印 */
+window.addEventListener('beforeprint', () => { if (!_exportLock) buildPrintDomReal(); });
 
 /* ---------- ⑬ 键盘总控（分层守卫：搜索框 > 弹窗 > 输入型目标 > 全局快捷键） ---------- */
 document.addEventListener('keydown', e => {

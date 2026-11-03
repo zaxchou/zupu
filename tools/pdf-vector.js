@@ -7,14 +7,16 @@
  */
 function createVectorPdfContext(width, height, fontBase64) {
   'use strict';
-  const fail = message => { throw new Error('PDF export: ' + message); };
+  /* 不加来源前缀：调用方的 toast 已带「导出失败：/Export failed: 」，避免双重前缀 */
+  const fail = message => { throw new Error(message); };
   const finite = (...xs) => { if (!xs.every(Number.isFinite)) fail('Coordinates and dimensions must be finite numbers'); };
   finite(width, height);
   if (width <= 0 || height <= 0) fail('Page width and height must be positive');
   const num = x => {
     finite(x);
     if (Math.abs(x) >= 1e21) fail('Numeric value is too large');
-    return x.toFixed(6).replace(/\.?0+$/, '') || '0';
+    const s = x.toFixed(6).replace(/\.?0+$/, '');
+    return s === '-0' ? '0' : (s || '0');
   };
   const hex = x => x.toString(16).padStart(4, '0');
   const bytes = s => new TextEncoder().encode(s);
@@ -126,8 +128,9 @@ function createVectorPdfContext(width, height, fontBase64) {
         if (gid && gid < glyphCount) return gid;
       }
       if (allowMissing) return 0;
-      const ch = String.fromCodePoint(cp), code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-      fail('Embedded font is missing character “' + ch + '” (' + code + ')' + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+      /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
+      const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+      fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
     }
     function subset(gids) {
       if (!canSubset) return data.slice();
@@ -271,7 +274,12 @@ function createVectorPdfContext(width, height, fontBase64) {
     const f = getFont(), size = fontSize(), glyphs = [];
     let width = 0;
     for (const ch of String(text)) {
-      const cp = ch.codePointAt(0), gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
+      let cp = ch.codePointAt(0);
+      /* 画布排版把换行/制表当空白、变体选择符与零宽字符当不可见，PDF 必须同语义：
+         多行备注（应用自己的续行格式）曾因 U+000A 无字形而整单导出失败 */
+      if (cp === 0x0a || cp === 0x0d || cp === 0x09 || cp === 0x2028 || cp === 0x2029) cp = 0x20;
+      if ((cp >= 0x200b && cp <= 0x200f) || cp === 0xfe0e || cp === 0xfe0f || cp === 0x2060) continue;
+      const gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
       const advance = (vector ? 650 : f.pdfWidth(gid)) * size / 1000;
       glyphs.push({ ch, cp, gid, vector, x: width }); width += advance;
     }

@@ -7,6 +7,15 @@ function openPdfExport(n){
   if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
+  /* 超大谱预选「A4 分页」：矢量页上限 14400pt，布局超过 ~13000px 时单页名字
+     会小于 13pt，预选分页更实用；用户仍可改回单页高清。不用 pdfNeedsPaging——
+     那是旧 12000px 栅格启发式，对矢量页过于激进 */
+  try {
+    const dims = exportDims();
+    if (Math.max(dims.W, dims.H) > 13000) {
+      document.querySelector('input[name="pdfMode"][value="paged"]').checked = true;
+    }
+  } catch (e) { /* 画布尚未渲染时保持默认单页 */ }
   document.getElementById('__pdfFont').value = '';
   document.getElementById('__pdfModal').classList.add('open');
   document.getElementById('__pdfGo').focus();

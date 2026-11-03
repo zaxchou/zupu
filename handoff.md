@@ -336,4 +336,6 @@ with sync_playwright() as p:
 
 | v15.48 | **分支导出遮罩时序修复（2026-11-03）**：①`runSubtreeExport` 返回 `withTempRender` 的 Promise，PDF 弹窗不再在临时子树仍生效时提前 `exportBusy(false)`——否则用户此时编辑会写进临时树并在 teardown 丢失；新增 t_vector_pdf 回归直接断言返回 Promise 且遮罩仍在；②内联后端最终版：极长页面 pageScale 20 位小数，避免 14400 缩放被坐标精度裁边；③EN/JA 分支 PDF 按钮改「Export PDF… / PDF を出力…」；④`build_i18n.build()` 残留检查通过后才写文件；⑤20 模块 105 用例。 |
 
+| v15.49 | **深审修复（2026-11-04，两轮独立评审）**：①PDF 后端 textRun 把 \n\r\t/U+2028/2029 映射为空格、剥离 U+200B–200F/FE0E/FE0F/2060——多行备注（应用续行格式）与 ❤️ 曾整单导出失败；②ellipText 宽度可加单遍扫描（万字备注 14s→<1s）；③runSubtreeExport 以 `Promise.resolve().then` 包裹 + makeTempStage 入 try：临时渲染同步抛出不再永久卡死遮罩；④beforeprint 在 `_exportLock` 时跳过（导出中 Ctrl+P 不再打印临时子树）；⑤整树 PNG 加遮罩、toBlob 空结果明确报错；⑥帮助字辈表标题跟实际表长；打印角标推算代回退本代字辈字；⑦布局 >13000px 弹窗预选 A4 分页；⑧缺字只报 U+XXXX，弹窗注明不含韩文/扩展 B；⑨20 模块 107 用例。评审确认干净：TrueType 解析/子集校验和、xref、状态隔离、i18n 字节级一致、无并发导出路径。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

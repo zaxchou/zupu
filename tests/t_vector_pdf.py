@@ -157,7 +157,7 @@ def large_single_page(b, total, direct=False):
         tree = synthetic_tree(total)
         install_tree(page, tree)
         check(page.locator('.node').count() == total, '夹具成员数准确', str(total))
-        path = save_pdf(page, 'vector_%d.pdf' % total, direct=direct)
+        path = save_pdf(page, 'vector_%d.pdf' % total, mode=None if direct else 'vector', direct=direct)
         assert_vector(path, [n['name'] for n in members(tree)], render=True)
         check(not errs, '大谱导出无 JS 错误', str(errs))
     finally:
@@ -198,27 +198,116 @@ def t_vector_four_directions_and_vertical_text_bounds(b):
 
 
 @testcase
+def t_vector_multiline_note_and_invisible_chars(b):
+    """多行备注（应用续行格式）/零宽字符/emoji 变体选择符：画布把它们当空白或不可见，
+    PDF 曾因 U+000A 无字形而整单失败。"""
+    import json as _json
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        tree = {
+            "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
+            "children": [
+                {"id": "a", "name": "周\u200b吉", "note": "生于明末\n迁居台湾", "spouses": [], "expanded": True, "children": []},
+                {"id": "b", "name": "周心", "note": "热爱❤️家", "spouses": [], "expanded": True, "children": []},
+            ],
+        }
+        app = open(LOCAL_HTML, encoding="utf-8").read()
+        seed = _json.dumps(tree, ensure_ascii=False)
+        fixture, n = re.subn(
+            r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+            lambda m: m.group(1) + "\n" + seed + "\n" + m.group(2), app, count=1)
+        assert n == 1
+        path = Path(LOCAL_OUT) / "fixture_multiline.html"
+        path.write_text(fixture, encoding="utf-8")
+        page.goto(OUT_DIR + "/fixture_multiline.html")
+        page.wait_for_load_state("domcontentloaded")
+        page.evaluate("() => { localStorage.clear(); }")
+        page.reload()
+        page.wait_for_load_state("domcontentloaded")
+        page.wait_for_timeout(300)
+        open_pdf_menu(page)
+        with page.expect_download(timeout=90000) as dl:
+            page.locator('#__pdfGo').click()
+        out = Path(LOCAL_OUT) / "multiline.pdf"
+        dl.value.save_as(str(out))
+        text = "".join(fitz.open(out)[0].get_text().split())
+        check("迁居台湾" in text and "生于明末" in text, "多行备注完整导出（不因换行缺字失败）", text[:120])
+        check("周吉" in text, "名字中的零宽字符被剥掉", text[:120])
+        check("热爱" in text and "家" in text, "emoji 变体选择符剥掉后正文保留", text[:120])
+        check(not errs, "无 JS 错误", str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
+def t_vector_very_long_note_fast(b):
+    """万字备注曾把 ellipText 卡成 O(n²)（实测 14 秒）：宽度可加后应单遍完成。"""
+    import json as _json
+    import time as _time
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        tree = {
+            "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
+            "children": [{"id": "a", "name": "周长注", "note": "备注内容测试" * 1250, "spouses": [], "expanded": True, "children": []}],
+        }
+        app = open(LOCAL_HTML, encoding="utf-8").read()
+        seed = _json.dumps(tree, ensure_ascii=False)
+        fixture, n = re.subn(
+            r'(<script id="__treeData" type="application/json">)[\s\S]*?(\n</script>)',
+            lambda m: m.group(1) + "\n" + seed + "\n" + m.group(2), app, count=1)
+        assert n == 1
+        path = Path(LOCAL_OUT) / "fixture_longnote.html"
+        path.write_text(fixture, encoding="utf-8")
+        page.goto(OUT_DIR + "/fixture_longnote.html")
+        page.wait_for_load_state("domcontentloaded")
+        page.evaluate("() => { localStorage.clear(); }")
+        page.reload()
+        page.wait_for_load_state("domcontentloaded")
+        page.wait_for_timeout(300)
+        open_pdf_menu(page)
+        t0 = _time.time()
+        with page.expect_download(timeout=120000) as dl:
+            page.locator('#__pdfGo').click()
+        took = _time.time() - t0
+        out = Path(LOCAL_OUT) / "longnote.pdf"
+        dl.value.save_as(str(out))
+        check(took < 8, "万字备注导出不再卡死（<8s，旧实现 14s+）", "%.1fs" % took)
+        text = "".join(fitz.open(out)[0].get_text().split())
+        check("备注内容测试" in text, "长备注开头可见", text[:80])
+        check(not errs, "无 JS 错误", str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
 def t_branch_export_returns_completion_promise(b):
-    """分支导出必须把 withTempRender 的 Promise 交回调用方：
-    否则 PDF 弹窗的 busy 收尾会在临时子树仍生效时提前执行，用户编辑会丢。"""
+    """v15.48 回归（强化版）：走真实 __pdfGo 流程，stub exportPdfAs 为挂起 Promise——
+    导出期间遮罩与 _exportLock 必须保持、全局数据是临时子树；释放后遮罩撤掉、主树恢复。"""
     ctx, page, errs, _ = fresh_page(b)
     try:
         goto(page)
-        r = page.evaluate("""() => {
-          const real = withTempRender;
-          let called = false;
-          withTempRender = function(){ called = true; return new Promise(function(){}); };
-          const p = runSubtreeExport('png', null, null, findNode('b1'));
-          withTempRender = real;
-          const busy = !!document.getElementById('__exportBusy');
-          exportBusy(false);
-          return { promise: p instanceof Promise, called: called, busy: busy };
+        page.locator('.node[data-id="b1"]').click(button='right')
+        page.locator('#__ctxMenu .mi', has_text='导出此支').click()
+        page.locator('#__subtreePdf').click()
+        page.locator('#__pdfModal').wait_for(state='visible')
+        page.evaluate("""() => {
+          window.__realExportPdfAs = exportPdfAs;
+          exportPdfAs = function(){ return new Promise(res => { window.__releaseExport = res; }); };
         }""")
-        check(r["called"], "导出进入临时渲染", str(r))
-        check(r["promise"], "runSubtreeExport 返回完成 Promise（遮罩可等到恢复后收尾）", str(r))
-        check(r["busy"], "调用方返回到手时导出遮罩仍在", str(r))
-        check(not errs, "无 JS 错误", str(errs))
+        page.locator('input[name="pdfMode"][value="vector"]').check()
+        page.locator('#__pdfGo').click()
+        page.wait_for_timeout(250)
+        during = page.evaluate("""() => ({
+          busy: !!document.getElementById('__exportBusy'), lock: _exportLock, root: treeData.id })""")
+        check(during == {'busy': True, 'lock': True, 'root': 'b1'},
+              '导出期间遮罩/锁在，全局数据是临时子树', str(during))
+        page.evaluate("() => window.__releaseExport()")
+        page.wait_for_function("() => !document.getElementById('__exportBusy') && !_exportLock && treeData.id === 'root'")
+        after = page.evaluate("() => ({ busy: !!document.getElementById('__exportBusy'), root: treeData.id })")
+        check(after['busy'] is False and after['root'] == 'root', '释放后遮罩撤掉、主树恢复', str(after))
+        check(not errs, '无 JS 错误', str(errs))
     finally:
+        page.evaluate("() => { if (window.__realExportPdfAs) exportPdfAs = window.__realExportPdfAs; }")
         ctx.close()
 
 

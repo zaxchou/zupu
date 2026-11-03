@@ -1035,7 +1035,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p class="help-note">照片清晰度取決於原圖片。單頁模式內嵌字型，離線檢視也能正常顯示。</p>
     <details><summary>生僻字與其他文字</summary>
       <label>字型檔案（可選，TTF，僅供本次匯出）<input id="__pdfFont" type="file" accept=".ttf,font/ttf"></label>
-      <p class="help-note">缺字時可選擇包含該字、允許嵌入的本機 TrueType 字型。字型不會上傳。</p>
+      <p class="help-note">缺字時可選擇包含該字、允許嵌入的本機 TrueType 字型。字型不會上傳。內建字型不含韓文與擴充套件 B 區生僻字。</p>
     </details>
     <div class="modal-btns"><button id="__pdfCancel">關閉</button><button class="primary" id="__pdfGo">匯出</button></div>
   </div>
@@ -2738,7 +2738,7 @@ document.getElementById('btnHelp').addEventListener('click', e => {
 function hmIsOpen(){ return document.getElementById('__helpModal').classList.contains('open'); }
 function openHelp(){
   /* 字輩表網格：藍框 = 族譜中有人用這個字輩 */
-  const lo = 1 + genOffset(), hi2 = lo + 39;
+  const lo = 1 + genOffset(), hi2 = lo + (Array.isArray(treeData.zibei) ? treeData.zibei.length : 40) - 1;   /* 標題範圍跟實際表長，勿寫死 40 */
   const range = cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi2) : lo + '–' + hi2;
   document.getElementById('__zbTitle').textContent =
     '字輩表（第' + range + genUnit() + '，藍框 = 族譜中已出現）';
@@ -5690,14 +5690,16 @@ const ZUPU_PDF_FONT_BASE64 = [
  */
 function createVectorPdfContext(width, height, fontBase64) {
   'use strict';
-  const fail = message => { throw new Error('PDF export: ' + message); };
+  /* 不加來源字首：呼叫方的 toast 已帶「匯出失敗：/Export failed: 」，避免雙重字首 */
+  const fail = message => { throw new Error(message); };
   const finite = (...xs) => { if (!xs.every(Number.isFinite)) fail('Coordinates and dimensions must be finite numbers'); };
   finite(width, height);
   if (width <= 0 || height <= 0) fail('Page width and height must be positive');
   const num = x => {
     finite(x);
     if (Math.abs(x) >= 1e21) fail('Numeric value is too large');
-    return x.toFixed(6).replace(/\.?0+$/, '') || '0';
+    const s = x.toFixed(6).replace(/\.?0+$/, '');
+    return s === '-0' ? '0' : (s || '0');
   };
   const hex = x => x.toString(16).padStart(4, '0');
   const bytes = s => new TextEncoder().encode(s);
@@ -5809,8 +5811,9 @@ function createVectorPdfContext(width, height, fontBase64) {
         if (gid && gid < glyphCount) return gid;
       }
       if (allowMissing) return 0;
-      const ch = String.fromCodePoint(cp), code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-      fail('Embedded font is missing character “' + ch + '” (' + code + ')' + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+      /* 只報碼點不引原字元：控制符等不可見字元在 toast 裡看不見，還像亂碼 */
+      const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+      fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
     }
     function subset(gids) {
       if (!canSubset) return data.slice();
@@ -5954,7 +5957,12 @@ function createVectorPdfContext(width, height, fontBase64) {
     const f = getFont(), size = fontSize(), glyphs = [];
     let width = 0;
     for (const ch of String(text)) {
-      const cp = ch.codePointAt(0), gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
+      let cp = ch.codePointAt(0);
+      /* 畫布排版把換行/製表當空白、變體選擇符與零寬字元當不可見，PDF 必須同語義：
+         多行備註（應用自己的續行格式）曾因 U+000A 無字形而整單匯出失敗 */
+      if (cp === 0x0a || cp === 0x0d || cp === 0x09 || cp === 0x2028 || cp === 0x2029) cp = 0x20;
+      if ((cp >= 0x200b && cp <= 0x200f) || cp === 0xfe0e || cp === 0xfe0f || cp === 0x2060) continue;
+      const gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
       const advance = (vector ? 650 : f.pdfWidth(gid)) * size / 1000;
       glyphs.push({ ch, cp, gid, vector, x: width }); width += advance;
     }
@@ -6214,6 +6222,8 @@ function createVectorPdfContext(width, height, fontBase64) {
 }
 /* END_PDF_ENGINE */
 function exportPalette(){
+  /* 刻意讀 :root 而不是 body：主題變數掛在 body[data-theme] 上，
+     這樣晴空/暗色下匯出的圖和 PDF 仍是紙面配色（v15.38 的承諾），不會白底白字 */
   const cs = getComputedStyle(document.documentElement);
   const v = k => cs.getPropertyValue(k).trim();
   return {
@@ -6316,10 +6326,15 @@ function paintTreeBody(ctx, photoImgs){
   function rr(x, y, w, h, r){ ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function ellipText(t, maxW){
     if (ctx.measureText(t).width <= maxW) return t;
-    /* 按碼點截斷：slice 可能把代理對（生僻字）切成半個，PDF 會報缺字 */
+    /* 寬度可加：逐碼點量一次再單遍找截斷點。舊實現每彈一字全文重測，
+       萬字備註卡 14 秒。按碼點切，避免把代理對（生僻字）切成半個報缺字 */
     const cs = Array.from(t);
-    while (cs.length > 1 && ctx.measureText(cs.join('') + '…').width > maxW) cs.pop();
-    return cs.join('') + '…';
+    const ell = ctx.measureText('…').width;
+    const widths = cs.map(ch => ctx.measureText(ch).width);
+    let total = widths.reduce((a, b) => a + b, 0);
+    let cut = cs.length;
+    while (cut > 1 && total + ell > maxW){ cut--; total -= widths[cut]; }
+    return cs.slice(0, cut).join('') + '…';
   }
   /* 頭像繪製：圓形裁剪畫縮圖 + 細環；無照片時向量剪影（與 DOM 內聯 SVG 同款構圖） */
   function drawAvatarImg(img, cx, cy, r){
@@ -6579,11 +6594,16 @@ function savePngToAlbum(cv){
       .catch(function(e){ toast('儲存失敗：' + ((e && e.errMsg) || e)); });
   } catch(e){ toast('儲存失敗：' + e.message); }
 }
-function exportPNG(){ exportPngAs(); }
+function exportPNG(){
+  /* 整樹 PNG 與分支匯出同樣加遮罩：多照片解碼視窗裡編輯會讓圖和介面不一致 */
+  exportBusy(true, '正在生成圖片…');
+  Promise.resolve(exportPngAs()).then(() => exportBusy(false));
+}
 function exportPngAs(base){
   return exportTreeCanvas().then(cv => {
     if (IS_XHS){ savePngToAlbum(cv); return; }
     cv.toBlob(bl => {
+      if (!bl){ toast('匯出失敗：圖片編碼失敗（畫布可能超出本機記憶體限制）'); return; }
       download(stampName('.png', base), bl, 'image/png');
       /* 名字有效字號 <8px（S<0.62）：整圖能匯出來但看不清，主動引導去分頁 PDF */
       toast(cv._exportS && 13 * cv._exportS < 8
@@ -6592,8 +6612,9 @@ function exportPngAs(base){
     }, 'image/png');
   }).catch(e => toast('匯出失敗：' + ((e && e.message) || e)));
 }
-/* 分頁判定（純函式）：單頁匯出下名字有效字號 13*S<15（約 max(W,H)>10400px）
-   → 大譜匯出 PDF 自動改為 A4 橫向分頁 */
+/* 分頁判定（純函式）：單頁匯出下名字有效字號 13*S<15（約 max(W,H)>10400px）。
+   v15.43–v15.45 曾據此自動分頁；v15.46 起預設單頁向量，此判定改為在匯出彈窗
+   預選「A4 分頁」供超大譜使用（使用者仍可改回單頁高畫質） */
 function pdfNeedsPaging(W, H){
   return 13 * Math.min(3, 12000 / Math.max(W, H)) < 15;
 }
@@ -6728,6 +6749,15 @@ function openPdfExport(n){
   if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
+  /* 超大譜預選「A4 分頁」：向量頁上限 14400pt，佈局超過 ~13000px 時單頁名字
+     會小於 13pt，預選分頁更實用；使用者仍可改回單頁高畫質。不用 pdfNeedsPaging——
+     那是舊 12000px 柵格啟發式，對向量頁過於激進 */
+  try {
+    const dims = exportDims();
+    if (Math.max(dims.W, dims.H) > 13000) {
+      document.querySelector('input[name="pdfMode"][value="paged"]').checked = true;
+    }
+  } catch (e) { /* 畫布尚未渲染時保持預設單頁 */ }
   document.getElementById('__pdfFont').value = '';
   document.getElementById('__pdfModal').classList.add('open');
   document.getElementById('__pdfGo').focus();
@@ -6843,12 +6873,9 @@ function withTempRender(root, fn){
     edges: edgeSegments, markers: rowMarkers, lastGens: LAST_GENS, sel: selectedId,
     fam: FAM_SUR   /* 本譜姓氏：臨時 render 會按子樹重算，漏恢復會讓主介面錯誤剝姓 */
   };
-  const env = makeTempStage(!!cfg.vertical);
-  _renderTargets = env;
+  let env = null;
   _renderSilent = true;
   _exportLock = true;
-  treeData = root;
-  selectedId = null;
   function teardown(){
     _renderTargets = null; _renderSilent = false; _exportLock = false;
     treeData = saved.treeData; selectedId = saved.sel;
@@ -6856,10 +6883,19 @@ function withTempRender(root, fn){
     saved.rects.forEach(function(kv){ nodeRects.set(kv[0], kv[1]); });
     edgeSegments = saved.edges; rowMarkers = saved.markers; LAST_GENS = saved.lastGens;
     FAM_SUR = saved.fam;
-    if (env.host.parentNode) env.host.parentNode.removeChild(env.host);
+    if (env && env.host.parentNode) env.host.parentNode.removeChild(env.host);
   }
   let out;
-  try { render(); out = fn(); }   /* 隱藏舞臺上為臨時子樹重算佈局（nodeRects/edgeSegments/_baseW） */
+  /* makeTempStage 也在 try 內：同步丟擲時 globals（_renderSilent/_exportLock）已復原，
+     呼叫方的 catch 能可靠收尾遮罩（v15.49：遮罩卡死類問題的第二道保險） */
+  try {
+    env = makeTempStage(!!cfg.vertical);
+    _renderTargets = env;
+    treeData = root;
+    selectedId = null;
+    render();
+    out = fn();   /* 隱藏舞臺上為臨時子樹重算佈局（nodeRects/edgeSegments/_baseW） */
+  }
   catch (e){ teardown(); throw e; }
   if (out && typeof out.then === 'function'){
     return out.then(v => { teardown(); return v; }, e => { teardown(); throw e; });
@@ -6890,12 +6926,14 @@ function runSubtreeExport(kind, pdfMode, fontBase64, pdfNode){
   const root = buildSubtreeData(n);
   exportBusy(true, '正在生成匯出檔案…');
   /* 必須把 Promise 交回撥用方：PDF 彈窗的 busy 收尾依賴它；
-     否則遮罩會在臨時子樹仍生效時提前消失，使用者此刻的編輯會隨 teardown 丟掉 */
-  return withTempRender(root, () => {
+     否則遮罩會在臨時子樹仍生效時提前消失，使用者此刻的編輯會隨 teardown 丟掉。
+     先落一個微任務再進 withTempRender：它同步丟擲（病態資料讓 render 出錯）時
+     catch 也能掛上，遮罩永不卡死 */
+  return Promise.resolve().then(() => withTempRender(root, () => {
     _exportTitle = base + '（此支）';
     const p = kind === 'png' ? exportPngAs(base) : exportPdfAs(base, pdfMode, fontBase64);
     return Promise.resolve(p).then(() => { _exportTitle = null; exportBusy(false); });
-  }).catch(e => { _exportTitle = null; exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
+  })).catch(e => { _exportTitle = null; exportBusy(false); toast('匯出失敗：' + ((e && e.message) || e)); });
 }
 document.getElementById('__subtreeCancel').addEventListener('click', closeSubtreeExport);
 document.getElementById('__subtreePng').addEventListener('click', () => runSubtreeExport('png'));
@@ -6969,7 +7007,10 @@ function printMemberRow(n, gen, rank){
   const b = (n.birth || '').trim(), de = (n.death || '').trim();
   if (b || de) extra += '<span class="pmeta">（' + esc([b, de].filter(Boolean).join(' – ')) + '）</span>';
   if (n.note) extra += '<span class="pmeta">— ' + esc(n.note) + '</span>';
-  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (gen.zi ? '·' + gen.zi : '')) + '</span>'
+  /* 字輩字與卡片/搜尋/豎排同規則：推算代回退到本代字輩字，列印書不缺「·X」 */
+  const zbP = Array.isArray(treeData.zibei) ? treeData.zibei : [];
+  const ziShow = gen ? (gen.zi || zbP[gen.gen - 1] || '') : '';
+  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (ziShow ? '·' + ziShow : '')) + '</span>'
                       : (rank ? '<span class="pgen">' + esc(rank) + '</span>' : '');
   return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
 }
@@ -7016,7 +7057,8 @@ function buildPrintDomReal(){
   })(treeData, rootUl);
   area.appendChild(rootUl);
 }
-window.addEventListener('beforeprint', buildPrintDomReal);
+/* 匯出進行中全域性資料是臨時子樹：此時列印會輸出分支內容，跳過本次列印 */
+window.addEventListener('beforeprint', () => { if (!_exportLock) buildPrintDomReal(); });
 
 /* ---------- ⑬ 鍵盤總控（分層守衛：搜尋框 > 彈窗 > 輸入型目標 > 全域性快捷鍵） ---------- */
 document.addEventListener('keydown', e => {
