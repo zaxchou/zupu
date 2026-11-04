@@ -62,7 +62,8 @@ def t_doubleclick_name_inline_edit(b):
     name = page.evaluate('window.__ZP.findNode("b1a1").name')
     check(name == "周新涛", "行内改名提交", name)
     txt = page.locator('.node[data-id="b1a1"] .node-label').inner_text()
-    check(txt.startswith("周新涛"), "改名后 DOM 更新", txt)
+    # .node-label 现在先排世祖/辈序角标，名字不再是首段
+    check("周新涛" in txt and "雷志成" not in txt, "改名后 DOM 更新", txt)
     ulen, rlen = page.evaluate("window.__ZP.historyLens()")
     check(ulen >= 1, "改名入撤销栈", f"undo={ulen}")
     check(dlg.count() == 0, "全程零原生对话框", str(dlg.records))

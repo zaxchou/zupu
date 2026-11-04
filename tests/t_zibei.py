@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""字辈定代（v15.44 结构优先）：父子链是唯一真值（堂/亲兄弟必然同代）；
-名字含「本代」字辈字=蓝色印证；含「其他代」=照常显示世系代数 + tooltip 提示核对。
+"""世祖与字辈独立：父子链决定世祖（堂/亲兄弟必然同世）；
+字辈从设置世数起用，名字只作印证；本辈已有字辈时误命中其他字才提示核对。
 使用独立夹具（fixture_zibei），不影响其他模块的示例数据。"""
 from helper import *
 import json as _json
@@ -59,33 +59,30 @@ def chip_of(page, nid):
 def t_zibei_match_and_infer(b):
     ctx, page, errs, cons = fresh_page(b)
     goto_zibei(page)
-    check(chip_of(page, "z1").inner_text().replace("\n", "") == "11代·勤", "字辈匹配：勤善=11·勤",
-          chip_of(page, "z1").inner_text())
-    check(chip_of(page, "z2").inner_text().replace("\n", "") == "12代·修", "父辈推算：少群=12·修（带本代字辈）",
-          chip_of(page, "z2").inner_text())
-    check(chip_of(page, "z3").inner_text().replace("\n", "") == "13代·昭", "父辈推算：豪=13·昭（带本代字辈）",
-          chip_of(page, "z3").inner_text())
-    check(chip_of(page, "z4").inner_text().replace("\n", "") == "14代·厚", "字辈匹配：厚翰=14·厚",
-          chip_of(page, "z4").inner_text())
+    page.evaluate("treeData.zibei = ['勤', '修', '昭', '厚']; render()")
+    for i, zi in enumerate('勤修昭厚', 1):
+        check(chip_of(page, f'z{i}').inner_text() == f'{i}世', '世祖只按父子层级排列')
+        check(page.locator(f'.node[data-id="z{i}"] .zibei').inner_text() == f'辈序{i}·{zi}',
+              '字辈单独显示对应辈序')
     # 蓝色=字辈匹配，灰色=推算
     cls_match = chip_of(page, "z1").get_attribute("class")
     cls_infer = chip_of(page, "z2").get_attribute("class")
     check("match" in cls_match and "match" not in (cls_infer or ""), "匹配/推算样式区分", f"{cls_match}/{cls_infer}")
     # tooltip 语义
     tip2 = chip_of(page, "z2").get_attribute("title")
-    check("推算" in tip2 and "12" in tip2, "推算角标 tooltip 说明来源", tip2)
+    check("推算" in tip2 and "2世" in tip2 and '辈序2·修' in tip2, "推算角标 tooltip 说明来源", tip2)
     tip1 = chip_of(page, "z1").get_attribute("title")
     check("字辈「勤」" in tip1 and "缺一代" not in tip1, "匹配角标 tooltip 无冲突警告", tip1)
     # 统计条带字辈范围
     stats = page.locator("#statsChip").inner_text().replace("\n", "")
-    check("字辈第11–14代" in stats, "统计条显示字辈代范围", stats)
+    check("世祖第1–4世" in stats and '辈序1–4' in stats, "统计条分列世祖与辈序范围", stats)
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
 
 @testcase
 def t_zibei_ancestors_before_first_character(b):
-    """字辈从第四层开始：祖辈相对序 -2/-1/0 不截断，零也有行标。"""
+    """字辈从第四世开始，前三世辈序留空，世祖从一世起。"""
     ctx, page, errs, cons = fresh_page(b)
     goto_zibei(page)
     original = page.evaluate("""() => {
@@ -94,29 +91,32 @@ def t_zibei_ancestors_before_first_character(b):
       for (let i = names.length - 1; i >= 0; i--)
         children = [{id: 'a' + i, name: names[i], spouses: [], expanded: true, children}];
       treeData.zibei = ['勤', '修', '昭']; treeData.children = children;
-      cfg.genBase = 1; cfg.vertical = true; render();
+      cfg.zibeiStart = 4; cfg.vertical = true; render();
       return JSON.stringify(sanitize(treeData));
     }""")
     relative = page.evaluate("Array.from(computeGenerations().values(), g => g.gen)")
-    check(relative == [-2, -1, 0, 1, 2, 3], "保留完整相对代序", str(relative))
-    expected = ['字辈前3代', '字辈前2代', '字辈前1代', '1代·勤', '2代·修', '3代·昭']
+    check(relative == [1, 2, 3, 4, 5, 6], "世祖从第一层成员按一世起", str(relative))
+    expected = ['1世', '2世', '3世', '4世', '5世', '6世']
     actual = [chip_of(page, f'a{i}').inner_text() for i in range(6)]
     check(actual == expected, "基准前祖辈用人话表示", str(actual))
-    rows = page.locator('.vrow').all_text_contents()
-    check(rows == ['字辈前三代', '字辈前二代', '字辈前一代', '一代·勤', '二代·修', '三代·昭'],
-          "祖辈竖排行标完整，零索引不丢失", str(rows))
+    rows = page.locator('.vrow.row-gen').all_text_contents()
+    zrows = page.locator('.vrow.row-zibei').all_text_contents()
+    check(rows == ['一世', '二世', '三世', '四世', '五世', '六世'],
+          "竖排行标列只显示世祖", str(rows))
+    check(zrows == ['辈序一·勤', '辈序二·修', '辈序三·昭'],
+          "辈序独立成列，起用前不显示", str(zrows))
     for i in range(3):
         tip = chip_of(page, f'a{i}').get_attribute('title')
         check(expected[i] in tip and not _re.search(r'(?:第?-\d+代|0代|undefined)', tip),
               "祖辈 tooltip 无零或负代数", tip)
     stats = page.locator('#statsChip').inner_text()
-    check('字辈前3代–3代' in stats and '6 代' in stats, "统计保留祖辈范围与六代层数", stats)
+    check('世祖第1–6世' in stats and '辈序1–3' in stats and '6 代' in stats, "统计分列世祖与辈序范围", stats)
     check(page.evaluate("[numToCn(-2), numToCn(0), numToCn(110)]") == ['负二', '零', '一百一十'],
           "汉字数转换支持负数与超过百世")
     page.evaluate("cfg.genBase = 10; render()")
     actual = [chip_of(page, f'a{i}').inner_text() for i in range(6)]
-    check(actual == ['7世', '8世', '9世', '10世·勤', '11世·修', '12世·昭'],
-          "勤从十世起，三祖辈依次七八九世", str(actual))
+    check(actual == expected, "起用世数改十世，不改变世祖编号", str(actual))
+    check(page.locator('.node[data-id="a3"] .zibei').text_content() == '', '十世之前辈序为空')
     check(page.evaluate("JSON.stringify(sanitize(treeData))") == original,
           "换算与布局不改族谱原始数据")
     check(not errs, "无 JS 错误", str(errs))
@@ -140,12 +140,12 @@ def t_zibei_conflict_hint(b):
     page.mouse.up()
     page.wait_for_timeout(450)
     txt = chip_of(page, "z4").inner_text().replace("\n", "")
-    # 字辈校准偏移由全树票选决定（本夹具=10：勤善11·厚翰14），挂到 w1 下后世系=2+10=12
-    check(txt == "12代·修", "冲突时以世系为准：显示12代·修（不再被「厚」带偏到14代）", txt)
+    check(txt == "2世", "冲突时仍按父子结构显示第二世", txt)
+    check(page.locator('.node[data-id="z4"] .zibei').inner_text() == '辈序2·士', '误命中字辈不改变辈序')
     tip = chip_of(page, "z4").get_attribute("title")
     check("「厚」" in tip and "14" in tip and "核对" in tip, "tooltip 提示名字与世系不符请核对", tip)
-    # 同样被挂过去的 z1 分支不受影响（票选偏移对全树一致）
-    check(chip_of(page, "z1").inner_text().replace("\n", "") == "11代·勤", "整体校准不破坏其他成员",
+    # 其他分支保持原世祖编号。
+    check(chip_of(page, "z1").inner_text().replace("\n", "") == "1世", "误命中不改变其他成员世祖", 
           chip_of(page, "z1").inner_text())
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
@@ -187,10 +187,11 @@ def t_zibei_cousins_always_same_gen(b):
     page.wait_for_load_state("domcontentloaded")
     page.wait_for_function("document.querySelectorAll('.node').length >= 8")
     # 第二代：赵高（名字含「高」=第3字，曾被带偏到3代）与堂弟赵三 → 必须同代
-    check(chip_of(page, "a1").inner_text().replace("\n", "") == "2代·成", "误命中者按世系显示 2代", chip_of(page, "a1").inner_text())
+    check(chip_of(page, "a1").inner_text() == "2世", "误命中者按世系显示第二世", chip_of(page, "a1").inner_text())
+    check(page.locator('.node[data-id="a1"] .zibei').inner_text() == '辈序2·成', '辈序独立按表取字')
     check(chip_of(page, "a1").inner_text() == chip_of(page, "b1").inner_text(), "堂兄弟同代（第二代）")
     # 第三代堂兄弟：赵铁柱 vs 赵狗剩 → 必须同代
-    check(chip_of(page, "a1a").inner_text() == chip_of(page, "b1a").inner_text() == "3代·高",
+    check(chip_of(page, "a1a").inner_text() == chip_of(page, "b1a").inner_text() == "3世",
           "堂兄弟同代（第三代）", chip_of(page, "a1a").inner_text())
     # 误命中者的 tooltip 带核对提示；一致者仍是蓝色印证
     tip = chip_of(page, "a1").get_attribute("title")
@@ -202,9 +203,8 @@ def t_zibei_cousins_always_same_gen(b):
 
 
 @testcase
-def t_zibei_tie_prefers_non_negative_shift(b):
-    """票数并列时不得把整谱推到「字辈前」：早期名字含后代字辈字、后辈名字含前代字辈字，
-    两种解释同分，应取非负偏移（3代·昭 / 4代），而不是 0/1 代。"""
+def t_zibei_names_never_shift_generation(b):
+    """名字含其他辈字，不得使任何世祖编号偏移。"""
     ctx, page, errs, cons = fresh_page(b)
     data = {
         "id": "root", "name": "家族族谱", "spouses": [], "expanded": True,
@@ -229,13 +229,11 @@ def t_zibei_tie_prefers_non_negative_shift(b):
     page.evaluate("() => { localStorage.clear(); }")
     page.reload()
     page.wait_for_load_state("domcontentloaded")
-    check(chip_of(page, "a").inner_text().replace("\n", "") == "3代·昭",
-          "并列时取非负偏移：周昭=3代·昭", chip_of(page, "a").inner_text())
-    check(chip_of(page, "b").inner_text().replace("\n", "") == "4代·厚",
-          "后代按世系：周勤=4代·厚", chip_of(page, "b").inner_text())
+    check(chip_of(page, "a").inner_text() == "1世", "周昭始终为一世祖")
+    check(chip_of(page, "b").inner_text() == "2世", "子女为二世祖")
     page.evaluate("() => { cfg.genBase = 10; render(); }")
-    check(chip_of(page, "a").inner_text().replace("\n", "") == "12世·昭",
-          "基准10时同偏移换算：12世·昭", chip_of(page, "a").inner_text())
+    check(chip_of(page, "a").inner_text() == "1世", "字辈从十世起不改变世祖")
+    check(page.locator('.node[data-id="a"] .zibei').text_content() == '', '起用之前字辈为空')
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -262,7 +260,8 @@ def t_zibei_rescued_draft_no_injection(b):
     check(page.evaluate('!!window.__ZP.findNode("old1")'), "旧草稿成员胜出播种")
     zb = page.evaluate("window.__ZP.data.zibei")
     check(not zb, "字辈表不被演示数据注入（保持空）", str(zb))
-    check(page.locator('.node[data-id="z1"] .gen').count() == 0, "无字辈表则无世代角标")
+    check(chip_of(page, 'z1').inner_text() == '1世', "无字辈表仍显示世祖编号")
+    check(page.locator('.node[data-id="z1"] .zibei').text_content() == '', '无表字辈为空')
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 

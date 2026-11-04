@@ -141,14 +141,16 @@ body{
   font-style:normal;font-size:9px;color:#8fa0b5;
   background:#e3ebf2;border-radius:3px;padding:0 3px;margin-right:4px;vertical-align:1px;
 }
-/* 字辈代数角标（卡片最左侧）：蓝=名字含本代字辈字（与世系一致）；灰=按世系推算 */
-.node-label .gen{
+/* 世祖、辈序各自成标；蓝色表示名字与当前字辈一致 */
+.node-label .gen,.node-label .zibei{
   display:inline-block;margin-right:7px;padding:0 6px;
   background:#eef2f7;border:1px solid #dbe3ec;border-radius:5px;
   font-size:10px;font-weight:600;color:#66768c;line-height:16px;vertical-align:1px;
   cursor:help;
 }
-.node-label .gen.match{background:#e8f1fa;border-color:#b9d6ee;color:#2f6390}
+.node-label .gen.match,.node-label .zibei.match{background:#e8f1fa;border-color:#b9d6ee;color:#2f6390}
+.node-label .zibei:empty{display:none}
+#stage.v .node-label .zibei,.ps.v .node-label .zibei{display:none}
 /* 性别徽标：按谱书惯例只标「女」（男不标） */
 .node-label .gx{
   display:inline-block;margin-left:4px;padding:0 5px;
@@ -273,6 +275,7 @@ body{
   font-size:13.5px;font-weight:600;
   color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
 }
+.vrow.row-zibei{font-size:10.5px;font-weight:500;letter-spacing:1px;text-indent:1px;color:#a9b6c6}
 /* 谱书竖排·纸面化（v15.24）：框退后、墨字当主角——hover/选中才现淡框 */
 #stage.v .node-label,.ps.v .node-label{
   background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
@@ -536,7 +539,7 @@ body{
   #printArea h2{font-size:20px;margin:0 0 6px}
   #printArea .pxu{font-size:11.5px;color:#333;background:#f5f7fa;border:1px solid #dde4ec;border-radius:6px;padding:8px 12px;margin:8px 0 14px;line-height:1.8}
   #printArea .pxu b{color:#16324f}
-  #printArea .pgen{display:inline-block;border:1px solid #b9c3cf;border-radius:4px;padding:0 4px;font-size:10.5px;color:#2f6390;margin-right:5px;background:#f2f6fa}
+  #printArea .pgen,#printArea .pzibei{display:inline-block;border:1px solid #b9c3cf;border-radius:4px;padding:0 4px;font-size:10.5px;color:#2f6390;margin-right:5px;background:#f2f6fa}
   #printArea .pzi{color:#555;font-size:11px}
   #printArea li b{font-size:13.5px}
   #printArea .pstage-wrap{margin:0 auto}
@@ -855,7 +858,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p class="help-note">照片清晰度取决于原图片。单页模式内嵌字体，离线查看也能正常显示。</p>
     <details><summary>生僻字与其他文字</summary>
       <label>字体文件（可选，TTF，仅供本次导出）<input id="__pdfFont" type="file" accept=".ttf,font/ttf"></label>
-      <p class="help-note">缺字时可选择包含该字、允许嵌入的本机 TrueType 字体。字体不会上传。内置字体不含韩文与扩展 B 区生僻字。</p>
+      <p class="help-note">已补充「𨻧、𠮷、𡊨、𠀀」等字形。其他缺字可选择包含该字、允许嵌入的本机 TrueType 字体；常用字会自动后备，字体不会上传。内置字库不涵盖所有生僻字或韩文。</p>
     </details>
     <div class="modal-btns"><button id="__pdfCancel">关闭</button><button class="primary" id="__pdfGo">导出</button></div>
   </div>
@@ -909,7 +912,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>
       <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
       <tr><td>查看 ▾ 视觉设置 · 谱书竖排</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
-      <tr><td>查看 ▾ 视觉设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td>查看 ▾ 视觉设置</td><td>字辈从第几世开始（如填10，第10世起用第1字；之前辈序留空）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
       <tr><td>成员照片</td><td>「档案」里添加照片后卡片显示圆形头像，点头像看大图；文件 ▾ 可按文件夹批量导入照片，备份（含照片原图）换电脑不丢原图</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
     </tbody></table>
@@ -940,13 +943,13 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     </div></fieldset>
     <label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> 滚轮直接缩放（关闭后：滚轮平移，Ctrl＋滚轮缩放）</label>
     <details id="__cfgOther"><summary>其他显示项</summary>
-    <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
+    <label title="字辈起用设置保存在本浏览器">字辈从第几世开始<input id="__cfgBase" type="number" min="1" max="9999" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
-      传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
+      世祖按父子关系排列：谱名下第一层为第1世，每下一层加1。字辈独立按起用世数排列；例如填10，第10世使用字辈第1字，第11世使用第2字，此前辈序留空。更改起用世数只影响字辈，不改变世祖编号。
     </p>
     <label class="checkline"><input type="checkbox" id="__cfgSpouse"> 配偶按谱书式显示（丁嘉 → 丁氏嘉；数据仍存原名，搜索不受影响）</label>
     <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「<span id="__cfgSurName">—</span>」（关闭 = 按谱书习惯只报名；仅显示层，姓氏随数据自动识别）</label>
-    <label class="checkline"><input type="checkbox" id="__cfgCn"> 世数用汉字（廿三世·勤；关闭显示 23世·勤）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgCn"> 世祖与辈序用汉字（廿三世 · 辈序十一·勤；关闭显示 23世 · 辈序11·勤）</label>
     <label class="checkline"><input type="checkbox" id="__cfgPhotos"> 成员照片头像（卡片显示照片/剪影，点头像看大图）</label>
     </details>
     <div class="modal-btns"><button id="__setDone" type="button">关闭</button></div>
@@ -961,7 +964,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <label>堂号<input id="__clTang" placeholder="可选，如 四知堂 / 陇西堂"></label>
     </div>
     <label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="始祖 — 二世 — 三世……"></label>
-    <label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>
+    <label>字辈表（空格 / 逗号 / 顿号分隔，按辈序排列；起用世数在视觉设置中填写）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>
     <label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>
     <label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>
     <label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>

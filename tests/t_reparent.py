@@ -105,9 +105,13 @@ def t_reparent_single_child_draggable(b):
     check(empty == 0, "原分支变为无后", str(empty))
     # 独子左右拖仍是普通换位：过继后 [雷波美, 周厚翰]，把雷波美向右拖 → 移到周厚翰之后
     s = page.locator('.node[data-id="b3a"] .node-label').bounding_box()
+    t = page.locator('.node[data-id="b2a1"] .node-label').bounding_box()
     cx, cy = s["x"] + s["width"] / 2, s["y"] + s["height"] / 2
+    # 用实际卡片位置计算目标：现在每张卡都带世祖角标，固定 150px 不一定越过邻卡中心
+    tx = t["x"] + t["width"] / 2 + 30
+    ty = t["y"] + t["height"] / 2
     page.mouse.move(cx, cy); page.mouse.down()
-    page.mouse.move(cx + 150, cy, steps=10)    # 越过右邻（周厚翰）中心 → 换到其右
+    page.mouse.move(tx, ty, steps=10)
     page.mouse.up()
     page.wait_for_timeout(450)
     order = page.evaluate('window.__ZP.findNode("b3").children.map(c=>c.name)')

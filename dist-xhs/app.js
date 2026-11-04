@@ -81,18 +81,24 @@ function heirTitle(n){
 }
 
 /* ---------- 视觉设置（本浏览器配置，与族谱数据分开存） ----------
- * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
+ * zibeiStart：字辈第 1 字从第几世起用；genBase 为旧设置的兼容别名，均不改变世祖编号
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面
  * showPhotos：成员照片头像（卡片显示照片/剪影，点头像看大图） */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+Object.defineProperty(cfg, 'genBase', {
+  enumerable: true,
+  get(){ return this.zibeiStart; },
+  set(v){ if (Number.isFinite(v)) this.zibeiStart = Math.max(1, Math.min(9999, Math.round(v))); }
+});
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
-    if (typeof c.genBase === 'number' && c.genBase >= 1) cfg.genBase = Math.min(99, Math.round(c.genBase));
+    const start = Number.isFinite(c.zibeiStart) && c.zibeiStart >= 1 ? c.zibeiStart : c.genBase;
+    if (Number.isFinite(start) && start >= 1) cfg.genBase = start;
     if (typeof c.bookSpouse === 'boolean') cfg.bookSpouse = c.bookSpouse;
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
@@ -119,8 +125,7 @@ function saveCfg(){
   updateCfgSaveState();
   return !cfgSaveFailed;
 }
-function genOffset(){ return Math.max(0, cfg.genBase - 1); }
-function genUnit(){ return genOffset() ? '世' : '代'; }
+function genUnit(){ return '世'; }
 /* 阿拉伯数字 → 汉数字（谱书式）：10=十 11=十一 20=廿 23=廿三 30=卅 45=卌五 52=五十二 */
 const CN_D = ['零','一','二','三','四','五','六','七','八','九'];
 function numToCn(n){
@@ -142,12 +147,17 @@ function numToCn(n){
   }
   return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');
 }
-function beforeZibeiLabel(g, cn = cfg.cnNum){ return '字辈前' + (cn ? numToCn(1 - g) : 1 - g) + '代'; }
 function genLabel(g, cn = cfg.cnNum, unit = genUnit()){
-  const v = g + genOffset();
-  return v <= 0 ? beforeZibeiLabel(g, cn) : (cn ? numToCn(v) : v) + unit;
+  return (cn ? numToCn(g) : g) + unit;
 }
-/* 字辈前世代区间标题（世系录五世表）：独立成句便于整句翻译，勿拆成单字 */
+function zibeiLabel(g, cn = cfg.cnNum){
+  if (!g || g.ziIndex < 0 || !g.zi) return '';
+  return '辈序' + (cn ? numToCn(g.ziIndex + 1) : g.ziIndex + 1) + '·' + g.zi;
+}
+function generationText(g, cn = cfg.cnNum){
+  return g ? genLabel(g.gen, cn) + (zibeiLabel(g, cn) ? ' · ' + zibeiLabel(g, cn) : '') : '';
+}
+/* 世代区间标题（世系录五世表） */
 function genRangeLabel(lo, hi, unit){ return genLabel(lo, true, unit) + '至' + genLabel(hi, true, unit); }
 /* 世系录表格的世次（谱书体例用「世」） */
 function genReportLabel(g){ return genLabel(g, true, '世'); }
@@ -260,76 +270,43 @@ function migrate(d){
   return d;
 }
 
-/* ---------- 字辈定代 ----------
- * 优先级：名字含字辈字（权威）> 父辈推算 > 同辈推算 > 世系偏移。
- * 推算结果与字辈冲突时（如中间缺一代），以字辈为准并在角标提示里注明。 */
+/* ---------- 世祖与字辈独立排列 ----------
+ * root 只装谱名，第一层成员为一世祖，父子相差一世；名字只印证字辈，不改变世祖。
+ * 导出此支的临时根携带原世祖 _genRoot，字辈起用设置仍沿用主树 cfg。 */
 function computeGenerations(){
-  const map = new Map();   // id -> {gen, src:'match'|'depth', zi, ziConflict:{zi,gen}}
+  const map = new Map();   // id -> {gen, ziIndex, zi, src:'match'|'depth', ziConflict}
   const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const depths = new Map(), names = new Map();
-  (function walk(n, d){
+  const rootGen = treeData.id === 'root' ? 0 : (Number.isFinite(treeData._genRoot) ? treeData._genRoot : 1);
+  (function walk(n, gen){
     if (n.id !== 'root'){
-      depths.set(n.id, d);
-      names.set(n.id, String(n.name || ''));
+      const ziIndex = gen < cfg.zibeiStart ? -1 : gen - cfg.zibeiStart;
+      const zi = ziIndex >= 0 ? (zb[ziIndex] || '') : '';
+      const e = { gen, ziIndex, zi, src: 'depth' };
+      const name = String(n.name || '');
+      if (zi && name.includes(zi)) e.src = 'match';
+      else if (ziIndex >= 0 && zi){
+        for (let i = 0; i < zb.length; i++){
+          if (zb[i] && i !== ziIndex && name.includes(zb[i])){
+            e.ziConflict = { zi: zb[i], gen: i + 1 }; break;
+          }
+        }
+      }
+      map.set(n.id, e);
     }
-    if (n.children) n.children.forEach(c => walk(c, d + 1));
-  })(treeData, 0);
-  if (!zb.length) return map;
-  /* 「导出此支」的临时子树携带根节点在原谱中的绝对代数：
-     子树按 根代数+层级 定位，不再靠子树内名字重新票选（缺锚点时会从 1 代错起） */
-  const fixedRoot = Number.isFinite(treeData._genRoot) ? treeData._genRoot : null;
-  /* 结构优先 + 字辈整体校准（v15.44）：
-     ① 父子链（父+1）是骨架——堂/亲兄弟必然同代，任何名字都不能推翻；
-     ② 很多谱从字辈诗中间开始记（如从「勤」=第11字起），所以用票选求整体偏移：
-        在所有「名字含字辈字」的人里，选使最多人名字与本代字辈字一致的 depth→字辈 偏移；
-     ③ 个体误命中（常见字碰上其他代字辈字）只进 tooltip 提示核对，绝不带偏整支。
-     旧版「名字含字辈字=权威定代」即栽在 ③（网友反馈：堂兄弟相差好几辈） */
-  const votes = new Set([0]);
-  depths.forEach((d, id) => {
-    const s = names.get(id);
-    for (let i = 0; i < zb.length; i++)
-      if (zb[i] && s.includes(zb[i])) votes.add(i + 1 - d);
-  });
-  let bestOff = 0, bestScore = -1;
-  if (fixedRoot === null) votes.forEach(o => {
-    let consistent = 0;
-    depths.forEach((d, id) => {
-      const gi = d + o - 1;
-      if (gi >= 0 && gi < zb.length && zb[gi] && names.get(id).includes(zb[gi])) consistent++;
-    });
-    /* 票数并列时优先非负偏移：负偏移会把整谱标成「字辈前」，必须有多数证据才接受 */
-    const better = consistent > bestScore ||
-      (consistent === bestScore && (
-        (bestOff < 0 && o >= 0) ||
-        (bestOff >= 0 && o >= 0 && o < bestOff) ||
-        (bestOff < 0 && o < 0 && o > bestOff)));
-    if (better){ bestScore = consistent; bestOff = o; }
-  });
-  depths.forEach((d, id) => {
-    const gen = fixedRoot === null ? d + bestOff : fixedRoot + d;   // 保留字辈之前的相对序（含零/负数），显示时再加谱书基准
-    const e = { gen: gen, src: 'depth' };
-    const s = names.get(id);
-    const here = zb[gen - 1];
-    if (here && s.includes(here)){ e.zi = here; e.src = 'match'; }
-    else {
-      for (let i = 0; i < zb.length; i++)
-        if (zb[i] && i !== gen - 1 && s.includes(zb[i])){ e.ziConflict = { zi: zb[i], gen: i + 1 }; break; }
-    }
-    map.set(id, e);
-  });
+    if (n.children) n.children.forEach(c => walk(c, gen + 1));
+  })(treeData, rootGen);
   return map;
 }
 function genTitle(g, n){
-  const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const ziOfGen = zbList[g.gen - 1] || '';
-  const base = genOffset() && g.gen + genOffset() > 0
-    ? '（谱书世数，' + (g.gen > 0 ? '应用自算第' + g.gen + '代' : beforeZibeiLabel(g.gen)) + '）' : '';
-  if (g.src === 'match')
-    return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base;
-  let t = '按世系推算：' + genLabel(g.gen) + base;
-  t += ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';
+  let t = '按世系推算：' + genLabel(g.gen);
+  if (g.zi){
+    t += '；' + zibeiLabel(g);
+    t += g.src === 'match' ? '（名字含本辈字辈「' + g.zi + '」，与辈序一致）'
+      : '（本人名字未用本辈字辈「' + g.zi + '」）';
+  } else if (g.ziIndex < 0) t += '（尚未起用字辈，辈序留空）';
+  else t += '（未配置本辈字辈）';
   if (g.ziConflict)
-    t += '。注意：名字里的「' + g.ziConflict.zi + '」是字辈第 ' + g.ziConflict.gen + ' 字，与世系不符——或系重名巧合、过继继嗣或谱书缺代，请核对';
+    t += '。名字里的「' + g.ziConflict.zi + '」在字辈表中排第 ' + g.ziConflict.gen + '，与当前辈序不一致，请核对；世祖编号仍按父子关系排列';
   return t;
 }
 /* 序列化前清理：布局把 _w/_x/_y 写进数据对象，绝不能持久化。
@@ -802,16 +779,19 @@ function render(){
     ).join('') + (meta ? '<span class="meta">' + esc(meta) + '</span>' : '');
     label.title = [displayName(n), fullDatesLine(n), meta, '双击备注行可编辑生卒年与备注'].filter(Boolean).join('\n');
 
-    /* 字辈代数角标（最左侧）：名字含字辈字=权威定代；未用字辈则按父/同辈推算 */
+    /* 世祖与辈序分别显示；无字辈表也保留世祖编号。 */
     const genInfo = GENS.get(n.id);
     if (genInfo && n.id !== 'root'){
-      const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-      const zi = genInfo.zi || zbList[genInfo.gen - 1] || '';   // 推算代也标注本代字辈字
       const chip = document.createElement('span');
       chip.className = 'gen' + (genInfo.src === 'match' ? ' match' : '');
-      chip.textContent = genLabel(genInfo.gen) + (zi ? '·' + zi : '');
+      chip.textContent = genLabel(genInfo.gen);
       chip.title = genTitle(genInfo, n);
-      label.insertBefore(chip, label.firstChild);
+      const ziChip = document.createElement('span');
+      ziChip.className = 'zibei' + (genInfo.src === 'match' ? ' match' : '');
+      ziChip.textContent = zibeiLabel(genInfo);
+      ziChip.title = chip.title;
+      label.insertBefore(ziChip, label.firstChild);
+      label.insertBefore(chip, ziChip);
     }
 
     /* 成员照片头像：28px 圆形（有 thumb=img / 无 thumb=内联 SVG 中性剪影）。
@@ -981,19 +961,28 @@ function render(){
   rowMarkers = [];
   if (V){
     const zbRows = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-    for (let d = 1; d < rowTop.length; d++){
+    for (let d = 0; d < rowTop.length; d++){
       const g = rowGen[d];
       if (g === undefined) continue;
-      const text = genLabel(g, true) + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');
-      const el = document.createElement('div');
-      el.className = 'vrow'; el.textContent = text;
+      const ziIndex = g < cfg.zibeiStart ? -1 : g - cfg.zibeiStart;
+      const rowInfo = { gen: g, ziIndex, zi: ziIndex >= 0 ? (zbRows[ziIndex] || '') : '' };
+      const genText = genLabel(g, true), ziText = zibeiLabel(rowInfo, true);
       let x = 8, y = rowTop[d] + rowH[d] / 2;
       if (horizontal){ x = cfg.direction === 'left' ? treeW - rowTop[d] - rowH[d] / 2 : rowTop[d] + rowH[d] / 2; y = 8; }
       else if (cfg.direction === 'up') y = treeH - y;
-      el.style.left = x + 'px'; el.style.top = y + 'px';
-      if (horizontal){ el.style.transform = 'translateX(-50%)'; el.style.writingMode = 'horizontal-tb'; }
-      nodesEl.appendChild(el);
-      rowMarkers.push({ x, y, text, horizontal });
+      /* 世祖与辈序分开排：竖排为左右两列（辈序更小），横排为上下两行，
+         避免合并成长串压到相邻世代（v15.50 视觉验收缺陷） */
+      function addRow(cls, txt, ox, oy){
+        const el = document.createElement('div');
+        el.className = 'vrow ' + cls;
+        el.textContent = txt;
+        el.style.left = (x + ox) + 'px'; el.style.top = (y + oy) + 'px';
+        if (horizontal){ el.style.transform = 'translateX(-50%)'; el.style.writingMode = 'horizontal-tb'; }
+        nodesEl.appendChild(el);
+      }
+      addRow('row-gen', genText, 0, 0);
+      if (ziText) addRow('row-zibei', ziText, horizontal ? 0 : 18, horizontal ? 14 : 0);
+      rowMarkers.push({ x, y, text: genText + (ziText ? ' · ' + ziText : ''), genText, ziText, horizontal });
     }
   }
 
@@ -1071,10 +1060,13 @@ function updateStats(GENS){
     let lo = Infinity, hi = -Infinity;
     G2.forEach(v => { if (v.gen < lo) lo = v.gen; if (v.gen > hi) hi = v.gen; });
     if (hi > -Infinity){
-      const loV = lo + genOffset(), hiV = hi + genOffset();
-      extra = loV <= 0
-        ? ' · <b>' + genLabel(lo) + '–' + genLabel(hi) + '</b>'
-        : ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();
+      extra = ' · 世祖第<b>' + (cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi) : lo + '–' + hi) + '</b>世';
+      const used = Array.from(G2.values()).filter(g => g.ziIndex >= 0 && g.zi);
+      if (used.length){
+        const a = Math.min(...used.map(g => g.ziIndex + 1)), b = Math.max(...used.map(g => g.ziIndex + 1));
+        extra += ' · 辈序<b>' + (cfg.cnNum ? numToCn(a) + '–' + numToCn(b) : a + '–' + b) + '</b>';
+      }
+      gens = hi - lo + 1;
     }
   }
   document.getElementById('statsChip').innerHTML =
@@ -1526,7 +1518,7 @@ document.getElementById('btnHelp').addEventListener('click', e => {
 function hmIsOpen(){ return document.getElementById('__helpModal').classList.contains('open'); }
 function openHelp(){
   /* 字辈表网格：蓝框 = 族谱中有人用这个字辈 */
-  const lo = 1 + genOffset(), hi2 = lo + (Array.isArray(treeData.zibei) ? treeData.zibei.length : 40) - 1;   /* 标题范围跟实际表长，勿写死 40 */
+  const lo = cfg.zibeiStart, hi2 = lo + Math.max(1, Array.isArray(treeData.zibei) ? treeData.zibei.length : 0) - 1;
   const range = cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi2) : lo + '–' + hi2;
   document.getElementById('__zbTitle').textContent =
     '字辈表（第' + range + genUnit() + '，蓝框 = 族谱中已出现）';
@@ -1539,8 +1531,8 @@ function openHelp(){
     zb.forEach((z, i) => {
       const d = document.createElement('span');
       d.className = 'zb' + (z && all.includes(z) ? ' on' : '');
-      d.innerHTML = esc(z || '·') + '<small>第' + genLabel(i + 1) + '</small>';
-      d.title = '第' + genLabel(i + 1) + '字辈「' + (z || '?') + '」' + (all.includes(z) ? '（族谱中已出现）' : '');
+      d.innerHTML = esc(z || '·') + '<small>第' + genLabel(cfg.zibeiStart + i) + '</small><small>' + esc(zibeiLabel({ ziIndex: i, zi: z })) + '</small>';
+      d.title = '第' + genLabel(cfg.zibeiStart + i) + '，' + zibeiLabel({ ziIndex: i, zi: z }) + (z && all.includes(z) ? '（族谱中已出现）' : '');
       host.appendChild(d);
     });
   } else {
@@ -1564,7 +1556,7 @@ function syncSettings(){
 function openSettings(){
   closeMenu();
   document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自动识别）';
-  document.getElementById('__cfgBase').value = cfg.genBase;
+  document.getElementById('__cfgBase').value = cfg.zibeiStart;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
   const cn = document.getElementById('__cfgCn');
@@ -1595,7 +1587,7 @@ function previewSettings(){
 function applySettings(){
   const base = document.getElementById('__cfgBase');
   const raw = parseInt(base.value, 10);
-  if (Number.isFinite(raw)) cfg.genBase = Math.max(1, Math.min(99, raw));
+  if (Number.isFinite(raw)) cfg.genBase = Math.max(1, Math.min(9999, raw));
   cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   const cn = document.getElementById('__cfgCn');
@@ -1723,7 +1715,7 @@ document.getElementById('__setModal').addEventListener('input', e => {
   if (e.target.matches('input')) applySettings();
 });
 document.getElementById('__setModal').addEventListener('change', e => {
-  if (e.target.id === '__cfgBase') e.target.value = cfg.genBase;
+  if (e.target.id === '__cfgBase') e.target.value = cfg.zibeiStart;
 });
 document.getElementById('__setModal').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -2432,8 +2424,7 @@ function renderSbList(){
     const item = document.createElement('div');
     item.className = 'sb-item' + (i === _sbSel ? ' sel' : '');
     const gen = LAST_GENS.get(id);
-    const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-    const gtxt = gen ? (genLabel(gen.gen) + (gen.zi || zb[gen.gen - 1] ? '·' + (gen.zi || zb[gen.gen - 1]) : '')) : '';
+    const gtxt = generationText(gen);
     item.innerHTML = (gtxt ? '<span class="g">' + esc(gtxt) + '</span>' : '') +
       '<span class="nm">' + esc(dispName(n.name)) + (n.gender === 'f' ? '<i class="gx">女</i>' : '') + '</span>' +
       '<span class="sub">' + (metaLine(n) ? esc(metaLine(n)).slice(0, 14) : (gen ? genLabel(gen.gen) : '?')) + '</span>';
@@ -2689,7 +2680,7 @@ function exportShixilu(){
       const g = GENSX.get(n.id);
       rows.push({
         gen: g ? g.gen : null,
-        zi: g ? (g.zi || zb[g.gen - 1] || '') : '',
+        zi: g ? zibeiLabel(g, true) : '',
         name: n.name || '', ziname: n.zi || '', hao: n.hao || '',
         rank: ranks.has(n.id) ? rankWord(ranks.get(n.id)) : '',
         birth: (n.birth || '').trim(), death: (n.death || '').trim(),
@@ -2702,10 +2693,10 @@ function exportShixilu(){
     }
     if (n.children) n.children.forEach(w);
   })(treeData);
-  /* 五世一表：按谱世（=应用代数+世代基准）每五代分一表 */
+  /* 五世一表：只按实际世祖分表，字辈起用设置不改变分组。 */
   const groups = new Map();
   rows.forEach(r => {
-    const s = r.gen === null ? null : r.gen + genOffset();
+    const s = r.gen;
     const gi = s === null ? Infinity : s <= 0 ? -1 : Math.floor((s - 1) / 5);
     if (!groups.has(gi)) groups.set(gi, []);
     groups.get(gi).push(r);
@@ -2743,11 +2734,12 @@ function exportShixilu(){
       const s0 = gi * 5 + 1, s1 = gi * 5 + 5;
       html += '<h2>第' + numToCn(s0) + '世至第' + numToCn(s1) + '世</h2>';
     }
-    html += '<table><tr><th>世次</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>';
+    html += '<table><tr><th>世次</th><th>辈序</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>';
     list.forEach(r => {
       const ji = [r.heir, r.zhi, r.note].filter(Boolean).join('；');
       html += '<tr>'
-        + '<td class="c">' + (r.gen !== null ? genReportLabel(r.gen) + (r.zi ? '·' + r.zi : '') : '—') + '</td>'
+        + '<td class="c">' + (r.gen !== null ? genReportLabel(r.gen) : '—') + '</td>'
+        + '<td class="c">' + esc(r.zi) + '</td>'
         + '<td><b>' + esc(dispName(r.name)) + '</b></td>'
         + '<td>' + esc(r.ziname) + '</td>'
         + '<td>' + esc(r.hao) + '</td>'
@@ -3222,17 +3214,19 @@ function paintTreeBody(ctx, photoImgs){
       const gen = GENS.get(n.id);
       let chipW = 0;
       if (gen){
-        const zi = gen.zi || zbList[gen.gen - 1] || '';
-        const t = genLabel(gen.gen) + (zi ? '·' + zi : '');
         ctx.font = '600 10px ' + FONT;
-        chipW = ctx.measureText(t).width + 10;
         const match = gen.src === 'match';
-        rr(x + 14 + avOff, y + 4, chipW, 16, 5);
-        ctx.fillStyle = match ? '#e8f1fa' : '#eef2f7'; ctx.fill();
-        ctx.lineWidth = 1; ctx.strokeStyle = match ? '#b9d6ee' : '#dbe3ec'; ctx.stroke();
-        ctx.fillStyle = match ? '#2f6390' : '#66768c';
-        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(t, x + 19 + avOff, y + 12.5);
+        [genLabel(gen.gen), zibeiLabel(gen)].filter(Boolean).forEach(t => {
+          const bw = ctx.measureText(t).width + 10;
+          rr(x + 14 + avOff + chipW, y + 4, bw, 16, 5);
+          ctx.fillStyle = match ? '#e8f1fa' : '#eef2f7'; ctx.fill();
+          ctx.lineWidth = 1; ctx.strokeStyle = match ? '#b9d6ee' : '#dbe3ec'; ctx.stroke();
+          ctx.fillStyle = match ? '#2f6390' : '#66768c';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(t, x + 19 + avOff + chipW, y + 12.5);
+          chipW += bw + 7;
+        });
+        chipW -= 7;
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       }
 
@@ -3343,9 +3337,22 @@ function paintTreeBody(ctx, photoImgs){
   ctx.font = '600 13.5px ' + FONT;
   ctx.fillStyle = '#9aa9bb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   rowMarkers.forEach(m => {
-    if (m.horizontal){ ctx.fillText(m.text, m.x, m.y + 8); return; }
-    const startY = m.y - m.text.length * 8;
-    for (let i = 0; i < m.text.length; i++) ctx.fillText(m.text[i], m.x + 7, startY + 8 + i * 16);
+    const genText = m.genText || m.text || '';
+    if (m.horizontal){
+      ctx.font = '600 13.5px ' + FONT;
+      ctx.fillText(genText, m.x, m.y + 8);
+      if (m.ziText){ ctx.font = '500 10.5px ' + FONT; ctx.fillText(m.ziText, m.x, m.y + 22); }
+      return;
+    }
+    /* 竖排：世祖一列、辈序一小列，各自按列长居中；合并成长串会压到邻代 */
+    const gl = Array.from(genText), gy0 = m.y - (gl.length - 1) * 8;
+    ctx.font = '600 13.5px ' + FONT;
+    gl.forEach((ch, i) => ctx.fillText(ch, m.x + 7, gy0 + i * 16));
+    if (m.ziText){
+      const zl = Array.from(m.ziText), zy0 = m.y - (zl.length - 1) * 6.25;
+      ctx.font = '500 10.5px ' + FONT;
+      zl.forEach((ch, i) => ctx.fillText(ch, m.x + 25, zy0 + i * 12.5));
+    }
   });
   ctx.textBaseline = 'alphabetic';
 }
@@ -3520,15 +3527,7 @@ function openPdfExport(n){
   if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
-  /* 超大谱预选「A4 分页」：矢量页上限 14400pt，布局超过 ~13000px 时单页名字
-     会小于 13pt，预选分页更实用；用户仍可改回单页高清。不用 pdfNeedsPaging——
-     那是旧 12000px 栅格启发式，对矢量页过于激进 */
-  try {
-    const dims = exportDims();
-    if (Math.max(dims.W, dims.H) > 13000) {
-      document.querySelector('input[name="pdfMode"][value="paged"]').checked = true;
-    }
-  } catch (e) { /* 画布尚未渲染时保持默认单页 */ }
+  /* 默认始终单页矢量，方便整谱缩放阅读；A4 分页仅在用户选择打印模式时启用。 */
   document.getElementById('__pdfFont').value = '';
   document.getElementById('__pdfModal').classList.add('open');
   document.getElementById('__pdfGo').focus();
@@ -3778,11 +3777,10 @@ function printMemberRow(n, gen, rank){
   const b = (n.birth || '').trim(), de = (n.death || '').trim();
   if (b || de) extra += '<span class="pmeta">（' + esc([b, de].filter(Boolean).join(' – ')) + '）</span>';
   if (n.note) extra += '<span class="pmeta">— ' + esc(n.note) + '</span>';
-  /* 字辈字与卡片/搜索/竖排同规则：推算代回退到本代字辈字，打印书不缺「·X」 */
-  const zbP = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const ziShow = gen ? (gen.zi || zbP[gen.gen - 1] || '') : '';
-  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (ziShow ? '·' + ziShow : '')) + '</span>'
-                      : (rank ? '<span class="pgen">' + esc(rank) + '</span>' : '');
+  /* 打印与成员卡同样分列世祖和辈序；谱名容器不显示世祖或字辈。 */
+  const ziShow = zibeiLabel(gen);
+  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen)) + '</span>' +
+    (ziShow ? '<span class="pzibei">' + esc(ziShow) + '</span> ' : '') : '';
   return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
 }
 function buildPrintDomReal(){

@@ -213,11 +213,11 @@ def t_fit_avoids_overlays_on_mobile_and_resize(b):
 def t_horizontal_book_export_generation_marker(b):
     ctx, page, errs, _ = fresh_page(b)
     goto(page)
-    page.evaluate("() => {treeData.children=[{id:'single',name:'周勤甲',expanded:true,spouses:[],children:[]}];treeData.zibei=['勤'];cfg.genBase=23;render()}")
+    page.evaluate("() => {treeData.children=[{id:'single',name:'周勤甲',expanded:true,spouses:[],children:[]}];treeData.zibei=['勤'];cfg.zibeiStart=23;render()}")
     for direction in ['right','left']:
         choose(page,direction,True)
         result = page.evaluate("""async () => {const draws=[],proto=CanvasRenderingContext2D.prototype,original=proto.fillText;proto.fillText=function(t,x,y){draws.push({t:String(t),x,y});return original.apply(this,arguments)};try{await exportTreeCanvas()}finally{proto.fillText=original}const m=rowMarkers[0],r=nodeRects.get('single');return {draws,m,r,writing:getComputedStyle(document.querySelector('.vrow')).writingMode};}""")
-        marker = [t for t in result['draws'] if t['t'] == '廿三世·勤']
+        marker = [t for t in result['draws'] if t['t'] == '一世']
         check(len(marker) == 1, '图片世数标整条横排绘制', str(result['draws']))
         check(marker[0]['y']+10 < result['r']['y'], '世数标与姓名无垂直重叠')
         check(result['writing'] == 'horizontal-tb', 'DOM世数标与导出一致')

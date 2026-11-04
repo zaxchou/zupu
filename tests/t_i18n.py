@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-"""多语言版本（v15.32）：index-en / index-ja 冒烟——能起、向导可用、添加成员可用、
-世代角标按各自语言的字辈（世代名）工作、界面无中文残留（en）。
-直接使用生成文件自身的内嵌种子（即该语言的演示谱），不另造数据。"""
+"""多语言冒烟：英/日/繁页面、向导、添加成员及独立世祖/字辈角标。
+冒烟使用各语言演示种子；十一层夹具核对起用10与无字辈表时的结构编号。"""
 from helper import *
 import sys as _sys
 import os
@@ -42,13 +41,17 @@ def t_i18n_en_smoke(b):
     check("View" in page.locator("#btnView").inner_text(), "EN: View menu is English")
     stats = page.locator("#statsChip").inner_text()
     check("members" in stats and "gens" in stats, "EN: stats chip is English", stats)
-    # 字辈定代：d1 = Zhu Yuanzhang → Gen 1（回退标注本代字 Xing）
-    chip = page.locator('.node[data-id="d1"] .gen').inner_text().replace("\n", "")
-    check("Gen 1" in chip, "EN: generation chip via generational name", chip)
-    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text().replace("\n", "")
-    check("Gen 4" in chip4, "EN: 4th gen chip (Zhu Zhanji)", chip4)
-    chip5 = page.locator('.node[data-id="d5"] .gen').inner_text().replace("\n", "")
-    check("Gen 3" in chip5 and "Gao" in chip5, "EN: zibei match via pinyin name (Zhu Gaochi)", chip5)
+    # 世祖按父子结构编号，字辈在独立角标中按辈序显示。
+    chip = page.locator('.node[data-id="d1"] .gen').inner_text()
+    check(chip == "Generation 1", "EN: first member has structural generation 1", chip)
+    sequence = page.locator('.node[data-id="d1"] .zibei').inner_text()
+    check(sequence == "Generation-name sequence 1 · Xing", "EN: first generation-name badge is separate", sequence)
+    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text()
+    check(chip4 == "Generation 4", "EN: Zhu Zhanji has structural generation 4", chip4)
+    chip5 = page.locator('.node[data-id="d5"] .gen').inner_text()
+    check(chip5 == "Generation 3", "EN: Zhu Gaochi has structural generation 3", chip5)
+    sequence5 = page.locator('.node[data-id="d5"] .zibei').inner_text()
+    check(sequence5 == "Generation-name sequence 3 · Gao", "EN: Gao is in the independent sequence badge", sequence5)
     # 添加第一代成员
     dlg = DialogRecorder(page)
     page.locator('.node .quick-add').first.click()
@@ -82,11 +85,15 @@ def t_i18n_ja_smoke(b):
     check("表示" in page.locator("#btnView").inner_text(), "JA: 表示メニューが日本語")
     stats = page.locator("#statsChip").inner_text()
     check("人" in stats and "代" in stats, "JA: 統計チップが日本語", stats)
-    # 字輩定代：朱元璋 → 第1世代
-    chip = page.locator('.node[data-id="d1"] .gen').inner_text().replace("\n", "")
-    check("1" in chip, "JA: 世代バッジ（字輩一致）", chip)
-    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text().replace("\n", "")
-    check("4" in chip4, "JA: 第4世代バッジ（朱瞻基）", chip4)
+    # 世代は親子関係から数え、字輩順序は別のバッジで表示する。
+    chip = page.locator('.node[data-id="d1"] .gen').inner_text()
+    check(chip == "1世代", "JA: 親子関係から数えた第1世代", chip)
+    sequence = page.locator('.node[data-id="d1"] .zibei').inner_text()
+    check(sequence == "字輩順序1・興", "JA: 独立した字輩順序バッジ", sequence)
+    chip4 = page.locator('.node[data-id="d6"] .gen').inner_text()
+    check(chip4 == "4世代", "JA: 朱瞻基は第4世代", chip4)
+    sequence3 = page.locator('.node[data-id="d5"] .zibei').inner_text()
+    check(sequence3 == "字輩順序3・高", "JA: 第3世代の字輩は別表示", sequence3)
     # 兄弟姉妹メニューで追加
     dlg = DialogRecorder(page)
     page.locator('.node .quick-add').first.click()
@@ -130,6 +137,60 @@ def t_i18n_zh_hant_smoke(b):
     check(page.evaluate("localStorage.getItem('zupu_data_v4_hant') !== null"), "繁：寫入自己的儲存鍵")
     check(not errs, "繁：無 JS 錯誤", str(errs))
     ctx.close()
+
+
+@testcase
+def t_i18n_independent_generation_sequence(b):
+    cases = [
+        (LOCAL_EN, "fixture_en.html", "Generation {}", "Generation-name sequence {} · {}"),
+        (LOCAL_JA, "fixture_ja.html", "{}世代", "字輩順序{}・{}"),
+        (r"Z:\BaiduNetdiskWorkspace\myagent-work\zcode\legacy\index-zh-Hant.html",
+         "fixture_hant.html", "{}世", "輩序{}·{}"),
+    ]
+    for local, name, gen_text, sequence_text in cases:
+        ctx, page, errs, cons = fresh_page(b)
+        try:
+            goto_lang(page, lang_url(local, name))
+            page.locator('#__wizModal [data-wiz="demo"]').click()
+            # 连续十一层；名字含第2字也不能改变结构世数或起用前的空辈序。
+            page.evaluate("""() => {
+                const root = {id:'root', name:'Tree', spouses:[], expanded:true,
+                              zibei:['Alpha', 'Beta'], children:[]};
+                let parent = root;
+                for (let i = 1; i <= 11; i++) {
+                    const child = {id:'g' + i, name:i === 1 ? 'Beta' : 'Member ' + i,
+                                   spouses:[], expanded:true, children:[]};
+                    parent.children.push(child);
+                    parent = child;
+                }
+                window.__ZP.cfg.zibeiStart = 10;
+                window.__ZP.cfg.cnNum = false;
+                window.__ZP.data = root;
+            }""")
+            for i in (1, 9, 10, 11):
+                chip = page.locator(f'.node[data-id="g{i}"] .gen').inner_text()
+                check(chip == gen_text.format(i), f"{name}: generation {i} follows structure", chip)
+            for i in (1, 9):
+                badge = page.locator(f'.node[data-id="g{i}"] .zibei')
+                check(badge.inner_text() == "" and not badge.is_visible(),
+                      f"{name}: sequence stays empty and hidden before generation 10")
+            for i, zi in ((10, "Alpha"), (11, "Beta")):
+                badge = page.locator(f'.node[data-id="g{i}"] .zibei').inner_text()
+                check(badge == sequence_text.format(i - 9, zi),
+                      f"{name}: generation {i} uses independent sequence {i - 9}", badge)
+            check(page.locator('.node[data-id="root"] .gen, .node[data-id="root"] .zibei').count() == 0,
+                  f"{name}: tree title has neither generation nor sequence badge")
+            page.evaluate("() => { const d = window.__ZP.data; d.zibei = []; window.__ZP.data = d; }")
+            badges = page.locator('.node .zibei')
+            check(all(text == "" for text in badges.all_inner_texts())
+                  and all(not badge.is_visible() for badge in badges.all()),
+                  f"{name}: unconfigured sequence badges stay empty and hidden")
+            check(page.locator('.node .gen').count() == 11, f"{name}: all generations remain without a sequence")
+            check(page.locator('.node[data-id="g11"] .gen').inner_text() == gen_text.format(11),
+                  f"{name}: no sequence still preserves generation 11")
+            check(not errs, f"{name}: no JS errors", str(errs))
+        finally:
+            ctx.close()
 
 
 if __name__ == "__main__":

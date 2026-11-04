@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""谱书式显示（v15.12）：性别「女」徽标、配偶谱书式（丁嘉→丁氏嘉）、
-世代基准对齐谱书世数（勤=23世→字辈第1字填13）。
+"""谱书式显示：性别「女」徽标、配偶谱书式（丁嘉→丁氏嘉）、
+世祖按结构排列，字辈从设置的世数独立起用。
 使用独立夹具 fixture_book，不影响其他模块的示例数据。"""
 from helper import *
 import sys as _sys
@@ -148,18 +148,16 @@ def t_genbase_alignment(b):
     ctx, page, errs, cons = fresh_page(b)
     goto_book(page)
     chip = lambda nid: page.locator(f'.node[data-id="{nid}"] .gen').inner_text().replace("\n", "")
-    check(chip("z1") == "11代·勤", "默认按应用自算：11代·勤", chip("z1"))
-    # 对齐谱书：字辈第 1 字（多）= 第 13 世 → 勤 11+12=23世
+    check(chip("z1") == "1世", "默认从一世祖开始", chip("z1"))
     open_settings(page, base=13)
     page.locator("#__setDone").click()
     page.wait_for_timeout(150)
-    check(chip("z1") == "23世·勤", "世代基准13：勤=23世", chip("z1"))
-    check(chip("z2") == "24世·修", "推算代同样偏移：修=24世", chip("z2"))
-    check(chip("z3") == "25世·昭", "昭=25世", chip("z3"))
+    check([chip('z1'), chip('z2'), chip('z3')] == ['1世', '2世', '3世'], '起用设置不改变世祖')
+    check(page.locator('.node[data-id="z1"] .zibei').text_content() == '', '十三世之前辈序留空')
     tip = page.locator('.node[data-id="z1"] .gen').get_attribute("title")
-    check("谱书世数" in tip and "第11代" in tip, "tooltip 注明谱书世数与应用代数", tip)
+    check('尚未起用字辈' in tip and '1世' in tip, 'tooltip 解释起用之前辈序留空', tip)
     stats = page.locator("#statsChip").inner_text().replace("\n", "")
-    check("字辈第23–25世" in stats, "统计条范围用世数", stats)
+    check("世祖第1–3世" in stats and '辈序' not in stats, "统计世祖范围不偏移", stats)
     # 帮助网格同步
     page.evaluate("openHelp()")
     h4 = page.locator("#__zbTitle").inner_text()
@@ -172,17 +170,18 @@ def t_genbase_alignment(b):
     page.fill("#sbInput", "昭麟")
     page.wait_for_timeout(150)
     g = page.locator(".sb-item .g").first.inner_text()
-    check(g == "25世·昭", "搜索徽标用世数", g)
+    check(g == "3世", "搜索显示实际世祖，起用前不带字辈", g)
     page.evaluate("closeSearch()")
     # 持久化：刷新后仍是世数
     page.reload()
     page.wait_for_load_state("domcontentloaded")
-    check(chip("z1") == "23世·勤", "世代基准刷新后持久", chip("z1"))
-    # 改回 1 → 恢复「代」
+    check(chip("z1") == "1世" and page.evaluate('cfg.zibeiStart') == 13, "起用设置刷新后持久，世祖仍为一世", chip("z1"))
+    # 改回 1，仅字辈从一世起用。
     open_settings(page, base=1)
     page.locator("#__setDone").click()
     page.wait_for_timeout(120)
-    check(chip("z1") == "11代·勤", "改回1恢复代数", chip("z1"))
+    check(chip("z1") == "1世", "改回1也保持实际世祖", chip("z1"))
+    check(page.locator('.node[data-id="z1"] .zibei').inner_text() == '辈序1·多', '字辈按诗中第一字显示')
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -323,10 +322,10 @@ def t_cn_numeral(b):
     page.locator("#__setDone").click()
     page.wait_for_timeout(150)
     chip = lambda nid: page.locator(f'.node[data-id="{nid}"] .gen').inner_text().replace("\n", "")
-    check(chip("z1") == "廿三世·勤", "汉字世数：廿三世·勤", chip("z1"))
-    check(chip("z3") == "廿五世·昭", "廿五世·昭", chip("z3"))
+    check(chip("z1") == "一世", "汉字显示实际一世祖", chip("z1"))
+    check(chip("z3") == "三世", "汉字显示实际三世祖", chip("z3"))
     stats = page.locator("#statsChip").inner_text().replace("\n", "")
-    check("字辈第廿三–廿五世" in stats, "统计条汉字范围", stats)
+    check("世祖第一–三世" in stats, "统计条汉字世祖范围", stats)
     page.evaluate("openHelp()")
     check("第十三–五十二世" in page.locator("#__zbTitle").inner_text(), "帮助表标题汉字", page.locator("#__zbTitle").inner_text())
     check("第廿三世" in page.locator('#__zbGrid .zb').nth(10).inner_text(), "第11字标廿三世", page.locator('#__zbGrid .zb').nth(10).inner_text())
@@ -334,21 +333,21 @@ def t_cn_numeral(b):
     page.evaluate("openSearch()")
     page.fill("#sbInput", "勤善")
     page.wait_for_timeout(150)
-    check(page.locator(".sb-item .g").first.inner_text() == "廿三世·勤", "搜索徽标汉字", page.locator(".sb-item .g").first.inner_text())
+    check(page.locator(".sb-item .g").first.inner_text() == "一世", "搜索徽标汉字世祖", page.locator(".sb-item .g").first.inner_text())
     page.evaluate("closeSearch()")
     page.reload()
     page.wait_for_load_state("domcontentloaded")
-    check(chip("z1") == "廿三世·勤", "汉字设置刷新后持久", chip("z1"))
+    check(chip("z1") == "一世", "汉字世祖设置刷新后持久", chip("z1"))
     # 基准=1 时也可用汉字：十一代
     open_settings(page, base=1)
     page.locator("#__setDone").click()
     page.wait_for_timeout(120)
-    check(chip("z1") == "十一代·勤", "代数也可用汉字", chip("z1"))
+    check(chip("z1") == "一世" and page.locator('.node[data-id="z1"] .zibei').inner_text() == '辈序一·多', "世祖与辈序分别使用汉字", chip("z1"))
     open_settings(page)
     page.set_checked("#__cfgCn", False)
     page.locator("#__setDone").click()
     page.wait_for_timeout(120)
-    check(chip("z1") == "11代·勤", "关闭恢复数字", chip("z1"))
+    check(chip("z1") == "1世", "关闭恢复数字世祖", chip("z1"))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 
@@ -374,9 +373,10 @@ def t_vertical_book_view(b):
     check(abs(pos["z1"][1] - pos["w1"][1]) < 2, "同辈同行", str(pos))
     check(abs(pos["z1"][0] - pos["w1"][0]) > 10, "同辈横向铺开", str(pos))
     # 行左世数标（默认基准：第 1 行 = 十一代·勤；固定汉字数字，带本代字辈字）
-    vrows = page.locator(".vrow")
+    vrows = page.locator(".vrow.row-gen")
     check(vrows.count() >= 1, "行左世数标存在", str(vrows.count()))
-    check(vrows.first.inner_text() == "十一代·勤", "世数标内容（含字辈）", vrows.first.inner_text())
+    check(vrows.first.inner_text() == "一世", "行标世祖单独成列", vrows.first.inner_text())
+    check(page.locator(".vrow.row-zibei").first.inner_text() == "辈序一·多", "行标辈序单独成列")
     # 竖排下折叠/展开仍可用
     fold = page.locator('.node[data-id="z1"] .fold')
     check(fold.count() == 1, "折叠钮存在", str(fold.count()))
@@ -468,13 +468,15 @@ def t_shixilu_export(b):
     # 标题与谱序摘要
     check("<h1>潮阳泗水周氏族谱（申锡堂） · 世系录</h1>" in txt, "标题带谱名堂号", txt[:120])
     check("源流世系：" in txt and "濂溪" in txt, "文首带谱序摘要", "源流世系" in txt)
-    check("第廿一世至第廿五世" in txt, "五世一表分组（汉字）", "第廿一世至第廿五世" in txt)
+    check("第一世至第五世" in txt and "第廿一世至第廿五世" not in txt, "五世一表按实际世祖分组", "第一世至第五世" in txt)
     # 表头与行传内容
     for kw in ["<th>世次</th>", "<th>讳</th>", "<th>字</th>", "<th>号</th>", "<th>行第</th>",
                "<th>生</th>", "<th>卒</th>", "<th>配偶</th>", "<th>子女</th>", "<th>记</th>"]:
         check(kw in txt, "表头含 " + kw, kw in txt)
-    check("廿三世·勤" in txt and "<b>周勤善</b>" in txt, "勤善行：世次+讳", "廿三世·勤" in txt)
-    check("廿四世·修" in txt and "<b>周少群</b>" in txt, "少群行", "廿四世·修" in txt)
+    check('<td class="c">一世</td><td class="c"></td><td><b>周勤善</b>' in txt,
+          "勤善行：一世且起用前辈序列留空")
+    check('<td class="c">二世</td><td class="c"></td><td><b>周少群</b>' in txt,
+          "少群行：二世且辈序列留空")
     check("<b>周昭凤</b>" in txt, "昭凤行存在", "昭凤" in txt)
     check("原配 李氏平" in txt, "配偶列", "李氏平" in txt)
     check("勤善" in txt and "少群" in txt, "子女列含后代名", "少群" in txt)
@@ -498,7 +500,7 @@ def t_genbase_ancestors_across_book_outputs(b):
     open_settings(page, base=10)
     page.locator('#__setDone').click()
     stats = page.locator('#statsChip').inner_text()
-    check('字辈第7–12世' in stats and '6 代' in stats, "统计为七至十二世、实际六代", stats)
+    check('世祖第1–6世' in stats and '6 代' in stats and '辈序' not in stats, "统计六代且十世前不显示辈序", stats)
     # 截获实际绘制文字，验证 PNG/PDF 共用画布使用相同世次。
     drawn = page.evaluate("""async () => {
       const texts = [], original = CanvasRenderingContext2D.prototype.fillText;
@@ -508,21 +510,21 @@ def t_genbase_ancestors_across_book_outputs(b):
       try { await exportTreeCanvas(); return texts; }
       finally { CanvasRenderingContext2D.prototype.fillText = original; }
     }""")
-    expected = ['7世', '8世', '9世', '10世·勤', '11世·修', '12世·昭']
+    expected = ['1世', '2世', '3世', '4世', '5世', '6世']
     check(all(x in drawn for x in expected), "画布绘制七至十二世", str(drawn))
     page.evaluate('buildPrintDomReal()')
     check(page.locator('#printArea .pgen').all_text_contents() == expected,
           "大纲打印与成员卡世次一致", page.locator('#printArea .pgen').all_text_contents())
     page.evaluate('cfg.cnNum = true; cfg.vertical = true; render()')
-    expected_cn = ['七世', '八世', '九世', '十世·勤', '十一世·修', '十二世·昭']
-    check(page.locator('.vrow').all_text_contents() == expected_cn,
-          "汉字行标保留零相对索引的九世", page.locator('.vrow').all_text_contents())
+    expected_cn = ['一世', '二世', '三世', '四世', '五世', '六世']
+    check(page.locator('.vrow.row-gen').all_text_contents() == expected_cn,
+          "汉字行标保留零相对索引的九世", page.locator('.vrow.row-gen').all_text_contents())
     page.evaluate('buildPrintDomReal()')
-    check(page.locator('#printArea .vrow').all_text_contents() == expected_cn,
+    check(page.locator('#printArea .vrow.row-gen').all_text_contents() == expected_cn,
           "竖排打印保留全部祖辈行标")
     page.evaluate('openSearch()')
     page.fill('#sbInput', '周丙')
-    check(page.locator('.sb-item .g').inner_text() == '九世', "搜索零相对索引显示九世")
+    check(page.locator('.sb-item .g').inner_text() == '三世', "搜索显示实际三世祖")
     page.evaluate('closeSearch()')
 
     def exported_generations(suffix):
@@ -531,30 +533,31 @@ def t_genbase_ancestors_across_book_outputs(b):
         path = os.path.join(LOCAL_OUT, 'shixilu_ancestors_' + suffix + '.html')
         dl.value.save_as(path)
         html = open(path, encoding='utf-8').read()
-        rows = _re.findall(r'<tr><td class="c">([^<]*)</td><td><b>([^<]*)</b>', html)
+        rows = _re.findall(r'<tr><td class="c">([^<]*)</td><td class="c">[^<]*</td><td><b>([^<]*)</b>', html)
         return html, dict((name, generation) for generation, name in rows)
 
     html, rows = exported_generations('base10')
     check([rows[name] for name in ['周甲', '周乙', '周丙', '周勤', '周修', '周昭']] == expected_cn,
           "世系录含七八九世，不把相对零当未定", str(rows))
-    check('第六世至第十世' in html and '第十一世至第十五世' in html and '未定世次' not in html,
-          "祖辈按实际谱世进入五世分表")
-    # 小基准跨越零：不能把已知祖辈混入未定世次，也不能输出零/负数。
+    check('第一世至第五世' in html and '第六世至第十世' in html and '未定世次' not in html,
+          "祖辈按实际一至六世进入五世分表")
+    # 从第二世起用字辈，仅辈序改变，世祖和五世分组不变。
     page.evaluate('cfg.genBase = 2; render()')
-    check(page.locator('#stage .vrow').all_text_contents() ==
-          ['字辈前三代', '字辈前二代', '一世', '二世·勤', '三世·修', '四世·昭'],
-          "跨零行标用字辈前代数，正数继续按谱世")
+    check(page.locator('#stage .vrow.row-gen').all_text_contents() ==
+          ['一世', '二世', '三世', '四世', '五世', '六世'],
+          "第二世起用时只更改辈序")
     html, rows = exported_generations('base2')
     check([rows[name] for name in ['周甲', '周乙', '周丙', '周勤']] ==
-          ['字辈前三代', '字辈前二代', '一世', '二世·勤'], "零以下用字辈前代数，零索引正常换算", str(rows))
-    check('字辈前三代至字辈前二代' in html and '未定世次' not in html,
-          "字辈之前分表有可读范围")
+          ['一世', '二世', '三世', '四世'], "世系录世祖始终不受起用设置影响", str(rows))
+    check('第一世至第五世' in html and '未定世次' not in html,
+          "起用之前按实际世祖分表")
     page.evaluate('openSearch()')
     page.fill('#sbInput', '周甲')
-    check(page.locator('.sb-item .g').inner_text() == '字辈前三代', "搜索同样使用字辈前代数")
+    check(page.locator('.sb-item .g').inner_text() == '一世', "搜索显示一世祖且辈序留空")
     page.evaluate('closeSearch()')
     stats = page.locator('#statsChip').inner_text()
-    check('字辈前三代–四世' in stats and '六 代' in stats, "跨零统计可读且总代数稳定", stats)
+    check('世祖第一–六世' in stats and '六 代' in stats and '辈序一–三' in stats,
+          "统计独立世祖与辈序且总代数稳定", stats)
     for i in range(3):
         tip = page.locator(f'#stage .node[data-id="a{i}"] .gen').get_attribute('title')
         check(not _re.search(r'(?:第?-\d+[代世]|[零0]世|第[零0]代|undefined)', tip),

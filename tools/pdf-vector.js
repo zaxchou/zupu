@@ -1,7 +1,8 @@
 /* Standalone Canvas-like PDF backend for paintTreeBody. Inline before its caller.
  * Dependency: ZUPU_PDF_FONT_BASE64, a base64-encoded static TrueType (glyf) font.
- * Optional third argument overrides it; null/undefined use the embedded font.
- * No shaping/kerning or weight synthesis: all sizes/families use this one font.
+ * Optional third argument is tried first, then the embedded default, then optional
+ * ZUPU_PDF_SUPPLEMENT_BASE64. Each used font embeds its own searchable text subset.
+ * No shaping/kerning or weight synthesis: CSS families do not change this order.
  * Only drawImage (3/5-argument form) rasterizes individual photos. Text stays text;
  * a missing U+25B8 UI disclosure marker alone falls back to a vector triangle.
  */
@@ -31,11 +32,45 @@ function createVectorPdfContext(width, height, fontBase64) {
     for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
     return out;
   };
-  let fontData;
-  function getFont() {
-    if (fontData) return fontData;
-    const source = fontBase64 == null ? (typeof ZUPU_PDF_FONT_BASE64 === 'string' ? ZUPU_PDF_FONT_BASE64 : '') : fontBase64;
-    if (typeof source !== 'string' || !source) fail('Missing embedded font ZUPU_PDF_FONT_BASE64');
+  let fonts;
+  const selections = new Map();
+  function getFonts() {
+    if (fonts) return fonts;
+    const sources = [];
+    if (fontBase64 != null) sources.push(['Selected font', fontBase64]);
+    if (typeof ZUPU_PDF_FONT_BASE64 !== 'undefined') sources.push(['Default font', ZUPU_PDF_FONT_BASE64]);
+    else if (fontBase64 == null) fail('Missing embedded font ZUPU_PDF_FONT_BASE64');
+    if (typeof ZUPU_PDF_SUPPLEMENT_BASE64 !== 'undefined') sources.push(['Supplement font', ZUPU_PDF_SUPPLEMENT_BASE64]);
+    // Validate every configured font, even when an earlier font covers the text.
+    // Publish only after all succeed so a failed validation cannot be bypassed on retry.
+    fonts = sources.map(([label, source], i) => {
+      try { return { ...parseFont(source), index: i + 1, characters: new Map() }; }
+      catch (e) { fail(label + ': ' + e.message); }
+    });
+    return fonts;
+  }
+  function selectGlyph(cp) {
+    if (selections.has(cp)) return selections.get(cp);
+    const available = getFonts();
+    for (const f of available) {
+      const gid = f.glyph(cp);
+      if (gid) {
+        const selected = { f, gid, vector: false };
+        selections.set(cp, selected);
+        return selected;
+      }
+    }
+    if (cp === 0x25b8) {
+      const selected = { f: available[0], gid: 0, vector: true };
+      selections.set(cp, selected);
+      return selected;
+    }
+    /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
+    const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+    fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+  }
+  function parseFont(source) {
+    if (typeof source !== 'string' || !source) fail('Invalid base64 font data');
     let data;
     try { data = unbase64(source); }
     catch (_) { fail('Invalid base64 font data'); }
@@ -97,7 +132,9 @@ function createVectorPdfContext(width, height, fontBase64) {
     }
     cmaps.sort((a, b) => b.format - a.format);
     if (!cmaps.length) fail('Font has no Unicode cmap format 4/12');
-    function glyph(cp, allowMissing = false) {
+    const glyphCache = new Map();
+    function glyph(cp) {
+      if (glyphCache.has(cp)) return glyphCache.get(cp);
       for (const c of cmaps) {
         let gid = 0, lo = 0, hi = c.n - 1;
         if (c.format === 12) {
@@ -125,12 +162,10 @@ function createVectorPdfContext(width, height, fontBase64) {
             }
           }
         }
-        if (gid && gid < glyphCount) return gid;
+        if (gid && gid < glyphCount) { glyphCache.set(cp, gid); return gid; }
       }
-      if (allowMissing) return 0;
-      /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
-      const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-      fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+      glyphCache.set(cp, 0);
+      return 0;
     }
     function subset(gids) {
       if (!canSubset) return data.slice();
@@ -196,7 +231,7 @@ function createVectorPdfContext(width, height, fontBase64) {
       ov.setUint32(headOffset + 8, (0xb1b0afba - checksum(out)) >>> 0);
       return out;
     }
-    fontData = {
+    return {
       glyph, pdfWidth, subset, units, canSubset, ascent: i16(hhea + 4), descent: i16(hhea + 6),
       bbox: [i16(head + 36), i16(head + 38), i16(head + 40), i16(head + 42)],
       glyphBox(gid) {
@@ -204,7 +239,6 @@ function createVectorPdfContext(width, height, fontBase64) {
         return locations[gid + 1] - locations[gid] >= 10 ? [i16(p + 2), i16(p + 4), i16(p + 6), i16(p + 8)] : [0, 0, 0, 0];
       }
     };
-    return fontData;
   }
 
   let state = {
@@ -213,7 +247,7 @@ function createVectorPdfContext(width, height, fontBase64) {
     textAlign: 'start', textBaseline: 'alphabetic', direction: 'ltr', globalAlpha: 1,
     lineDashOffset: 0, dash: [], matrix: [1, 0, 0, 1, 0, 0]
   };
-  const stack = [], ops = [], characters = new Map(), alphas = new Map(), images = [], imageCache = new WeakMap();
+  const stack = [], ops = [], alphas = new Map(), images = [], imageCache = new WeakMap();
   let path = [], current = null, subpath = null;
   const point = (x, y, m = state.matrix) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
   function inverse(m) {
@@ -271,7 +305,7 @@ function createVectorPdfContext(width, height, fontBase64) {
     return +m[1];
   }
   function textRun(text) {
-    const f = getFont(), size = fontSize(), glyphs = [];
+    const f = getFonts()[0], size = fontSize(), glyphs = [];
     let width = 0;
     for (const ch of String(text)) {
       let cp = ch.codePointAt(0);
@@ -279,9 +313,9 @@ function createVectorPdfContext(width, height, fontBase64) {
          多行备注（应用自己的续行格式）曾因 U+000A 无字形而整单导出失败 */
       if (cp === 0x0a || cp === 0x0d || cp === 0x09 || cp === 0x2028 || cp === 0x2029) cp = 0x20;
       if ((cp >= 0x200b && cp <= 0x200f) || cp === 0xfe0e || cp === 0xfe0f || cp === 0x2060) continue;
-      const gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
-      const advance = (vector ? 650 : f.pdfWidth(gid)) * size / 1000;
-      glyphs.push({ ch, cp, gid, vector, x: width }); width += advance;
+      const selected = selectGlyph(cp);
+      const advance = (selected.vector ? 650 : selected.f.pdfWidth(selected.gid)) * size / 1000;
+      glyphs.push({ ch: String.fromCodePoint(cp), cp, ...selected, x: width }); width += advance;
     }
     return { f, size, glyphs, width };
   }
@@ -378,19 +412,29 @@ function createVectorPdfContext(width, height, fontBase64) {
     },
     fillRect(x, y, w, h) { finite(x, y, w, h); draw([x, y, w, h].map(num).join(' ') + ' re f', false); },
     measureText(text) {
-      const run = textRun(text), f = run.f, k = run.size / f.units;
-      let left = Infinity, right = -Infinity, top = 0, bottom = 0;
+      const run = textRun(text), baseline = baselineOffset(run.f, run.size);
+      let left = Infinity, right = -Infinity, top = -Infinity, bottom = -Infinity;
+      let fontTop = -Infinity, fontBottom = -Infinity;
       for (const g of run.glyphs) {
+        const f = g.f, k = run.size / f.units;
         const box = g.vector ? [0.1 * f.units, 0, 0.55 * f.units, 0.6 * f.units] : f.glyphBox(g.gid);
         left = Math.min(left, g.x + box[0] * k); right = Math.max(right, g.x + box[2] * k);
-        top = Math.max(top, box[3] * k); bottom = Math.max(bottom, -box[1] * k);
+        top = Math.max(top, Math.max(0, box[3] * k) - baseline);
+        bottom = Math.max(bottom, Math.max(0, -box[1] * k) + baseline);
+        fontTop = Math.max(fontTop, f.ascent * k - baseline);
+        fontBottom = Math.max(fontBottom, -f.descent * k + baseline);
       }
-      const align = alignment(run.width), baseline = baselineOffset(f, run.size);
+      if (!run.glyphs.length) {
+        const f = run.f, k = run.size / f.units;
+        top = -baseline; bottom = baseline;
+        fontTop = f.ascent * k - baseline; fontBottom = -f.descent * k + baseline;
+      }
+      const align = alignment(run.width);
       return {
         width: run.width, actualBoundingBoxLeft: run.glyphs.length ? align - left : 0,
         actualBoundingBoxRight: run.glyphs.length ? right - align : 0,
-        actualBoundingBoxAscent: top - baseline, actualBoundingBoxDescent: bottom + baseline,
-        fontBoundingBoxAscent: f.ascent * k - baseline, fontBoundingBoxDescent: -f.descent * k + baseline
+        actualBoundingBoxAscent: top, actualBoundingBoxDescent: bottom,
+        fontBoundingBoxAscent: fontTop, fontBoundingBoxDescent: fontBottom
       };
     },
     fillText(text, x, y, maxWidth) {
@@ -399,24 +443,28 @@ function createVectorPdfContext(width, height, fontBase64) {
       const run = textRun(text);
       if (!run.glyphs.length) return;
       const factor = maxWidth === undefined || !run.width ? 1 : Math.min(1, maxWidth / run.width);
-      x -= alignment(run.width * factor); y += baselineOffset(run.f, run.size);
-      let encoded = '', runX = x;
+      x -= alignment(run.width * factor);
+      // Canvas establishes one baseline for the whole run, including fallback glyphs.
+      const baseY = y + baselineOffset(run.f, run.size);
+      let encoded = '', runX = x, runFont;
       const flush = () => {
-        if (encoded) draw('BT /F1 ' + num(run.size) + ' Tf ' + num(factor) + ' 0 0 -1 ' + num(runX) + ' ' + num(y) + ' Tm <' + encoded + '> Tj ET', false);
+        if (encoded) draw('BT /F' + runFont.index + ' ' + num(run.size) + ' Tf ' + num(factor) + ' 0 0 -1 ' + num(runX) + ' ' + num(baseY) + ' Tm <' + encoded + '> Tj ET', false);
         encoded = '';
       };
       for (const g of run.glyphs) {
         if (g.vector) {
           // Only the UI disclosure marker may fall back to a vector triangle.
           flush();
-          const vx = x + (g.x + run.size * 0.1) * factor, vy = y - run.size * 0.6;
-          draw(num(vx) + ' ' + num(vy) + ' m ' + num(vx + run.size * 0.45 * factor) + ' ' + num(vy + run.size * 0.3) + ' l ' + num(vx) + ' ' + num(y) + ' l h f', false);
+          const vx = x + (g.x + run.size * 0.1) * factor, vy = baseY - run.size * 0.6;
+          draw(num(vx) + ' ' + num(vy) + ' m ' + num(vx + run.size * 0.45 * factor) + ' ' + num(vy + run.size * 0.3) + ' l ' + num(vx) + ' ' + num(baseY) + ' l h f', false);
           continue;
         }
-        if (!encoded) runX = x + g.x * factor;
+        if (encoded && runFont !== g.f) flush();
+        if (!encoded) { runX = x + g.x * factor; runFont = g.f; }
+        const characters = g.f.characters;
         if (!characters.has(g.cp)) {
-          if (characters.size >= 65535) fail('Too many distinct characters on one page (maximum 65535)');
-          characters.set(g.cp, { ...g, cid: characters.size + 1 });
+          if (characters.size >= 65535) fail('Too many distinct characters in one font (maximum 65535)');
+          characters.set(g.cp, { ch: g.ch, cp: g.cp, gid: g.gid, cid: characters.size + 1 });
         }
         encoded += hex(characters.get(g.cp).cid);
       }
@@ -446,7 +494,8 @@ function createVectorPdfContext(width, height, fontBase64) {
     },
     async toBytes() {
       // Snapshot before the first await; drawing may continue while compression runs.
-      const chars = [...characters.values()], alphaEntries = [...alphas], photoEntries = images.slice();
+      const fontEntries = (fonts || []).filter(f => f.characters.size).map(f => ({ f, chars: [...f.characters.values()] }));
+      const alphaEntries = [...alphas], photoEntries = images.slice();
       const pageScale = Math.min(1, 14400 / Math.max(width, height));
       const pageW = +num(width * pageScale), pageH = +num(height * pageScale);
       // Keep tiny page scales precise; rounding to coordinate precision could clip a long tree.
@@ -466,11 +515,12 @@ function createVectorPdfContext(width, height, fontBase64) {
         return add(concat([bytes('<< /Length ' + data.length + filter + entries.replace(/\$LENGTH1/g, String(length1)) + ' >>\nstream\n'), data, bytes('\nendstream')]));
       }
       const catalog = add(null), pages = add(null), page = add(null);
-      let fontId;
-      if (chars.length) {
-        const f = getFont(), subset = f.subset(chars.map(c => c.gid));
+      const fontResources = [];
+      for (const { f, chars } of fontEntries) {
+        const subset = f.subset(chars.map(c => c.gid));
         const fontFile = await stream(subset, ' /Length1 $LENGTH1');
-        const metric = x => num(x * 1000 / f.units), name = (f.canSubset ? 'ZUPUAA+' : '') + 'ZupuVector';
+        const metric = x => num(x * 1000 / f.units);
+        const name = (f.canSubset ? 'ZUPUA' + String.fromCharCode(64 + f.index) + '+' : '') + 'ZupuVector' + f.index;
         const descriptor = add(bytes('<< /Type /FontDescriptor /FontName /' + name + ' /Flags 4 /FontBBox [' + f.bbox.map(metric).join(' ') + '] /ItalicAngle 0 /Ascent ' + metric(f.ascent) + ' /Descent ' + metric(f.descent) + ' /CapHeight ' + metric(f.ascent) + ' /StemV 80 /FontFile2 ' + fontFile + ' 0 R >>'));
         const mapping = new Uint8Array((chars.length + 1) * 2), mv = new DataView(mapping.buffer);
         for (const c of chars) mv.setUint16(c.cid * 2, c.gid);
@@ -490,7 +540,8 @@ function createVectorPdfContext(width, height, fontBase64) {
         }
         unicode += 'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n';
         const toUnicode = await stream(bytes(unicode));
-        fontId = add(bytes('<< /Type /Font /Subtype /Type0 /BaseFont /' + name + ' /Encoding /Identity-H /DescendantFonts [' + cidFont + ' 0 R] /ToUnicode ' + toUnicode + ' 0 R >>'));
+        const fontId = add(bytes('<< /Type /Font /Subtype /Type0 /BaseFont /' + name + ' /Encoding /Identity-H /DescendantFonts [' + cidFont + ' 0 R] /ToUnicode ' + toUnicode + ' 0 R >>'));
+        fontResources.push('/F' + f.index + ' ' + fontId + ' 0 R');
       }
       const gs = alphaEntries.map(([alpha, name]) => '/' + name + ' ' + add(bytes('<< /Type /ExtGState /ca ' + alpha + ' /CA ' + alpha + ' >>')) + ' 0 R');
       const xobjects = [];
@@ -501,7 +552,7 @@ function createVectorPdfContext(width, height, fontBase64) {
       const contents = await stream(content);
       objects[catalog] = bytes('<< /Type /Catalog /Pages ' + pages + ' 0 R >>');
       objects[pages] = bytes('<< /Type /Pages /Kids [' + page + ' 0 R] /Count 1 >>');
-      objects[page] = bytes('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 ' + num(pageW) + ' ' + num(pageH) + '] /Resources <<' + (fontId ? ' /Font << /F1 ' + fontId + ' 0 R >>' : '') + ' /ExtGState << ' + gs.join(' ') + ' >> /XObject << ' + xobjects.join(' ') + ' >> >> /Contents ' + contents + ' 0 R >>');
+      objects[page] = bytes('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 ' + num(pageW) + ' ' + num(pageH) + '] /Resources <<' + (fontResources.length ? ' /Font << ' + fontResources.join(' ') + ' >>' : '') + ' /ExtGState << ' + gs.join(' ') + ' >> /XObject << ' + xobjects.join(' ') + ' >> >> /Contents ' + contents + ' 0 R >>');
       const chunks = [bytes('%PDF-1.7\n%'), new Uint8Array([0xe2, 0xe3, 0xcf, 0xd3, 10])], offsets = [0];
       let offset = chunks.reduce((sum, c) => sum + c.length, 0);
       for (let i = 1; i < objects.length; i++) {

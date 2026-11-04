@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.49" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.50" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
-**A double-click electronic genealogy: record your family, auto-number generations, print & bind**
+**A double-click electronic genealogy: record family, number generations by lineage, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.49-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-107%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.50-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-114%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![Try online](https://img.shields.io/badge/try%20it-online-b03a2e)](https://zaxchou.github.io/zupu/)
@@ -50,10 +50,12 @@ top-to-bottom (right to left) — print it / export it to PDF and **bind it into
 - **Scroll to zoom, drag to pan** — the wheel zooms straight in and out, and grabbing any
   empty spot pans the tree, like a map app; prefer the old way? Turn direct zoom off in
   Visual settings (wheel scrolls the page, Ctrl+scroll zooms)
-- **Names in, generations out** — paste your generation-char list (e.g. the real Ming imperial poem “高瞻祁见祐”) and
-  everyone's generation is numbered automatically; align it with your old book, so “the 23rd
-  generation” there reads “the 23rd generation” here. v15.46 fixes clipped ancestor numbers:
-  with a base of 10, the three earlier generations read 7, 8, 9, followed by 10, 11, 12
+- **Count generations and generation names separately** — the founding ancestor is generation 1;
+  each child is one generation after their parent. The tree-title container does not count,
+  and names never change the numbers. Numbers appear even without a generation-name list.
+  In Visual settings, set “Generation at which generation names begin” to 10: generations
+  1–9 have no sequence badge, generation 10 uses the first character, and 11 the second.
+  Generation numbers and generation-name sequence badges appear separately
 - **Print a real genealogy book** — vertical text, generations as rows, five generations per
   table; export to PDF and take it straight to the print shop for binding. Tree name, hall
   name, lineage and founder record print up front
@@ -82,7 +84,7 @@ download the single file for your language — English: `index-en.html`
 One file is everything —
 double-click it; a first-run wizard appears:
 
-- **Explore the demo** — the real Ming imperial line (Zhu Yuanzhang’s family), auto-numbered by the generation poem
+- **Explore the demo** — the real Ming imperial line (Zhu Yuanzhang’s family), with generations counted by parent–child relationships and generation names shown separately
 - **Start from scratch** — enter your family name and start with generation one
 - **Import a previous backup** — restore json exported by this tool
 
@@ -100,16 +102,36 @@ Nothing is uploaded. Use “File ▾ → Backup (with original photos)” regula
 JSON backup; “Back up to file” includes only photo thumbnails. Import on another computer
 via “Restore backup”. The user data structure is unchanged; existing JSON backups still work.
 
-**Can I zoom and search a PDF? What about missing characters?**
-The default single-page mode embeds a subset of the DroidSansFallbackFull TrueType font.
-Text is searchable; connectors and shapes remain vectors. Photos remain images, so their
-sharpness depends on the source. In the PDF dialog, choose a local TTF with the required
-characters and permission to embed it if needed. It is used only for this single-page export,
-never uploaded or saved in the tree. Missing glyphs produce an explicit error; neither the
-bundled font nor a custom font guarantees full Unicode coverage. A4 landscape paged printing
-remains available, with a coordinate-transform (CTM) clipping fix in v15.46. Paged output is a continuous slice: a card crossing a page edge is split across the two pages and is complete once the pages are joined. In single-page PDFs, horizontal layouts are searchable by full name; vertical layouts set each character separately, so a full-name search may match only single characters.
-The Xiaohongshu mini-tool cannot save PDFs; its package omits the font and PDF backend but
-includes the generation-number fix.
+**How do generation numbers and generation names work? What happens to old settings?**
+Generation numbers follow parent–child relationships: the founding ancestor is generation 1,
+children are one generation later, and the tree-title container does not count. Numbers appear
+without a generation-name list, and matching a name to that list never changes the numbers.
+Under “View ▾ → Visual settings…”, set “Generation at which generation names begin”. For a
+list such as Gao, Zhan, Qi, Jian, You starting at 10, generations 1–9 show only their generation
+number and leave the sequence badge empty. Generation 10 shows generation 10 and sequence 1 · Gao;
+generation 11 shows generation 11 and sequence 2 · Zhan, in separate badges.
+The old local `genBase` setting migrates to the generation-name starting generation; it no
+longer shifts generation numbers. The setting stays in this browser. The user tree structure
+is unchanged, with no new JSON or Markdown schema.
+
+**Can I zoom and search a PDF? What if it reports U+28EE7 (𨻧) missing?**
+The dialog always defaults to a single-page vector PDF, even for large trees. Choose A4
+landscape pages yourself when needed. Apache-2.0 DroidSansFallbackFull supplies common
+characters; a separate SIL OFL 1.1 ZupuRareSupport fallback (about 16 KB) supplies 𨻧, 𠮷, 𡊨,
+and 𠀀, including the reported U+28EE7. Each font embeds its own subset of used glyphs,
+preserving original Unicode text that remains searchable, vector-based and available offline.
+Connectors and shapes remain vectors too. Photos remain images; sharpness depends on the source.
+For other missing characters, choose a local TTF with the required glyphs and legal permission
+to embed it. It can supply just the missing glyphs while default fonts remain available for
+common characters; one custom TTF no longer has to cover the whole tree. It is used only for
+this single-page export, never uploaded or saved in the tree. If no available font contains a
+required glyph, export still fails explicitly. Neither full Unicode nor full CJK Extension B
+coverage is guaranteed. Paged output is a continuous slice: a card crossing a page edge is split
+across the two pages and is complete once the pages are joined. In single-page PDFs, horizontal
+layouts are searchable by full name; vertical layouts set each character separately, so a
+full-name search may match only single characters.
+The Xiaohongshu mini-tool cannot save PDFs; its package omits both PDF fonts and the backend
+but includes the new generation-number and generation-name sequence rules.
 
 **Does Markdown replace a complete backup?**
 Use “Restore backup” to re-import `.md` files exported by this tool. This does not promise
@@ -138,5 +160,7 @@ The English and Japanese builds are generated from the Chinese master via
 
 ## 📄 License
 
-[MIT](LICENSE) © zaxchou. The bundled PDF font is licensed under Apache-2.0; see its
-[source and NOTICE](third_party/droid-sans/README.md).
+[MIT](LICENSE) © zaxchou. The bundled DroidSansFallbackFull PDF font for common characters
+is licensed under Apache-2.0; see its [source and NOTICE](third_party/droid-sans/README.md).
+The separate ZupuRareSupport fallback uses SIL OFL 1.1; see its
+[source, modifications and license](third_party/zupu-rare-font/README.md).

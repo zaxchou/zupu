@@ -28,6 +28,11 @@ def main():
     encoded = base64.b64encode(font).decode('ascii')
     chunks = [encoded[i:i + 4096] for i in range(0, len(encoded), 4096)]
     font_js = 'const ZUPU_PDF_FONT_BASE64 = [\n' + ',\n'.join("'" + c + "'" for c in chunks) + "\n].join('');\n"
+    # OFL 后备字体独立嵌入，与 Apache 常用字体分开保留许可及字体对象。
+    supplement = (ROOT / 'third_party/zupu-rare-font/ZupuRareSupport.ttf').read_bytes()
+    rare_encoded = base64.b64encode(supplement).decode('ascii')
+    rare_chunks = [rare_encoded[i:i + 4096] for i in range(0, len(rare_encoded), 4096)]
+    font_js += 'const ZUPU_PDF_SUPPLEMENT_BASE64 = [\n' + ',\n'.join("'" + c + "'" for c in rare_chunks) + "\n].join('');\n"
     engine = font_js + (ROOT / 'tools/pdf-vector.js').read_text(encoding='utf-8')
     result = replace_block(source, '/* BEGIN_PDF_ENGINE */', '/* END_PDF_ENGINE */', engine)
     if isinstance(result, tuple):

@@ -141,14 +141,16 @@ body{
   font-style:normal;font-size:9px;color:#8fa0b5;
   background:#e3ebf2;border-radius:3px;padding:0 3px;margin-right:4px;vertical-align:1px;
 }
-/* 字辈代数角标（卡片最左侧）：蓝=名字含本代字辈字（与世系一致）；灰=按世系推算 */
-.node-label .gen{
+/* 世祖、辈序各自成标；蓝色表示名字与当前字辈一致 */
+.node-label .gen,.node-label .zibei{
   display:inline-block;margin-right:7px;padding:0 6px;
   background:#eef2f7;border:1px solid #dbe3ec;border-radius:5px;
   font-size:10px;font-weight:600;color:#66768c;line-height:16px;vertical-align:1px;
   cursor:help;
 }
-.node-label .gen.match{background:#e8f1fa;border-color:#b9d6ee;color:#2f6390}
+.node-label .gen.match,.node-label .zibei.match{background:#e8f1fa;border-color:#b9d6ee;color:#2f6390}
+.node-label .zibei:empty{display:none}
+#stage.v .node-label .zibei,.ps.v .node-label .zibei{display:none}
 /* 性别徽标：按谱书惯例只标「女」（男不标） */
 .node-label .gx{
   display:inline-block;margin-left:4px;padding:0 5px;
@@ -273,6 +275,7 @@ body{
   font-size:13.5px;font-weight:600;
   color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
 }
+.vrow.row-zibei{font-size:10.5px;font-weight:500;letter-spacing:1px;text-indent:1px;color:#a9b6c6}
 /* 谱书竖排·纸面化（v15.24）：框退后、墨字当主角——hover/选中才现淡框 */
 #stage.v .node-label,.ps.v .node-label{
   background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
@@ -536,7 +539,7 @@ body{
   #printArea h2{font-size:20px;margin:0 0 6px}
   #printArea .pxu{font-size:11.5px;color:#333;background:#f5f7fa;border:1px solid #dde4ec;border-radius:6px;padding:8px 12px;margin:8px 0 14px;line-height:1.8}
   #printArea .pxu b{color:#16324f}
-  #printArea .pgen{display:inline-block;border:1px solid #b9c3cf;border-radius:4px;padding:0 4px;font-size:10.5px;color:#2f6390;margin-right:5px;background:#f2f6fa}
+  #printArea .pgen,#printArea .pzibei{display:inline-block;border:1px solid #b9c3cf;border-radius:4px;padding:0 4px;font-size:10.5px;color:#2f6390;margin-right:5px;background:#f2f6fa}
   #printArea .pzi{color:#555;font-size:11px}
   #printArea li b{font-size:13.5px}
   #printArea .pstage-wrap{margin:0 auto}
@@ -1035,7 +1038,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p class="help-note">照片清晰度取决于原图片。单页模式内嵌字体，离线查看也能正常显示。</p>
     <details><summary>生僻字与其他文字</summary>
       <label>字体文件（可选，TTF，仅供本次导出）<input id="__pdfFont" type="file" accept=".ttf,font/ttf"></label>
-      <p class="help-note">缺字时可选择包含该字、允许嵌入的本机 TrueType 字体。字体不会上传。内置字体不含韩文与扩展 B 区生僻字。</p>
+      <p class="help-note">已补充「𨻧、𠮷、𡊨、𠀀」等字形。其他缺字可选择包含该字、允许嵌入的本机 TrueType 字体；常用字会自动后备，字体不会上传。内置字库不涵盖所有生僻字或韩文。</p>
     </details>
     <div class="modal-btns"><button id="__pdfCancel">关闭</button><button class="primary" id="__pdfGo">导出</button></div>
   </div>
@@ -1089,7 +1092,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自动保存（拦截浏览器另存，无需手动操作）</td></tr>
       <tr><td>蓝色角标 / 橙色角标</td><td>出生年（自动排长幼）/ 排行称谓（手动排序）</td></tr>
       <tr><td>查看 ▾ 视觉设置 · 谱书竖排</td><td>世代成行、名字竖书（右→左）、行左标世数；导出图同款排版</td></tr>
-      <tr><td>查看 ▾ 视觉设置</td><td>世代基准（对齐谱书世数，如勤=23世填13）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
+      <tr><td>查看 ▾ 视觉设置</td><td>字辈从第几世开始（如填10，第10世起用第1字；之前辈序留空）/ 配偶谱式（丁嘉→丁氏嘉）/ 姓氏周开关 / 世数用汉字</td></tr>
       <tr><td>成员照片</td><td>「档案」里添加照片后卡片显示圆形头像，点头像看大图；文件 ▾ 可按文件夹批量导入照片，备份（含照片原图）换电脑不丢原图</td></tr>
       <tr><td><kbd>▸ N</kbd></td><td>此支已折叠 N 位后代，点击展开</td></tr>
     </tbody></table>
@@ -1120,13 +1123,13 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     </div></fieldset>
     <label class="checkline"><input type="checkbox" id="__cfgWheelZoom"> 滚轮直接缩放（关闭后：滚轮平移，Ctrl＋滚轮缩放）</label>
     <details id="__cfgOther"><summary>其他显示项</summary>
-    <label>世代基准 —— 字辈第 1 字对应的谱书世数<input id="__cfgBase" type="number" min="1" max="99" step="1"></label>
+    <label title="字辈起用设置保存在本浏览器">字辈从第几世开始<input id="__cfgBase" type="number" min="1" max="9999" step="1"></label>
     <p class="help-note" style="margin:-4px 0 12px">
-      传统谱书的「世」从<b>始祖一世</b>起算，而字辈往往是后世才议定的。你家谱书「勤」字辈记为<b>廿三世</b>，「勤」是字辈第 11 字，所以「多」字辈=第 <b>13</b> 世：这里填 <b>13</b>，卡片即显示「23世·勤」；填 1 则按应用自算显示「11代」。只改显示，不影响数据。
+      世祖按父子关系排列：谱名下第一层为第1世，每下一层加1。字辈独立按起用世数排列；例如填10，第10世使用字辈第1字，第11世使用第2字，此前辈序留空。更改起用世数只影响字辈，不改变世祖编号。
     </p>
     <label class="checkline"><input type="checkbox" id="__cfgSpouse"> 配偶按谱书式显示（丁嘉 → 丁氏嘉；数据仍存原名，搜索不受影响）</label>
     <label class="checkline"><input type="checkbox" id="__cfgSurname"> 姓名显示姓氏「<span id="__cfgSurName">—</span>」（关闭 = 按谱书习惯只报名；仅显示层，姓氏随数据自动识别）</label>
-    <label class="checkline"><input type="checkbox" id="__cfgCn"> 世数用汉字（廿三世·勤；关闭显示 23世·勤）</label>
+    <label class="checkline"><input type="checkbox" id="__cfgCn"> 世祖与辈序用汉字（廿三世 · 辈序十一·勤；关闭显示 23世 · 辈序11·勤）</label>
     <label class="checkline"><input type="checkbox" id="__cfgPhotos"> 成员照片头像（卡片显示照片/剪影，点头像看大图）</label>
     </details>
     <div class="modal-btns"><button id="__setDone" type="button">关闭</button></div>
@@ -1141,7 +1144,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <label>堂号<input id="__clTang" placeholder="可选，如 四知堂 / 陇西堂"></label>
     </div>
     <label>源流世系（远祖 → 近祖，用 — 相连）<input id="__clChain" placeholder="始祖 — 二世 — 三世……"></label>
-    <label>字辈表（空格 / 逗号 / 顿号分隔，按世代顺序；用于自动定代）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>
+    <label>字辈表（空格 / 逗号 / 顿号分隔，按辈序排列；起用世数在视觉设置中填写）<textarea id="__clZibei" rows="2" placeholder="如：高 瞻 祁 见 祐 厚 载 翊 常 由"></textarea></label>
     <label>先祖<input id="__clYuan" placeholder="如 周敦颐，字茂叔，号濂溪（湖南道州）"></label>
     <label>始祖记<textarea id="__clShi" rows="3" placeholder="一世祖承节公讳宣道……二世祖朝奉公讳景一……"></textarea></label>
     <label>始迁祖<input id="__clQian" placeholder="如 （南宋）宣，字承节"></label>
@@ -1293,18 +1296,24 @@ function heirTitle(n){
 }
 
 /* ---------- 视觉设置（本浏览器配置，与族谱数据分开存） ----------
- * genBase：字辈第 1 字对应的谱书世数（1=按应用自算「代」显示；13=勤字辈显示 23世）
+ * zibeiStart：字辈第 1 字从第几世起用；genBase 为旧设置的兼容别名，均不改变世祖编号
  * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面
  * showPhotos：成员照片头像（卡片显示照片/剪影，点头像看大图） */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, genBase: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+Object.defineProperty(cfg, 'genBase', {
+  enumerable: true,
+  get(){ return this.zibeiStart; },
+  set(v){ if (Number.isFinite(v)) this.zibeiStart = Math.max(1, Math.min(9999, Math.round(v))); }
+});
 (function loadCfg(){
   try {
     const c = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
-    if (typeof c.genBase === 'number' && c.genBase >= 1) cfg.genBase = Math.min(99, Math.round(c.genBase));
+    const start = Number.isFinite(c.zibeiStart) && c.zibeiStart >= 1 ? c.zibeiStart : c.genBase;
+    if (Number.isFinite(start) && start >= 1) cfg.genBase = start;
     if (typeof c.bookSpouse === 'boolean') cfg.bookSpouse = c.bookSpouse;
     if (typeof c.showSurname === 'boolean') cfg.showSurname = c.showSurname;
     if (typeof c.cnNum === 'boolean') cfg.cnNum = c.cnNum;
@@ -1331,8 +1340,7 @@ function saveCfg(){
   updateCfgSaveState();
   return !cfgSaveFailed;
 }
-function genOffset(){ return Math.max(0, cfg.genBase - 1); }
-function genUnit(){ return genOffset() ? '世' : '代'; }
+function genUnit(){ return '世'; }
 /* 阿拉伯数字 → 汉数字（谱书式）：10=十 11=十一 20=廿 23=廿三 30=卅 45=卌五 52=五十二 */
 const CN_D = ['零','一','二','三','四','五','六','七','八','九'];
 function numToCn(n){
@@ -1354,12 +1362,17 @@ function numToCn(n){
   }
   return CN_D[Math.floor(n / 10)] + '十' + (n % 10 ? CN_D[n % 10] : '');
 }
-function beforeZibeiLabel(g, cn = cfg.cnNum){ return '字辈前' + (cn ? numToCn(1 - g) : 1 - g) + '代'; }
 function genLabel(g, cn = cfg.cnNum, unit = genUnit()){
-  const v = g + genOffset();
-  return v <= 0 ? beforeZibeiLabel(g, cn) : (cn ? numToCn(v) : v) + unit;
+  return (cn ? numToCn(g) : g) + unit;
 }
-/* 字辈前世代区间标题（世系录五世表）：独立成句便于整句翻译，勿拆成单字 */
+function zibeiLabel(g, cn = cfg.cnNum){
+  if (!g || g.ziIndex < 0 || !g.zi) return '';
+  return '辈序' + (cn ? numToCn(g.ziIndex + 1) : g.ziIndex + 1) + '·' + g.zi;
+}
+function generationText(g, cn = cfg.cnNum){
+  return g ? genLabel(g.gen, cn) + (zibeiLabel(g, cn) ? ' · ' + zibeiLabel(g, cn) : '') : '';
+}
+/* 世代区间标题（世系录五世表） */
 function genRangeLabel(lo, hi, unit){ return genLabel(lo, true, unit) + '至' + genLabel(hi, true, unit); }
 /* 世系录表格的世次（谱书体例用「世」） */
 function genReportLabel(g){ return genLabel(g, true, '世'); }
@@ -1472,76 +1485,43 @@ function migrate(d){
   return d;
 }
 
-/* ---------- 字辈定代 ----------
- * 优先级：名字含字辈字（权威）> 父辈推算 > 同辈推算 > 世系偏移。
- * 推算结果与字辈冲突时（如中间缺一代），以字辈为准并在角标提示里注明。 */
+/* ---------- 世祖与字辈独立排列 ----------
+ * root 只装谱名，第一层成员为一世祖，父子相差一世；名字只印证字辈，不改变世祖。
+ * 导出此支的临时根携带原世祖 _genRoot，字辈起用设置仍沿用主树 cfg。 */
 function computeGenerations(){
-  const map = new Map();   // id -> {gen, src:'match'|'depth', zi, ziConflict:{zi,gen}}
+  const map = new Map();   // id -> {gen, ziIndex, zi, src:'match'|'depth', ziConflict}
   const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const depths = new Map(), names = new Map();
-  (function walk(n, d){
+  const rootGen = treeData.id === 'root' ? 0 : (Number.isFinite(treeData._genRoot) ? treeData._genRoot : 1);
+  (function walk(n, gen){
     if (n.id !== 'root'){
-      depths.set(n.id, d);
-      names.set(n.id, String(n.name || ''));
+      const ziIndex = gen < cfg.zibeiStart ? -1 : gen - cfg.zibeiStart;
+      const zi = ziIndex >= 0 ? (zb[ziIndex] || '') : '';
+      const e = { gen, ziIndex, zi, src: 'depth' };
+      const name = String(n.name || '');
+      if (zi && name.includes(zi)) e.src = 'match';
+      else if (ziIndex >= 0 && zi){
+        for (let i = 0; i < zb.length; i++){
+          if (zb[i] && i !== ziIndex && name.includes(zb[i])){
+            e.ziConflict = { zi: zb[i], gen: i + 1 }; break;
+          }
+        }
+      }
+      map.set(n.id, e);
     }
-    if (n.children) n.children.forEach(c => walk(c, d + 1));
-  })(treeData, 0);
-  if (!zb.length) return map;
-  /* 「导出此支」的临时子树携带根节点在原谱中的绝对代数：
-     子树按 根代数+层级 定位，不再靠子树内名字重新票选（缺锚点时会从 1 代错起） */
-  const fixedRoot = Number.isFinite(treeData._genRoot) ? treeData._genRoot : null;
-  /* 结构优先 + 字辈整体校准（v15.44）：
-     ① 父子链（父+1）是骨架——堂/亲兄弟必然同代，任何名字都不能推翻；
-     ② 很多谱从字辈诗中间开始记（如从「勤」=第11字起），所以用票选求整体偏移：
-        在所有「名字含字辈字」的人里，选使最多人名字与本代字辈字一致的 depth→字辈 偏移；
-     ③ 个体误命中（常见字碰上其他代字辈字）只进 tooltip 提示核对，绝不带偏整支。
-     旧版「名字含字辈字=权威定代」即栽在 ③（网友反馈：堂兄弟相差好几辈） */
-  const votes = new Set([0]);
-  depths.forEach((d, id) => {
-    const s = names.get(id);
-    for (let i = 0; i < zb.length; i++)
-      if (zb[i] && s.includes(zb[i])) votes.add(i + 1 - d);
-  });
-  let bestOff = 0, bestScore = -1;
-  if (fixedRoot === null) votes.forEach(o => {
-    let consistent = 0;
-    depths.forEach((d, id) => {
-      const gi = d + o - 1;
-      if (gi >= 0 && gi < zb.length && zb[gi] && names.get(id).includes(zb[gi])) consistent++;
-    });
-    /* 票数并列时优先非负偏移：负偏移会把整谱标成「字辈前」，必须有多数证据才接受 */
-    const better = consistent > bestScore ||
-      (consistent === bestScore && (
-        (bestOff < 0 && o >= 0) ||
-        (bestOff >= 0 && o >= 0 && o < bestOff) ||
-        (bestOff < 0 && o < 0 && o > bestOff)));
-    if (better){ bestScore = consistent; bestOff = o; }
-  });
-  depths.forEach((d, id) => {
-    const gen = fixedRoot === null ? d + bestOff : fixedRoot + d;   // 保留字辈之前的相对序（含零/负数），显示时再加谱书基准
-    const e = { gen: gen, src: 'depth' };
-    const s = names.get(id);
-    const here = zb[gen - 1];
-    if (here && s.includes(here)){ e.zi = here; e.src = 'match'; }
-    else {
-      for (let i = 0; i < zb.length; i++)
-        if (zb[i] && i !== gen - 1 && s.includes(zb[i])){ e.ziConflict = { zi: zb[i], gen: i + 1 }; break; }
-    }
-    map.set(id, e);
-  });
+    if (n.children) n.children.forEach(c => walk(c, gen + 1));
+  })(treeData, rootGen);
   return map;
 }
 function genTitle(g, n){
-  const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const ziOfGen = zbList[g.gen - 1] || '';
-  const base = genOffset() && g.gen + genOffset() > 0
-    ? '（谱书世数，' + (g.gen > 0 ? '应用自算第' + g.gen + '代' : beforeZibeiLabel(g.gen)) + '）' : '';
-  if (g.src === 'match')
-    return '字辈「' + g.zi + '」= ' + genLabel(g.gen) + base;
-  let t = '按世系推算：' + genLabel(g.gen) + base;
-  t += ziOfGen ? '（本人名字未用本代字辈「' + ziOfGen + '」）' : '（名字未用字辈）';
+  let t = '按世系推算：' + genLabel(g.gen);
+  if (g.zi){
+    t += '；' + zibeiLabel(g);
+    t += g.src === 'match' ? '（名字含本辈字辈「' + g.zi + '」，与辈序一致）'
+      : '（本人名字未用本辈字辈「' + g.zi + '」）';
+  } else if (g.ziIndex < 0) t += '（尚未起用字辈，辈序留空）';
+  else t += '（未配置本辈字辈）';
   if (g.ziConflict)
-    t += '。注意：名字里的「' + g.ziConflict.zi + '」是字辈第 ' + g.ziConflict.gen + ' 字，与世系不符——或系重名巧合、过继继嗣或谱书缺代，请核对';
+    t += '。名字里的「' + g.ziConflict.zi + '」在字辈表中排第 ' + g.ziConflict.gen + '，与当前辈序不一致，请核对；世祖编号仍按父子关系排列';
   return t;
 }
 /* 序列化前清理：布局把 _w/_x/_y 写进数据对象，绝不能持久化。
@@ -2014,16 +1994,19 @@ function render(){
     ).join('') + (meta ? '<span class="meta">' + esc(meta) + '</span>' : '');
     label.title = [displayName(n), fullDatesLine(n), meta, '双击备注行可编辑生卒年与备注'].filter(Boolean).join('\n');
 
-    /* 字辈代数角标（最左侧）：名字含字辈字=权威定代；未用字辈则按父/同辈推算 */
+    /* 世祖与辈序分别显示；无字辈表也保留世祖编号。 */
     const genInfo = GENS.get(n.id);
     if (genInfo && n.id !== 'root'){
-      const zbList = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-      const zi = genInfo.zi || zbList[genInfo.gen - 1] || '';   // 推算代也标注本代字辈字
       const chip = document.createElement('span');
       chip.className = 'gen' + (genInfo.src === 'match' ? ' match' : '');
-      chip.textContent = genLabel(genInfo.gen) + (zi ? '·' + zi : '');
+      chip.textContent = genLabel(genInfo.gen);
       chip.title = genTitle(genInfo, n);
-      label.insertBefore(chip, label.firstChild);
+      const ziChip = document.createElement('span');
+      ziChip.className = 'zibei' + (genInfo.src === 'match' ? ' match' : '');
+      ziChip.textContent = zibeiLabel(genInfo);
+      ziChip.title = chip.title;
+      label.insertBefore(ziChip, label.firstChild);
+      label.insertBefore(chip, ziChip);
     }
 
     /* 成员照片头像：28px 圆形（有 thumb=img / 无 thumb=内联 SVG 中性剪影）。
@@ -2193,19 +2176,28 @@ function render(){
   rowMarkers = [];
   if (V){
     const zbRows = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-    for (let d = 1; d < rowTop.length; d++){
+    for (let d = 0; d < rowTop.length; d++){
       const g = rowGen[d];
       if (g === undefined) continue;
-      const text = genLabel(g, true) + (zbRows[g - 1] ? '·' + zbRows[g - 1] : '');
-      const el = document.createElement('div');
-      el.className = 'vrow'; el.textContent = text;
+      const ziIndex = g < cfg.zibeiStart ? -1 : g - cfg.zibeiStart;
+      const rowInfo = { gen: g, ziIndex, zi: ziIndex >= 0 ? (zbRows[ziIndex] || '') : '' };
+      const genText = genLabel(g, true), ziText = zibeiLabel(rowInfo, true);
       let x = 8, y = rowTop[d] + rowH[d] / 2;
       if (horizontal){ x = cfg.direction === 'left' ? treeW - rowTop[d] - rowH[d] / 2 : rowTop[d] + rowH[d] / 2; y = 8; }
       else if (cfg.direction === 'up') y = treeH - y;
-      el.style.left = x + 'px'; el.style.top = y + 'px';
-      if (horizontal){ el.style.transform = 'translateX(-50%)'; el.style.writingMode = 'horizontal-tb'; }
-      nodesEl.appendChild(el);
-      rowMarkers.push({ x, y, text, horizontal });
+      /* 世祖与辈序分开排：竖排为左右两列（辈序更小），横排为上下两行，
+         避免合并成长串压到相邻世代（v15.50 视觉验收缺陷） */
+      function addRow(cls, txt, ox, oy){
+        const el = document.createElement('div');
+        el.className = 'vrow ' + cls;
+        el.textContent = txt;
+        el.style.left = (x + ox) + 'px'; el.style.top = (y + oy) + 'px';
+        if (horizontal){ el.style.transform = 'translateX(-50%)'; el.style.writingMode = 'horizontal-tb'; }
+        nodesEl.appendChild(el);
+      }
+      addRow('row-gen', genText, 0, 0);
+      if (ziText) addRow('row-zibei', ziText, horizontal ? 0 : 18, horizontal ? 14 : 0);
+      rowMarkers.push({ x, y, text: genText + (ziText ? ' · ' + ziText : ''), genText, ziText, horizontal });
     }
   }
 
@@ -2283,10 +2275,13 @@ function updateStats(GENS){
     let lo = Infinity, hi = -Infinity;
     G2.forEach(v => { if (v.gen < lo) lo = v.gen; if (v.gen > hi) hi = v.gen; });
     if (hi > -Infinity){
-      const loV = lo + genOffset(), hiV = hi + genOffset();
-      extra = loV <= 0
-        ? ' · <b>' + genLabel(lo) + '–' + genLabel(hi) + '</b>'
-        : ' · 字辈第<b>' + (cfg.cnNum ? numToCn(loV) + '–' + numToCn(hiV) : loV + '–' + hiV) + '</b>' + genUnit();
+      extra = ' · 世祖第<b>' + (cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi) : lo + '–' + hi) + '</b>世';
+      const used = Array.from(G2.values()).filter(g => g.ziIndex >= 0 && g.zi);
+      if (used.length){
+        const a = Math.min(...used.map(g => g.ziIndex + 1)), b = Math.max(...used.map(g => g.ziIndex + 1));
+        extra += ' · 辈序<b>' + (cfg.cnNum ? numToCn(a) + '–' + numToCn(b) : a + '–' + b) + '</b>';
+      }
+      gens = hi - lo + 1;
     }
   }
   document.getElementById('statsChip').innerHTML =
@@ -2738,7 +2733,7 @@ document.getElementById('btnHelp').addEventListener('click', e => {
 function hmIsOpen(){ return document.getElementById('__helpModal').classList.contains('open'); }
 function openHelp(){
   /* 字辈表网格：蓝框 = 族谱中有人用这个字辈 */
-  const lo = 1 + genOffset(), hi2 = lo + (Array.isArray(treeData.zibei) ? treeData.zibei.length : 40) - 1;   /* 标题范围跟实际表长，勿写死 40 */
+  const lo = cfg.zibeiStart, hi2 = lo + Math.max(1, Array.isArray(treeData.zibei) ? treeData.zibei.length : 0) - 1;
   const range = cfg.cnNum ? numToCn(lo) + '–' + numToCn(hi2) : lo + '–' + hi2;
   document.getElementById('__zbTitle').textContent =
     '字辈表（第' + range + genUnit() + '，蓝框 = 族谱中已出现）';
@@ -2751,8 +2746,8 @@ function openHelp(){
     zb.forEach((z, i) => {
       const d = document.createElement('span');
       d.className = 'zb' + (z && all.includes(z) ? ' on' : '');
-      d.innerHTML = esc(z || '·') + '<small>第' + genLabel(i + 1) + '</small>';
-      d.title = '第' + genLabel(i + 1) + '字辈「' + (z || '?') + '」' + (all.includes(z) ? '（族谱中已出现）' : '');
+      d.innerHTML = esc(z || '·') + '<small>第' + genLabel(cfg.zibeiStart + i) + '</small><small>' + esc(zibeiLabel({ ziIndex: i, zi: z })) + '</small>';
+      d.title = '第' + genLabel(cfg.zibeiStart + i) + '，' + zibeiLabel({ ziIndex: i, zi: z }) + (z && all.includes(z) ? '（族谱中已出现）' : '');
       host.appendChild(d);
     });
   } else {
@@ -2776,7 +2771,7 @@ function syncSettings(){
 function openSettings(){
   closeMenu();
   document.getElementById('__cfgSurName').textContent = FAM_SUR || '（自动识别）';
-  document.getElementById('__cfgBase').value = cfg.genBase;
+  document.getElementById('__cfgBase').value = cfg.zibeiStart;
   document.getElementById('__cfgSpouse').checked = !!cfg.bookSpouse;
   document.getElementById('__cfgSurname').checked = !!cfg.showSurname;
   const cn = document.getElementById('__cfgCn');
@@ -2807,7 +2802,7 @@ function previewSettings(){
 function applySettings(){
   const base = document.getElementById('__cfgBase');
   const raw = parseInt(base.value, 10);
-  if (Number.isFinite(raw)) cfg.genBase = Math.max(1, Math.min(99, raw));
+  if (Number.isFinite(raw)) cfg.genBase = Math.max(1, Math.min(9999, raw));
   cfg.bookSpouse = document.getElementById('__cfgSpouse').checked;
   cfg.showSurname = document.getElementById('__cfgSurname').checked;
   const cn = document.getElementById('__cfgCn');
@@ -2935,7 +2930,7 @@ document.getElementById('__setModal').addEventListener('input', e => {
   if (e.target.matches('input')) applySettings();
 });
 document.getElementById('__setModal').addEventListener('change', e => {
-  if (e.target.id === '__cfgBase') e.target.value = cfg.genBase;
+  if (e.target.id === '__cfgBase') e.target.value = cfg.zibeiStart;
 });
 document.getElementById('__setModal').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -3644,8 +3639,7 @@ function renderSbList(){
     const item = document.createElement('div');
     item.className = 'sb-item' + (i === _sbSel ? ' sel' : '');
     const gen = LAST_GENS.get(id);
-    const zb = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-    const gtxt = gen ? (genLabel(gen.gen) + (gen.zi || zb[gen.gen - 1] ? '·' + (gen.zi || zb[gen.gen - 1]) : '')) : '';
+    const gtxt = generationText(gen);
     item.innerHTML = (gtxt ? '<span class="g">' + esc(gtxt) + '</span>' : '') +
       '<span class="nm">' + esc(dispName(n.name)) + (n.gender === 'f' ? '<i class="gx">女</i>' : '') + '</span>' +
       '<span class="sub">' + (metaLine(n) ? esc(metaLine(n)).slice(0, 14) : (gen ? genLabel(gen.gen) : '?')) + '</span>';
@@ -3901,7 +3895,7 @@ function exportShixilu(){
       const g = GENSX.get(n.id);
       rows.push({
         gen: g ? g.gen : null,
-        zi: g ? (g.zi || zb[g.gen - 1] || '') : '',
+        zi: g ? zibeiLabel(g, true) : '',
         name: n.name || '', ziname: n.zi || '', hao: n.hao || '',
         rank: ranks.has(n.id) ? rankWord(ranks.get(n.id)) : '',
         birth: (n.birth || '').trim(), death: (n.death || '').trim(),
@@ -3914,10 +3908,10 @@ function exportShixilu(){
     }
     if (n.children) n.children.forEach(w);
   })(treeData);
-  /* 五世一表：按谱世（=应用代数+世代基准）每五代分一表 */
+  /* 五世一表：只按实际世祖分表，字辈起用设置不改变分组。 */
   const groups = new Map();
   rows.forEach(r => {
-    const s = r.gen === null ? null : r.gen + genOffset();
+    const s = r.gen;
     const gi = s === null ? Infinity : s <= 0 ? -1 : Math.floor((s - 1) / 5);
     if (!groups.has(gi)) groups.set(gi, []);
     groups.get(gi).push(r);
@@ -3955,11 +3949,12 @@ function exportShixilu(){
       const s0 = gi * 5 + 1, s1 = gi * 5 + 5;
       html += '<h2>第' + numToCn(s0) + '世至第' + numToCn(s1) + '世</h2>';
     }
-    html += '<table><tr><th>世次</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>';
+    html += '<table><tr><th>世次</th><th>辈序</th><th>讳</th><th>字</th><th>号</th><th>行第</th><th>生</th><th>卒</th><th>配偶</th><th>子女</th><th>记</th></tr>';
     list.forEach(r => {
       const ji = [r.heir, r.zhi, r.note].filter(Boolean).join('；');
       html += '<tr>'
-        + '<td class="c">' + (r.gen !== null ? genReportLabel(r.gen) + (r.zi ? '·' + r.zi : '') : '—') + '</td>'
+        + '<td class="c">' + (r.gen !== null ? genReportLabel(r.gen) : '—') + '</td>'
+        + '<td class="c">' + esc(r.zi) + '</td>'
         + '<td><b>' + esc(dispName(r.name)) + '</b></td>'
         + '<td>' + esc(r.ziname) + '</td>'
         + '<td>' + esc(r.hao) + '</td>'
@@ -5681,10 +5676,19 @@ const ZUPU_PDF_FONT_BASE64 = [
 'AQAAKAEAACMBAAAkAQAATQEAACIBAAAqAQAAIQEAACcBAAAjAQAAHgEAACYBAAAnAQAAHgEAACgBAAAlAQAAPwEAACQBAABPAQAAKAEAACQBAAAgAQAAJgEAACUBAAAmAQAAJgEAACgBAAAoAQAAHgEAACcBAAAyAQAAIAEAAEYBAAAjAQAAIAEAAB8BAAAkAQAAOAEAAB8BAAAhAQAAIQEAAB0BAAAnAQAAHAEAACEBAAAiAQAAHgEAAB0BAAAkAQAAIwEAACABAAAcAQAAIgEAACMBAAAlAQAAJAEAACcBAAAkAQAAJgEAACABAAApAQAAJQEAACQBAAApAQAAIAEAAB8BAAAnAQAAIwEAACMBAAAoAQAAHwEAACUBAAAhAQAAIgEAACIBAAAkAQAAKAEAAB0BAAAnAQAAIgEAACMBAAAfAQAAHgEAACUBAAAiAQAAIQEAACMBAAAiAQAAJQEAACIBAAAeAQAAIwEAABoBAAAZAQAAMAEAACIBAAAfAQAAHgEAAFEBAABJAQAAHQEAAA4BAAAOAQAASAEAAEEBAABHAQAAGQEAACYBAAAgAQAAOQEAAA0BAAAMAQAAGwEAAEkBAAAMAQAAQgEAAEMBAAAPAQAAPAEAAA8BAABCAQAADQEAAEYBAAANAQAADAEAAAwBAAA6AQAAFQEAAE0BAAAOAQAACwEAAB8BAAAMAQAAPAEAADsBAAAiAQAARwEAAAoBAAAeAQAADQEAADQBAAAlAQAADAEAAEYBAAANAQAAPwEAAA0BAAA4AQAANgEAADgBAABYAQAADQEAAFUBAAAMAQAAOgEAADQBAAALAQAADQEAAA0BAAAXAQAADQEAAA0BAAAMAQAAPwEAAA0BAAAbAQAADQEAADwBAAANAQAAEAEAABABAAA2AQAAHwEAABEBAAARAQAAIQEAAA8BAAALAQAAEAEAAAsBAAAMAQAADAEAADcBAABBAQAAPQEAACABAAAMAQAAEAEAAAwBAAAPAQAADgEAABEBAAAOAQAADQEAABIBAAANAQAADQEAAA4BAAAOAQAAEAEAAAwBAABCAQAAEwEAABEBAAAOAQAAEAEAAAwBAABNAQAAUgEAAFYBAAAOAQAADQEAABEBAAANAQAADwEAADgBAAANAQAAPgEAAAwBAAAQAQAAEwEAAAwBAAA3AQAAHwEAAA0BAAAQAQAAPwEAABsBAAAOAQAAIQEAAAwBAAANAQAADgEAABEBAAAOAQAAEwEAAAwBAABCAQAADwEAAA4BAAATAQAADgEAAA0BAABUAQAAEgEAAEkBAAANAQAATQEAAEMBAAA/AQAAGAEAAEUBAAAPAQAASgEAAAsBAAANAQAADgEAAB0BAAAgAQAAZgEAACABAAAbAQAAHwEAACMBAAAnAQAAHAEAAB0BAAAtAQAAKAEAABwBAAAcAQAAHAEAAB0BAAAgAQAAHgEAACEBAAAkAQAAJAEAACcBAAAdAQAAHAEAABwBAAAcAQAAGwEAACMBAAAbAQAAHgEAAB8BAAAgAQAAHQEAACABAAAjAQAAHgEAACABAAAeAQAAGQEAABoBAAAcAQAAHwEAACABAAAaAQAAHAEAABoBAAAZAQAAIAEAABoBAAAYAQAAHQEAABoBAAAaAQAAGwEAABsBAAAYAQAAGwEAACABAAAaAQAAGgEAAB0BAAAVAQAADgEAABABAAAQAQAADQEAABIBAAANAQAAEQEAAE8BAAANAQAAEAEAAA0BAAAPAQAADAEAAA4BAAA8AQAAEAEAAA0BAAAOAQAAEQEAABMBAAANAQAADAEAAEsBAAAOAQAAUQEAABQBAAAaAQAADQEAAA0BAABHAQAASAEAAD0BAAAOAQAADQEAAA0BAAAOAQAADAEAABABAAANAQAAEAEAAFUBAAAlAQAALAEAABwBAAAgAQAAJgEAACABAAApAQAAJQEAACABAAAdAQAAIAEAACEBAAAfAQAAIwEAAB8BAAAkAQAAIQEAACMBAAAgAQAAKAEAAB4BAAAhAQAAHgEAAB8BAAAcAQAAHAEAACABAAAgAQAAHAEAABwBAAAgAQAAIQEAAB0BAAAgAQAAHgEAAB4BAAAhAQAAGwEAACIBAAAaAQAAGQEAABQBAAAPAQAAHAEAABkBAAAVAQAAEQEAAA4BAAAOAQAADQEAABMBAAASAQAADgEAAA0BAAAKAQAAEAEAABABAAAMAQAAEQEAAAsBAAARAQAADAEAABABAAALAQAADQEAAA0BAAANAQAADQEAABABAAAQAQAAEQEAAA0BAAAMAQAADAEAAAsBAAAMAQAAEAEAAAwBAAAQAQAAUgEAAA4BAABJAQAADwEAABUBAAANAQAADAEAABEBAAAPAQAADAEAAA8BAAANAQAADwEAAA0BAABGAQAADAEAAAwBAAAQAQAAEwEAABIBAAAOAQAADQEAAA0BAAARAQAARQEAAA0BAAAMAQAADQEAABwBAAARAQAADAEAAA0BAAARAQAAEgEAABABAABFAQAAVwEAAA8BAAALAQAAWgEAABABAAAMAQAAQwEAAA0BAABEAQAAEAEAAA8BAAANAQAACwEAAA4BAAAPAQAADwEAACQBAAANAQAASAEAAAwBAAANAQAADQEAAA0BAAAMAQAAQAEAABEBAAANAQAAHAEAAA0BAABLAQAADAEAAA4BAAANAQAAQAEAAA8BAAANAQAADAEAABYBAAAMAQAADQEAAAwBAAA/AQAADAEAABIBAAALAQAAFQEAAA8BAAANAQAADAEAAAwBAAANAQAAEQEAAA0BAABRAQAAPwEAAEkBAAA8AQAAQAEAAD8BAABHAQAAQgEAAEwBAAA+AQAAPwEAAE4BAABCAQAAQAEAAEABAAAyAQAAQQEAAD0BAABBAQAAPgEAAEMBAAA/AQAAQQEAADwBAABAAQAARQEAAD4BAAA+AQAAPQEAAD8BAAA/AQAAPQEAAD0BAAA/AQAAPAEAAEEBAAA6AQAAPQEAADoBAAA6AQAAPAEAADgBAAAjAQAALwEAACoBAAANAQAADQEAAAwBAAAPAQAACwEAAA0BAAAPAQAAUgEAAA0BAAAiAQAADQEAAFYBAAAMAQAARwEAAEEBAABAAQAAPwEAAEEBAAA9AQAAOAEAADcBAAA+AQAAQgEAADoBAAA4AQAAQwEAAFIBAAA/AQAAQQEAADgBAAA3AQAAQQEAADkBAAA6AQAAOwEAAD4BAAAwAQAAMQEAADsBAAA8AQAAPQEAAEIBAAAyAQAAQQEAADMBAAA4AQAAOQEAADYBAAANAQAAOwEAADkBAAA4AQAAKQEAADgBAAAvAQAAKgEAAA0BAABGAQAAJwEAADoBAABhAQAAEwEAABQBAAATAQAAEwEAABMBAAATAQAAEwEAABMBAAAPAQAAFwEAAFMBAAANAQAADQEAAA0BAAANAQAAGgEAAA4BAAAOAQAADQEAAB8BAAAaAQAAEAEAAAwBAAA+AQAARQEAAEUBAAAZAQAAMQEAABQBAAAUAQAAGQEAABMBAAAPAQAAEgEAAA8BAAARAQAADgEAAA0BAAANAQAADQEAAA4BAAAUAQAAEQEAAA4BAAANAQAADgEAABABAAAOAQAADwEAABIBAAAPAQAADwEAAA4BAAAOAQAACwEAAAwBAAAQAQAACwEAABEBAAANAQAADwEAABABAAAOAQAAEQEAAA0BAAAMAQAADAEAABIBAAAnAQAAJgEAABQBAAAvAQAAJAEAACIBAAAiAQAAHQEAACEBAAAeAQAAJAEAAB8BAAAdAQAAIAEAAA8BAAAgAQAAHAEAACABAAAfAQAAHgEAAB4BAAAeAQAAHAEAACEBAAAcAQAAHQEAAB0BAAAgAQAAEgEAABsBAAAhAQAAHQEAAB0BAAAeAQAAHgEAABsBAAA6AQAAKAEAAA0BAABfAQAATgEAACUBAAAMAQAADQEAAEcBAAAQAQAAPgEAACEBAAAMAQAADAEAAAsBAAANAQAADQEAAA8BAAA+AQAADwEAAEUBAAATAQAAIQEAABMBAAANAQAADAEAACoBAAANAQAADAEAAA0BAAAP',
 'AQAAJAEAAEABAAAMAQAADQEAAAwBAAAzAQAAEAEAADcBAAAMAQAADwEAAA8BAABBAQAADgEAABkBAABMAQAAWAEAAAsBAAALAQAATwEAAEIBAAA9AQAATAEAAE4BAAA/AQAAZAEAAE0BAAA6AQAAPQEAADsBAABAAQAAQAEAAD4BAABBAQAAOwEAADoBAAA/AQAAXwEAAEIBAABCAQAAPwEAAFoBAAA/AQAAPQEAADsBAAA1AQAAOwEAADwBAAA5AQAAOAEAADoBAABVAQAAPAEAADYBAAAyAQAATwEAADQBAAAzAQAAMAEAADABAAARAQAAUQEAABwBAAAgAQAAHgEAACQBAABFAQAAHgEAAB8BAAAnAQAAIAEAACQBAAARAQAAIAEAAA8BAAARAQAAFAEAAA4BAAAWAQAAFgEAAA4BAAAQAQAASQEAAAwBAAANAQAADQEAAA4BAABFAQAADQEAAA0BAAARAQAADgEAAA0BAAASAQAADQEAAA8BAAANAQAAHgEAAA4BAAARAQAAIAEAAA4BAAANAQAADQEAAAwBAAAOAQAADgEAAA0BAAAMAQAADAEAAB8BAAAQAQAADQEAABIBAABWAQAAKgEAAA8BAAAeAQAAFQEAABkBAABUAQAANAEAAA0BAAAcAQAAVgEAABMBAAAVAQAAEwEAAA0BAAAQAQAADQEAAA4BAAAZAQAAUAEAACoBAAANAQAAWQEAAA4BAAARAQAAFAEAAA0BAABHAQAADgEAABIBAAARAQAASAEAABIBAABSAQAASQEAAAwBAAASAQAADAEAAEsBAABeAQAADAEAAA0BAABHAQAALwEAAA4BAAANAQAACwEAAA0BAAANAQAADgEAAAwBAAAMAQAAEQEAAE0BAAAMAQAACwEAAA4BAAATAQAAEQEAAA8BAAAQAQAAWAEAAEwBAABVAQAADwEAAFMBAABRAQAARQEAAA4BAABBAQAARgEAAA8BAAAxAQAAEAEAAAwBAAANAQAADAEAAD0BAAANAQAADQEAACABAAANAQAADAEAAA0BAAAPAQAADAEAAA4BAAAPAQAADAEAABIBAAAyAQAAUAEAABABAAA1AQAAUgEAAFUBAAAfAQAASgEAABABAABVAQAARwEAAEQBAABAAQAADAEAAAsBAAANAQAAGgEAAEwBAAAMAQAADQEAABABAAAPAQAADgEAAFsBAAAOAQAADQ=='
 ].join('');
+const ZUPU_PDF_SUPPLEMENT_BASE64 = [
+'AAEAAAAMAIAAAwBAR0RFRgAQAAUAAD30AAAAFk9TLzJfT2K3AAABSAAAAGBjbWFwACBbEgAAAbQAAABUZ2FzcAAgAAkAAD3kAAAAEGdseWar/3IeAAACFAAAAshoZWFkJ0faYwAAAMwAAAA2aGhlYQhmAvkAAAEEAAAAJGhtdHgEaQDMAAABqAAAAAxsb2NhANoBrQAAAggAAAAMbWF4cAAOAHAAAAEoAAAAIG5hbWXKwSlxAAAE3AAAOOZwb3N0/+MADAAAPcQAAAAgAAEAAAAGZmbga3l9Xw889QALA+gAAAAA3Ta/owAAAADnEHB9ACP/sAO5A0gAAAAIAAIAAAAAAAAAAQAABIj+4AAAA+gAIwAvA7kAAQAAAAAAAAAAAAAAAAAAAAEAAQAAAAUAbwAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAEA+YBkAAFAAAAgACAAAAAEACAAIAAAACAAAwAQAAAAgEFAAYBAQEBAQAAAAAKAAAAAAAAAAAAAABGUEtZAUD/////A3D/iAAABIgBIAAAAAEAAAAAAh8C3QAAACAAAQPoADIAXgA4ACMAYgAAAAIAAAAEAAAAFAADAAoAAAAUAAwAAAAAAEAAAAAAAAAABAACAAAAAgAAAAAAAQACC7cAAgu3AAAAAgACEqgAAhKoAAAAAwACjucAAo7nAAAABAAAAAAAGwBJAL8BZAABAF7/sgOOAwUADQAAEzUhFSERIREhFSERIRFeAzD+lf7IAoD9KgE4Ar9GRv6Z/qhOAewBIQADADj/sAOwA0gADwAXABsAABM1ITUhNSE1MxUhFSEVIRUBESERIzUhFTUhNSE4AZP+tAFMTQFQ/rABmP0GAoJO/hcB6f4XAaNHm0R/f0SbR/4NAYT+fCkpbtEAAAMAI/+/A7kDRQASAEcATAAAEzUzNTMVMxUjETY3FwYHJzY3ETc1ISYnNxYXBzMVIwYHNzY3FwIHJSYnNxYXByYnBgcGBzUGFSYnNjc2NwYGBzUmJzY3NjY3AxQXJzQ0eEpvbzg9Dq2QGT9K4QEJHC1ANB4n+vlOWbkyL0mqvQEtJTA/YjJCDRD/UlILAQkSJUIxcW9kCgkPGiIVTB60AQICB0fp6Uf+3hQXREY4TRUbATxXSD9EHEpBFEiJaAxITyf++7oaRkwck30jIiQZCQoICAECIScMSTCRCQwGAiIoCSwYdDj9eAIDAgIACABi/7IDlwNFAAMABwALAA8ALgA2AE4AbgAAJTM1Iwc1IxUXFTM1IyMVMyUzNjc2NTQnNjcjESMRMzcXBgcWFhUUBwYGIicmJxYTESERIzUhFQM1NjcXBgcVNyYnNxYXByYnBwYHJic2NgUzMjY3NjcjFRQGByYnNjY1NSM1IRUCBwYHBiInJicWAreTkz2U0ZPQlJT+aw0SDBRaMCB1Q9cLMS81NiQoFTAkDQESGNAB7kb+nEtvTyxRWFoTFzQyGzgGBnwlCwoUChIBkQYMDAUGA1goOxYcNyRHARgEGRIfESwSAg4wvW1tbW05bGxsxgEJEDJsY3xm/NcDbQMdhH9AbCxcHA8GASAiAv7UAbT+TCoqAmLrHig6IhbdKTE1D2hUExITPhMMJCIGHjMQLCugD0SwTBUORZw9Djsa/swPGAICAR8aAwAAAAAuAi4AAQAAAAAAAABEAAAAAQAAAAAAAQAPAEQAAQAAAAAAAgAHAFMAAQAAAAAAAwApAFoAAQAAAAAABAAPAEQAAQAAAAAABQA5AIMAAQAAAAAABgAXALwAAQAAAAAACgB9ANMAAQAAAAAADRDOAVAAAQAAAAAADgAaEh4AAQAAAAAAEgAPAEQAAQABAAsAAQAPAEQAAQABAAsABAAPAEQAAQACABMAAQAPAEQAAQACABMAAQAIEjgAAQACABMAAQAIEjgAAQACABMAAQAIEkAAAQACABMABAAPAEQAAQACABMABAAIEjgAAQACABMABAAIEjgAAQACABMABAAIEkAAAQAZACEAAQAPAEQAAQAZACEABAAPAEQAAwABBAQAAQAeEkgAAwABBAQABAAeEkgAAwABBAkAAACIEmYAAwABBAkAAQAeEkgAAwABBAkAAgAOEu4AAwABBAkAAwBSEvwAAwABBAkABAAeEkgAAwABBAkABQByE04AAwABBAkABgAuE8AAAwABBAkACgD6E+4AAwABBAkADSGcFOgAAwABBAkADgA0NoQAAwABBAkAEgAeEkgAAwABBBEAAQAeEkgAAwABBBEABAAeEkgAAwABCAQAAQAeEkgAAwABCAQABAAeEkgAAwABDAQAAQAeEkgAAwABDAQABAAeEkgAAwABEAQAAQAeEkgAAwABEAQABAAeEkgAAwABFAQAAQAeEkgAAwABFAQABAAeEkhDb3B5cmlnaHQgKGMpIDIwMjQgYnkgRml0emdlcmFsZCBQLiBLmmVpbmdzZWdnLiBBbGwgcmlnaHRzIHJlc2VydmVkLlp1cHVSYXJlU3VwcG9ydFJlZ3VsYXJadXB1UmFyZVN1cHBvcnQtUmVndWxhcjtzdWJzZXQtMjAyNi0xMS0wNFZlcnNpb24gNi40MDA7SnVseSA0LCAyMDI2O0ZvbnRDcmVhdG9yIDE0LjAuMC4yOTAxIDY0LWJpdFp1cHVSYXJlU3VwcG9ydC1SZWd1bGFyTW9kaWZpZWQgMjAyNi0xMS0wNDogc3Vic2V0IHRvIFUrMjAwMDAgVSsyMEJCNyBVKzIxMkE4IFUrMjhFRTcgYW5kIHJlbmFtZWQgWnVwdVJhcmVTdXBwb3J0OyBvcmlnaW5hbCBnbHlwaCBvdXRsaW5lcyByZXRhaW5lZC5UaGlzIEZvbnQgU29mdHdhcmUgaXMgbGljZW5zZWQgdW5kZXIgdGhlIFNJTCBPcGVuIEZvbnQgTGljZW5zZSwgVmVyc2lvbiAxLjEuClRoaXMgbGljZW5zZSBpcyBjb3BpZWQgYmVsb3csIGFuZCBpcyBhbHNvIGF2YWlsYWJsZSB3aXRoIGEgRkFRIGF0OgpodHRwOi8vc2NyaXB0cy5zaWwub3JnL09GTAoKCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tClNJTCBPUEVOIEZPTlQgTElDRU5TRSBWZXJzaW9uIDEuMSAtIDI2IEZlYnJ1YXJ5IDIwMDcKLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KClBSRUFNQkxFClRoZSBnb2FscyBvZiB0aGUgT3BlbiBGb250IExpY2Vuc2UgKE9GTCkgYXJlIHRvIHN0aW11bGF0ZSB3b3JsZHdpZGUKZGV2ZWxvcG1lbnQgb2YgY29sbGFib3JhdGl2ZSBmb250IHByb2plY3RzLCB0byBzdXBwb3J0IHRoZSBmb250IGNyZWF0aW9uCmVmZm9ydHMgb2YgYWNhZGVtaWMgYW5kIGxpbmd1aXN0aWMgY29tbXVuaXRpZXMsIGFuZCB0byBwcm92aWRlIGEgZnJlZSBhbmQKb3BlbiBmcmFtZXdvcmsgaW4gd2hpY2ggZm9udHMgbWF5IGJlIHNoYXJlZCBhbmQgaW1wcm92ZWQgaW4gcGFydG5lcnNoaXAKd2l0aCBvdGhlcnMuCgpUaGUgT0ZMIGFsbG93cyB0aGUgbGljZW5zZWQgZm9udHMgdG8gYmUgdXNlZCwgc3R1ZGllZCwgbW9kaWZpZWQgYW5kCnJlZGlzdHJpYnV0ZWQgZnJlZWx5IGFzIGxvbmcgYXMgdGhleSBhcmUgbm90IHNvbGQgYnkgdGhlbXNlbHZlcy4gVGhlCmZvbnRzLCBpbmNsdWRpbmcgYW55IGRlcml2YXRpdmUgd29ya3MsIGNhbiBiZSBidW5kbGVkLCBlbWJlZGRlZCwgCnJlZGlzdHJpYnV0ZWQgYW5kL29yIHNvbGQgd2l0aCBhbnkgc29mdHdhcmUgcHJvdmlkZWQgdGhhdCBhbnkgcmVzZXJ2ZWQKbmFt',
+'ZXMgYXJlIG5vdCB1c2VkIGJ5IGRlcml2YXRpdmUgd29ya3MuIFRoZSBmb250cyBhbmQgZGVyaXZhdGl2ZXMsCmhvd2V2ZXIsIGNhbm5vdCBiZSByZWxlYXNlZCB1bmRlciBhbnkgb3RoZXIgdHlwZSBvZiBsaWNlbnNlLiBUaGUKcmVxdWlyZW1lbnQgZm9yIGZvbnRzIHRvIHJlbWFpbiB1bmRlciB0aGlzIGxpY2Vuc2UgZG9lcyBub3QgYXBwbHkKdG8gYW55IGRvY3VtZW50IGNyZWF0ZWQgdXNpbmcgdGhlIGZvbnRzIG9yIHRoZWlyIGRlcml2YXRpdmVzLgoKREVGSU5JVElPTlMKIkZvbnQgU29mdHdhcmUiIHJlZmVycyB0byB0aGUgc2V0IG9mIGZpbGVzIHJlbGVhc2VkIGJ5IHRoZSBDb3B5cmlnaHQKSG9sZGVyKHMpIHVuZGVyIHRoaXMgbGljZW5zZSBhbmQgY2xlYXJseSBtYXJrZWQgYXMgc3VjaC4gVGhpcyBtYXkKaW5jbHVkZSBzb3VyY2UgZmlsZXMsIGJ1aWxkIHNjcmlwdHMgYW5kIGRvY3VtZW50YXRpb24uCgoiUmVzZXJ2ZWQgRm9udCBOYW1lIiByZWZlcnMgdG8gYW55IG5hbWVzIHNwZWNpZmllZCBhcyBzdWNoIGFmdGVyIHRoZQpjb3B5cmlnaHQgc3RhdGVtZW50KHMpLgoKIk9yaWdpbmFsIFZlcnNpb24iIHJlZmVycyB0byB0aGUgY29sbGVjdGlvbiBvZiBGb250IFNvZnR3YXJlIGNvbXBvbmVudHMgYXMKZGlzdHJpYnV0ZWQgYnkgdGhlIENvcHlyaWdodCBIb2xkZXIocykuCgoiTW9kaWZpZWQgVmVyc2lvbiIgcmVmZXJzIHRvIGFueSBkZXJpdmF0aXZlIG1hZGUgYnkgYWRkaW5nIHRvLCBkZWxldGluZywKb3Igc3Vic3RpdHV0aW5nIC0tIGluIHBhcnQgb3IgaW4gd2hvbGUgLS0gYW55IG9mIHRoZSBjb21wb25lbnRzIG9mIHRoZQpPcmlnaW5hbCBWZXJzaW9uLCBieSBjaGFuZ2luZyBmb3JtYXRzIG9yIGJ5IHBvcnRpbmcgdGhlIEZvbnQgU29mdHdhcmUgdG8gYQpuZXcgZW52aXJvbm1lbnQuCgoiQXV0aG9yIiByZWZlcnMgdG8gYW55IGRlc2lnbmVyLCBlbmdpbmVlciwgcHJvZ3JhbW1lciwgdGVjaG5pY2FsCndyaXRlciBvciBvdGhlciBwZXJzb24gd2hvIGNvbnRyaWJ1dGVkIHRvIHRoZSBGb250IFNvZnR3YXJlLgoKUEVSTUlTU0lPTiAmIENPTkRJVElPTlMKUGVybWlzc2lvbiBpcyBoZXJlYnkgZ3JhbnRlZCwgZnJlZSBvZiBjaGFyZ2UsIHRvIGFueSBwZXJzb24gb2J0YWluaW5nCmEgY29weSBvZiB0aGUgRm9udCBTb2Z0d2FyZSwgdG8gdXNlLCBzdHVkeSwgY29weSwgbWVyZ2UsIGVtYmVkLCBtb2RpZnksCnJlZGlzdHJpYnV0ZSwgYW5kIHNlbGwgbW9kaWZpZWQgYW5kIHVubW9kaWZpZWQgY29waWVzIG9mIHRoZSBGb250ClNvZnR3YXJlLCBzdWJqZWN0IHRvIHRoZSBmb2xsb3dpbmcgY29uZGl0aW9uczoKCjEpIE5laXRoZXIgdGhlIEZvbnQgU29mdHdhcmUgbm9yIGFueSBvZiBpdHMgaW5kaXZpZHVhbCBjb21wb25lbnRzLAppbiBPcmlnaW5hbCBvciBNb2RpZmllZCBWZXJzaW9ucywgbWF5IGJlIHNvbGQgYnkgaXRzZWxmLgoKMikgT3JpZ2luYWwgb3IgTW9kaWZpZWQgVmVyc2lvbnMgb2YgdGhlIEZvbnQgU29mdHdhcmUgbWF5IGJlIGJ1bmRsZWQsCnJlZGlzdHJpYnV0ZWQgYW5kL29yIHNvbGQgd2l0aCBhbnkgc29mdHdhcmUsIHByb3ZpZGVkIHRoYXQgZWFjaCBjb3B5CmNvbnRhaW5zIHRoZSBhYm92ZSBjb3B5cmlnaHQgbm90aWNlIGFuZCB0aGlzIGxpY2Vuc2UuIFRoZXNlIGNhbiBiZQppbmNsdWRlZCBlaXRoZXIgYXMgc3RhbmQtYWxvbmUgdGV4dCBmaWxlcywgaHVtYW4tcmVhZGFibGUgaGVhZGVycyBvcgppbiB0aGUgYXBwcm9wcmlhdGUgbWFjaGluZS1yZWFkYWJsZSBtZXRhZGF0YSBmaWVsZHMgd2l0aGluIHRleHQgb3IKYmluYXJ5IGZpbGVzIGFzIGxvbmcgYXMgdGhvc2UgZmllbGRzIGNhbiBiZSBlYXNpbHkgdmlld2VkIGJ5IHRoZSB1c2VyLgoKMykgTm8gTW9kaWZpZWQgVmVyc2lvbiBvZiB0aGUgRm9udCBTb2Z0d2FyZSBtYXkgdXNlIHRoZSBSZXNlcnZlZCBGb250Ck5hbWUocykgdW5sZXNzIGV4cGxpY2l0IHdyaXR0ZW4gcGVybWlzc2lvbiBpcyBncmFudGVkIGJ5IHRoZSBjb3JyZXNwb25kaW5nCkNvcHlyaWdodCBIb2xkZXIuIFRoaXMgcmVzdHJpY3Rpb24gb25seSBhcHBsaWVzIHRvIHRoZSBwcmltYXJ5IGZvbnQgbmFtZSBhcwpwcmVzZW50ZWQgdG8gdGhlIHVzZXJzLgoKNCkgVGhlIG5hbWUocykgb2YgdGhlIENvcHlyaWdodCBIb2xkZXIocykgb3IgdGhlIEF1dGhvcihzKSBvZiB0aGUgRm9udApTb2Z0d2FyZSBzaGFsbCBub3QgYmUgdXNlZCB0byBwcm9tb3RlLCBlbmRvcnNlIG9yIGFkdmVydGlzZSBhbnkKTW9kaWZpZWQgVmVyc2lvbiwgZXhjZXB0IHRvIGFja25vd2xlZGdlIHRoZSBjb250cmlidXRpb24ocykgb2YgdGhlCkNvcHlyaWdodCBIb2xkZXIocykgYW5kIHRoZSBBdXRob3Iocykgb3Igd2l0aCB0aGVpciBleHBsaWNpdCB3cml0dGVuCnBlcm1pc3Npb24uCgo1KSBUaGUgRm9udCBTb2Z0d2FyZSwgbW9kaWZpZWQgb3IgdW5tb2RpZmllZCwgaW4gcGFydCBvciBpbiB3aG9sZSwKbXVzdCBiZSBkaXN0cmlidXRlZCBlbnRpcmVseSB1bmRlciB0aGlzIGxpY2Vuc2UsIGFuZCBtdXN0IG5vdCBiZQpkaXN0cmlidXRlZCB1bmRlciBhbnkgb3RoZXIgbGljZW5zZS4gVGhlIHJlcXVpcmVtZW50IGZvciBmb250cyB0bwpyZW1haW4gdW5kZXIgdGhpcyBsaWNlbnNlIGRvZXMgbm90IGFwcGx5IHRvIGFueSBkb2N1bWVudCBjcmVhdGVkCnVzaW5nIHRoZSBGb250IFNvZnR3YXJlLgoKVEVSTUlOQVRJT04KVGhpcyBsaWNlbnNlIGJlY29tZXMgbnVsbCBhbmQgdm9pZCBpZiBhbnkgb2YgdGhlIGFib3ZlIGNvbmRpdGlvbnMgYXJlCm5vdCBtZXQuCgpESVNDTEFJTUVSClRIRSBGT05UIFNPRlRXQVJFIElTIFBST1ZJREVEICJBUyBJUyIsIFdJVEhPVVQgV0FSUkFOVFkgT0YgQU5ZIEtJTkQsCkVYUFJFU1MgT1IgSU1QTElFRCwgSU5DTFVESU5HIEJVVCBOT1QgTElNSVRFRCBUTyBBTlkgV0FSUkFOVElFUyBPRgpNRVJDSEFOVEFCSUxJVFksIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFIEFORCBOT05JTkZSSU5HRU1FTlQKT0YgQ09QWVJJR0hULCBQQVRFTlQsIFRSQURFTUFSSywgT1IgT1RIRVIgUklHSFQuIElOIE5PIEVWRU5UIFNIQUxMIFRIRQpDT1BZUklHSFQgSE9MREVSIEJF',
+'IExJQUJMRSBGT1IgQU5ZIENMQUlNLCBEQU1BR0VTIE9SIE9USEVSIExJQUJJTElUWSwKSU5DTFVESU5HIEFOWSBHRU5FUkFMLCBTUEVDSUFMLCBJTkRJUkVDVCwgSU5DSURFTlRBTCwgT1IgQ09OU0VRVUVOVElBTApEQU1BR0VTLCBXSEVUSEVSIElOIEFOIEFDVElPTiBPRiBDT05UUkFDVCwgVE9SVCBPUiBPVEhFUldJU0UsIEFSSVNJTkcKRlJPTSwgT1VUIE9GIFRIRSBVU0UgT1IgSU5BQklMSVRZIFRPIFVTRSBUSEUgRk9OVCBTT0ZUV0FSRSBPUiBGUk9NCk9USEVSIERFQUxJTkdTIElOIFRIRSBGT05UIFNPRlRXQVJFLgpodHRwOi8vc2NyaXB0cy5zaWwub3JnL09GTLlNtsLF6VAxuU22wspeUDEAWgB1AHAAdQBSAGEAcgBlAFMAdQBwAHAAbwByAHQAQwBvAHAAeQByAGkAZwBoAHQAIAAoAGMAKQAgADIAMAAyADQAIABiAHkAIABGAGkAdAB6AGcAZQByAGEAbABkACAAUAAuACAASwD2AGUAaQBuAGcAcwBlAGcAZwAuACAAQQBsAGwAIAByAGkAZwBoAHQAcwAgAHIAZQBzAGUAcgB2AGUAZAAuAFIAZQBnAHUAbABhAHIAWgB1AHAAdQBSAGEAcgBlAFMAdQBwAHAAbwByAHQALQBSAGUAZwB1AGwAYQByADsAcwB1AGIAcwBlAHQALQAyADAAMgA2AC0AMQAxAC0AMAA0AFYAZQByAHMAaQBvAG4AIAA2AC4ANAAwADAAOwBKAHUAbAB5ACAANAAsACAAMgAwADIANgA7AEYAbwBuAHQAQwByAGUAYQB0AG8AcgAgADEANAAuADAALgAwAC4AMgA5ADAAMQAgADYANAAtAGIAaQB0AFoAdQBwAHUAUgBhAHIAZQBTAHUAcABwAG8AcgB0AC0AUgBlAGcAdQBsAGEAcgBNAG8AZABpAGYAaQBlAGQAIAAyADAAMgA2AC0AMQAxAC0AMAA0ADoAIABzAHUAYgBzAGUAdAAgAHQAbwAgAFUAKwAyADAAMAAwADAAIABVACsAMgAwAEIAQgA3ACAAVQArADIAMQAyAEEAOAAgAFUAKwAyADgARQBFADcAIABhAG4AZAAgAHIAZQBuAGEAbQBlAGQAIABaAHUAcAB1AFIAYQByAGUAUwB1AHAAcABvAHIAdAA7ACAAbwByAGkAZwBpAG4AYQBsACAAZwBsAHkAcABoACAAbwB1AHQAbABpAG4AZQBzACAAcgBlAHQAYQBpAG4AZQBkAC4AVABoAGkAcwAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABpAHMAIABsAGkAYwBlAG4AcwBlAGQAIAB1AG4AZABlAHIAIAB0AGgAZQAgAFMASQBMACAATwBwAGUAbgAgAEYAbwBuAHQAIABMAGkAYwBlAG4AcwBlACwAIABWAGUAcgBzAGkAbwBuACAAMQAuADEALgAKAFQAaABpAHMAIABsAGkAYwBlAG4AcwBlACAAaQBzACAAYwBvAHAAaQBlAGQAIABiAGUAbABvAHcALAAgAGEAbgBkACAAaQBzACAAYQBsAHMAbwAgAGEAdgBhAGkAbABhAGIAbABlACAAdwBpAHQAaAAgAGEAIABGAEEAUQAgAGEAdAA6AAoAaAB0AHQAcAA6AC8ALwBzAGMAcgBpAHAAdABzAC4AcwBpAGwALgBvAHIAZwAvAE8ARgBMAAoACgAKAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAKAFMASQBMACAATwBQAEUATgAgAEYATwBOAFQAIABMAEkAQwBFAE4AUwBFACAAVgBlAHIAcwBpAG8AbgAgADEALgAxACAALQAgADIANgAgAEYAZQBiAHIAdQBhAHIAeQAgADIAMAAwADcACgAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ALQAtAC0ACgAKAFAAUgBFAEEATQBCAEwARQAKAFQAaABlACAAZwBvAGEAbABzACAAbwBmACAAdABoAGUAIABPAHAAZQBuACAARgBvAG4AdAAgAEwAaQBjAGUAbgBzAGUAIAAoAE8ARgBMACkAIABhAHIAZQAgAHQAbwAgAHMAdABpAG0AdQBsAGEAdABlACAAdwBvAHIAbABkAHcAaQBkAGUACgBkAGUAdgBlAGwAbwBwAG0AZQBuAHQAIABvAGYAIABjAG8AbABsAGEAYgBvAHIAYQB0AGkAdgBlACAAZgBvAG4AdAAgAHAAcgBvAGoAZQBjAHQAcwAsACAAdABvACAAcwB1AHAAcABvAHIAdAAgAHQAaABlACAAZgBvAG4AdAAgAGMAcgBlAGEAdABpAG8AbgAKAGUAZgBmAG8AcgB0AHMAIABvAGYAIABhAGMAYQBkAGUAbQBpAGMAIABhAG4AZAAgAGwAaQBuAGcAdQBpAHMAdABpAGMAIABjAG8AbQBtAHUAbgBpAHQAaQBlAHMALAAgAGEAbgBkACAAdABvACAAcAByAG8AdgBpAGQAZQAgAGEAIABmAHIAZQBlACAAYQBuAGQACgBvAHAAZQBuACAAZgByAGEAbQBlAHcAbwByAGsAIABpAG4AIAB3AGgAaQBjAGgAIABmAG8AbgB0AHMAIABtAGEAeQAgAGIAZQAgAHMAaABhAHIAZQBkACAAYQBuAGQAIABpAG0AcAByAG8AdgBlAGQAIABpAG4AIABwAGEAcgB0AG4AZQByAHMAaABpAHAACgB3AGkAdABoACAAbwB0AGgAZQByAHMALgAKAAoAVABoAGUAIABPAEYATAAgAGEAbABsAG8AdwBzACAAdABoAGUAIABsAGkAYwBlAG4AcwBlAGQAIABmAG8AbgB0AHMAIAB0AG8AIABiAGUAIAB1AHMAZQBkACwAIABzAHQAdQBkAGkAZQBkACwAIABtAG8AZABpAGYAaQBlAGQAIABhAG4AZAAKAHIAZQBkAGkAcwB0AHIAaQBiAHUAdABlAGQAIABmAHIAZQBlAGwAeQAgAGEAcwAgAGwAbwBuAGcAIABhAHMAIAB0AGgAZQB5ACAAYQByAGUAIABuAG8AdAAgAHMAbwBsAGQAIABiAHkAIAB0AGgAZQBtAHMAZQBsAHYAZQBzAC4AIABUAGgAZQAKAGYAbwBuAHQAcwAsACAAaQBuAGMAbAB1AGQAaQBuAGcAIABhAG4AeQAgAGQAZQByAGkAdgBhAHQAaQB2AGUAIAB3AG8AcgBrAHMALAAgAGMAYQBuACAAYgBlACAAYgB1AG4AZABsAGUAZAAsACAAZQBtAGIAZQBkAGQAZQBkACwAIAAKAHIAZQBkAGkAcwB0AHIAaQBiAHUAdABlAGQAIABhAG4AZAAvAG8AcgAgAHMAbwBsAGQAIAB3AGkAdABoACAAYQBuAHkAIABzAG8AZgB0AHcAYQByAGUAIABwAHIAbwB2AGkAZABlAGQAIAB0AGgAYQB0ACAAYQBuAHkAIAByAGUAcwBlAHIAdgBlAGQACgBuAGEAbQBlAHMAIABhAHIAZQAgAG4AbwB0ACAAdQBzAGUAZAAgAGIAeQAgAGQAZQByAGkAdgBhAHQAaQB2AGUAIAB3AG8AcgBrAHMALgAgAFQAaABlACAAZgBvAG4AdABzACAAYQBuAGQAIABkAGUAcgBpAHYAYQB0AGkAdgBlAHMALAAKAGgAbwB3AGUAdgBlAHIALAAgAGMAYQBuAG4AbwB0ACAAYgBlACAAcgBlAGwAZQBhAHMAZQBkACAAdQBuAGQAZQBy',
+'ACAAYQBuAHkAIABvAHQAaABlAHIAIAB0AHkAcABlACAAbwBmACAAbABpAGMAZQBuAHMAZQAuACAAVABoAGUACgByAGUAcQB1AGkAcgBlAG0AZQBuAHQAIABmAG8AcgAgAGYAbwBuAHQAcwAgAHQAbwAgAHIAZQBtAGEAaQBuACAAdQBuAGQAZQByACAAdABoAGkAcwAgAGwAaQBjAGUAbgBzAGUAIABkAG8AZQBzACAAbgBvAHQAIABhAHAAcABsAHkACgB0AG8AIABhAG4AeQAgAGQAbwBjAHUAbQBlAG4AdAAgAGMAcgBlAGEAdABlAGQAIAB1AHMAaQBuAGcAIAB0AGgAZQAgAGYAbwBuAHQAcwAgAG8AcgAgAHQAaABlAGkAcgAgAGQAZQByAGkAdgBhAHQAaQB2AGUAcwAuAAoACgBEAEUARgBJAE4ASQBUAEkATwBOAFMACgAiAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIgAgAHIAZQBmAGUAcgBzACAAdABvACAAdABoAGUAIABzAGUAdAAgAG8AZgAgAGYAaQBsAGUAcwAgAHIAZQBsAGUAYQBzAGUAZAAgAGIAeQAgAHQAaABlACAAQwBvAHAAeQByAGkAZwBoAHQACgBIAG8AbABkAGUAcgAoAHMAKQAgAHUAbgBkAGUAcgAgAHQAaABpAHMAIABsAGkAYwBlAG4AcwBlACAAYQBuAGQAIABjAGwAZQBhAHIAbAB5ACAAbQBhAHIAawBlAGQAIABhAHMAIABzAHUAYwBoAC4AIABUAGgAaQBzACAAbQBhAHkACgBpAG4AYwBsAHUAZABlACAAcwBvAHUAcgBjAGUAIABmAGkAbABlAHMALAAgAGIAdQBpAGwAZAAgAHMAYwByAGkAcAB0AHMAIABhAG4AZAAgAGQAbwBjAHUAbQBlAG4AdABhAHQAaQBvAG4ALgAKAAoAIgBSAGUAcwBlAHIAdgBlAGQAIABGAG8AbgB0ACAATgBhAG0AZQAiACAAcgBlAGYAZQByAHMAIAB0AG8AIABhAG4AeQAgAG4AYQBtAGUAcwAgAHMAcABlAGMAaQBmAGkAZQBkACAAYQBzACAAcwB1AGMAaAAgAGEAZgB0AGUAcgAgAHQAaABlAAoAYwBvAHAAeQByAGkAZwBoAHQAIABzAHQAYQB0AGUAbQBlAG4AdAAoAHMAKQAuAAoACgAiAE8AcgBpAGcAaQBuAGEAbAAgAFYAZQByAHMAaQBvAG4AIgAgAHIAZQBmAGUAcgBzACAAdABvACAAdABoAGUAIABjAG8AbABsAGUAYwB0AGkAbwBuACAAbwBmACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAgAGMAbwBtAHAAbwBuAGUAbgB0AHMAIABhAHMACgBkAGkAcwB0AHIAaQBiAHUAdABlAGQAIABiAHkAIAB0AGgAZQAgAEMAbwBwAHkAcgBpAGcAaAB0ACAASABvAGwAZABlAHIAKABzACkALgAKAAoAIgBNAG8AZABpAGYAaQBlAGQAIABWAGUAcgBzAGkAbwBuACIAIAByAGUAZgBlAHIAcwAgAHQAbwAgAGEAbgB5ACAAZABlAHIAaQB2AGEAdABpAHYAZQAgAG0AYQBkAGUAIABiAHkAIABhAGQAZABpAG4AZwAgAHQAbwAsACAAZABlAGwAZQB0AGkAbgBnACwACgBvAHIAIABzAHUAYgBzAHQAaQB0AHUAdABpAG4AZwAgAC0ALQAgAGkAbgAgAHAAYQByAHQAIABvAHIAIABpAG4AIAB3AGgAbwBsAGUAIAAtAC0AIABhAG4AeQAgAG8AZgAgAHQAaABlACAAYwBvAG0AcABvAG4AZQBuAHQAcwAgAG8AZgAgAHQAaABlAAoATwByAGkAZwBpAG4AYQBsACAAVgBlAHIAcwBpAG8AbgAsACAAYgB5ACAAYwBoAGEAbgBnAGkAbgBnACAAZgBvAHIAbQBhAHQAcwAgAG8AcgAgAGIAeQAgAHAAbwByAHQAaQBuAGcAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIAB0AG8AIABhAAoAbgBlAHcAIABlAG4AdgBpAHIAbwBuAG0AZQBuAHQALgAKAAoAIgBBAHUAdABoAG8AcgAiACAAcgBlAGYAZQByAHMAIAB0AG8AIABhAG4AeQAgAGQAZQBzAGkAZwBuAGUAcgAsACAAZQBuAGcAaQBuAGUAZQByACwAIABwAHIAbwBnAHIAYQBtAG0AZQByACwAIAB0AGUAYwBoAG4AaQBjAGEAbAAKAHcAcgBpAHQAZQByACAAbwByACAAbwB0AGgAZQByACAAcABlAHIAcwBvAG4AIAB3AGgAbwAgAGMAbwBuAHQAcgBpAGIAdQB0AGUAZAAgAHQAbwAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAuAAoACgBQAEUAUgBNAEkAUwBTAEkATwBOACAAJgAgAEMATwBOAEQASQBUAEkATwBOAFMACgBQAGUAcgBtAGkAcwBzAGkAbwBuACAAaQBzACAAaABlAHIAZQBiAHkAIABnAHIAYQBuAHQAZQBkACwAIABmAHIAZQBlACAAbwBmACAAYwBoAGEAcgBnAGUALAAgAHQAbwAgAGEAbgB5ACAAcABlAHIAcwBvAG4AIABvAGIAdABhAGkAbgBpAG4AZwAKAGEAIABjAG8AcAB5ACAAbwBmACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwAIAB0AG8AIAB1AHMAZQAsACAAcwB0AHUAZAB5ACwAIABjAG8AcAB5ACwAIABtAGUAcgBnAGUALAAgAGUAbQBiAGUAZAAsACAAbQBvAGQAaQBmAHkALAAKAHIAZQBkAGkAcwB0AHIAaQBiAHUAdABlACwAIABhAG4AZAAgAHMAZQBsAGwAIABtAG8AZABpAGYAaQBlAGQAIABhAG4AZAAgAHUAbgBtAG8AZABpAGYAaQBlAGQAIABjAG8AcABpAGUAcwAgAG8AZgAgAHQAaABlACAARgBvAG4AdAAKAFMAbwBmAHQAdwBhAHIAZQAsACAAcwB1AGIAagBlAGMAdAAgAHQAbwAgAHQAaABlACAAZgBvAGwAbABvAHcAaQBuAGcAIABjAG8AbgBkAGkAdABpAG8AbgBzADoACgAKADEAKQAgAE4AZQBpAHQAaABlAHIAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABuAG8AcgAgAGEAbgB5ACAAbwBmACAAaQB0AHMAIABpAG4AZABpAHYAaQBkAHUAYQBsACAAYwBvAG0AcABvAG4AZQBuAHQAcwAsAAoAaQBuACAATwByAGkAZwBpAG4AYQBsACAAbwByACAATQBvAGQAaQBmAGkAZQBkACAAVgBlAHIAcwBpAG8AbgBzACwAIABtAGEAeQAgAGIAZQAgAHMAbwBsAGQAIABiAHkAIABpAHQAcwBlAGwAZgAuAAoACgAyACkAIABPAHIAaQBnAGkAbgBhAGwAIABvAHIAIABNAG8AZABpAGYAaQBlAGQAIABWAGUAcgBzAGkAbwBuAHMAIABvAGYAIAB0AGgAZQAgAEYAbwBuAHQAIABTAG8AZgB0AHcAYQByAGUAIABtAGEAeQAgAGIAZQAgAGIAdQBuAGQAbABlAGQALAAKAHIAZQBkAGkAcwB0AHIAaQBiAHUAdABlAGQAIABhAG4AZAAvAG8AcgAgAHMAbwBsAGQAIAB3AGkAdABoACAAYQBuAHkAIABzAG8AZgB0AHcAYQByAGUALAAgAHAAcgBvAHYAaQBkAGUAZAAgAHQAaABhAHQAIABlAGEAYwBoACAAYwBvAHAAeQAKAGMAbwBuAHQAYQBpAG4AcwAgAHQAaABlACAAYQBiAG8AdgBlACAAYwBvAHAAeQByAGkAZwBoAHQAIABuAG8AdABpAGMAZQAgAGEAbgBkACAAdABoAGkAcwAgAGwAaQBjAGUAbgBzAGUALgAg',
+'AFQAaABlAHMAZQAgAGMAYQBuACAAYgBlAAoAaQBuAGMAbAB1AGQAZQBkACAAZQBpAHQAaABlAHIAIABhAHMAIABzAHQAYQBuAGQALQBhAGwAbwBuAGUAIAB0AGUAeAB0ACAAZgBpAGwAZQBzACwAIABoAHUAbQBhAG4ALQByAGUAYQBkAGEAYgBsAGUAIABoAGUAYQBkAGUAcgBzACAAbwByAAoAaQBuACAAdABoAGUAIABhAHAAcAByAG8AcAByAGkAYQB0AGUAIABtAGEAYwBoAGkAbgBlAC0AcgBlAGEAZABhAGIAbABlACAAbQBlAHQAYQBkAGEAdABhACAAZgBpAGUAbABkAHMAIAB3AGkAdABoAGkAbgAgAHQAZQB4AHQAIABvAHIACgBiAGkAbgBhAHIAeQAgAGYAaQBsAGUAcwAgAGEAcwAgAGwAbwBuAGcAIABhAHMAIAB0AGgAbwBzAGUAIABmAGkAZQBsAGQAcwAgAGMAYQBuACAAYgBlACAAZQBhAHMAaQBsAHkAIAB2AGkAZQB3AGUAZAAgAGIAeQAgAHQAaABlACAAdQBzAGUAcgAuAAoACgAzACkAIABOAG8AIABNAG8AZABpAGYAaQBlAGQAIABWAGUAcgBzAGkAbwBuACAAbwBmACAAdABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACAAbQBhAHkAIAB1AHMAZQAgAHQAaABlACAAUgBlAHMAZQByAHYAZQBkACAARgBvAG4AdAAKAE4AYQBtAGUAKABzACkAIAB1AG4AbABlAHMAcwAgAGUAeABwAGwAaQBjAGkAdAAgAHcAcgBpAHQAdABlAG4AIABwAGUAcgBtAGkAcwBzAGkAbwBuACAAaQBzACAAZwByAGEAbgB0AGUAZAAgAGIAeQAgAHQAaABlACAAYwBvAHIAcgBlAHMAcABvAG4AZABpAG4AZwAKAEMAbwBwAHkAcgBpAGcAaAB0ACAASABvAGwAZABlAHIALgAgAFQAaABpAHMAIAByAGUAcwB0AHIAaQBjAHQAaQBvAG4AIABvAG4AbAB5ACAAYQBwAHAAbABpAGUAcwAgAHQAbwAgAHQAaABlACAAcAByAGkAbQBhAHIAeQAgAGYAbwBuAHQAIABuAGEAbQBlACAAYQBzAAoAcAByAGUAcwBlAG4AdABlAGQAIAB0AG8AIAB0AGgAZQAgAHUAcwBlAHIAcwAuAAoACgA0ACkAIABUAGgAZQAgAG4AYQBtAGUAKABzACkAIABvAGYAIAB0AGgAZQAgAEMAbwBwAHkAcgBpAGcAaAB0ACAASABvAGwAZABlAHIAKABzACkAIABvAHIAIAB0AGgAZQAgAEEAdQB0AGgAbwByACgAcwApACAAbwBmACAAdABoAGUAIABGAG8AbgB0AAoAUwBvAGYAdAB3AGEAcgBlACAAcwBoAGEAbABsACAAbgBvAHQAIABiAGUAIAB1AHMAZQBkACAAdABvACAAcAByAG8AbQBvAHQAZQAsACAAZQBuAGQAbwByAHMAZQAgAG8AcgAgAGEAZAB2AGUAcgB0AGkAcwBlACAAYQBuAHkACgBNAG8AZABpAGYAaQBlAGQAIABWAGUAcgBzAGkAbwBuACwAIABlAHgAYwBlAHAAdAAgAHQAbwAgAGEAYwBrAG4AbwB3AGwAZQBkAGcAZQAgAHQAaABlACAAYwBvAG4AdAByAGkAYgB1AHQAaQBvAG4AKABzACkAIABvAGYAIAB0AGgAZQAKAEMAbwBwAHkAcgBpAGcAaAB0ACAASABvAGwAZABlAHIAKABzACkAIABhAG4AZAAgAHQAaABlACAAQQB1AHQAaABvAHIAKABzACkAIABvAHIAIAB3AGkAdABoACAAdABoAGUAaQByACAAZQB4AHAAbABpAGMAaQB0ACAAdwByAGkAdAB0AGUAbgAKAHAAZQByAG0AaQBzAHMAaQBvAG4ALgAKAAoANQApACAAVABoAGUAIABGAG8AbgB0ACAAUwBvAGYAdAB3AGEAcgBlACwAIABtAG8AZABpAGYAaQBlAGQAIABvAHIAIAB1AG4AbQBvAGQAaQBmAGkAZQBkACwAIABpAG4AIABwAGEAcgB0ACAAbwByACAAaQBuACAAdwBoAG8AbABlACwACgBtAHUAcwB0ACAAYgBlACAAZABpAHMAdAByAGkAYgB1AHQAZQBkACAAZQBuAHQAaQByAGUAbAB5ACAAdQBuAGQAZQByACAAdABoAGkAcwAgAGwAaQBjAGUAbgBzAGUALAAgAGEAbgBkACAAbQB1AHMAdAAgAG4AbwB0ACAAYgBlAAoAZABpAHMAdAByAGkAYgB1AHQAZQBkACAAdQBuAGQAZQByACAAYQBuAHkAIABvAHQAaABlAHIAIABsAGkAYwBlAG4AcwBlAC4AIABUAGgAZQAgAHIAZQBxAHUAaQByAGUAbQBlAG4AdAAgAGYAbwByACAAZgBvAG4AdABzACAAdABvAAoAcgBlAG0AYQBpAG4AIAB1AG4AZABlAHIAIAB0AGgAaQBzACAAbABpAGMAZQBuAHMAZQAgAGQAbwBlAHMAIABuAG8AdAAgAGEAcABwAGwAeQAgAHQAbwAgAGEAbgB5ACAAZABvAGMAdQBtAGUAbgB0ACAAYwByAGUAYQB0AGUAZAAKAHUAcwBpAG4AZwAgAHQAaABlACAARgBvAG4AdAAgAFMAbwBmAHQAdwBhAHIAZQAuAAoACgBUAEUAUgBNAEkATgBBAFQASQBPAE4ACgBUAGgAaQBzACAAbABpAGMAZQBuAHMAZQAgAGIAZQBjAG8AbQBlAHMAIABuAHUAbABsACAAYQBuAGQAIAB2AG8AaQBkACAAaQBmACAAYQBuAHkAIABvAGYAIAB0AGgAZQAgAGEAYgBvAHYAZQAgAGMAbwBuAGQAaQB0AGkAbwBuAHMAIABhAHIAZQAKAG4AbwB0ACAAbQBlAHQALgAKAAoARABJAFMAQwBMAEEASQBNAEUAUgAKAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAgAEkAUwAgAFAAUgBPAFYASQBEAEUARAAgACIAQQBTACAASQBTACIALAAgAFcASQBUAEgATwBVAFQAIABXAEEAUgBSAEEATgBUAFkAIABPAEYAIABBAE4AWQAgAEsASQBOAEQALAAKAEUAWABQAFIARQBTAFMAIABPAFIAIABJAE0AUABMAEkARQBEACwAIABJAE4AQwBMAFUARABJAE4ARwAgAEIAVQBUACAATgBPAFQAIABMAEkATQBJAFQARQBEACAAVABPACAAQQBOAFkAIABXAEEAUgBSAEEATgBUAEkARQBTACAATwBGAAoATQBFAFIAQwBIAEEATgBUAEEAQgBJAEwASQBUAFkALAAgAEYASQBUAE4ARQBTAFMAIABGAE8AUgAgAEEAIABQAEEAUgBUAEkAQwBVAEwAQQBSACAAUABVAFIAUABPAFMARQAgAEEATgBEACAATgBPAE4ASQBOAEYAUgBJAE4ARwBFAE0ARQBOAFQACgBPAEYAIABDAE8AUABZAFIASQBHAEgAVAAsACAAUABBAFQARQBOAFQALAAgAFQAUgBBAEQARQBNAEEAUgBLACwAIABPAFIAIABPAFQASABFAFIAIABSAEkARwBIAFQALgAgAEkATgAgAE4ATwAgAEUAVgBFAE4AVAAgAFMASABBAEwATAAgAFQASABFAAoAQwBPAFAAWQBSAEkARwBIAFQAIABIAE8ATABEAEUAUgAgAEIARQAgAEwASQBBAEIATABFACAARgBPAFIAIABBAE4AWQAgAEMATABBAEkATQAsACAARABBAE0AQQBHAEUAUwAgAE8AUgAgAE8AVABIAEUAUgAgAEwASQBBAEIASQBMAEkAVABZACwACgBJAE4AQwBMAFUARABJAE4ARwAgAEEATgBZACAARwBFAE4ARQBSAEEATAAsACAAUwBQAEUAQwBJAEEATAAsACAASQBOAEQASQBSAEUAQwBUACwAIABJAE4AQwBJ',
+'AEQARQBOAFQAQQBMACwAIABPAFIAIABDAE8ATgBTAEUAUQBVAEUATgBUAEkAQQBMAAoARABBAE0AQQBHAEUAUwAsACAAVwBIAEUAVABIAEUAUgAgAEkATgAgAEEATgAgAEEAQwBUAEkATwBOACAATwBGACAAQwBPAE4AVABSAEEAQwBUACwAIABUAE8AUgBUACAATwBSACAATwBUAEgARQBSAFcASQBTAEUALAAgAEEAUgBJAFMASQBOAEcACgBGAFIATwBNACwAIABPAFUAVAAgAE8ARgAgAFQASABFACAAVQBTAEUAIABPAFIAIABJAE4AQQBCAEkATABJAFQAWQAgAFQATwAgAFUAUwBFACAAVABIAEUAIABGAE8ATgBUACAAUwBPAEYAVABXAEEAUgBFACAATwBSACAARgBSAE8ATQAKAE8AVABIAEUAUgAgAEQARQBBAEwASQBOAEcAUwAgAEkATgAgAFQASABFACAARgBPAE4AVAAgAFMATwBGAFQAVwBBAFIARQAuAAoAaAB0AHQAcAA6AC8ALwBzAGMAcgBpAHAAdABzAC4AcwBpAGwALgBvAHIAZwAvAE8ARgBMAAAAAwAAAAAAAP/gAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMACQACABgAAf//AAMAAQAAAAwAAAAAAAAAAgABAAAABAABAAA='
+].join('');
 /* Standalone Canvas-like PDF backend for paintTreeBody. Inline before its caller.
  * Dependency: ZUPU_PDF_FONT_BASE64, a base64-encoded static TrueType (glyf) font.
- * Optional third argument overrides it; null/undefined use the embedded font.
- * No shaping/kerning or weight synthesis: all sizes/families use this one font.
+ * Optional third argument is tried first, then the embedded default, then optional
+ * ZUPU_PDF_SUPPLEMENT_BASE64. Each used font embeds its own searchable text subset.
+ * No shaping/kerning or weight synthesis: CSS families do not change this order.
  * Only drawImage (3/5-argument form) rasterizes individual photos. Text stays text;
  * a missing U+25B8 UI disclosure marker alone falls back to a vector triangle.
  */
@@ -5714,11 +5718,45 @@ function createVectorPdfContext(width, height, fontBase64) {
     for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
     return out;
   };
-  let fontData;
-  function getFont() {
-    if (fontData) return fontData;
-    const source = fontBase64 == null ? (typeof ZUPU_PDF_FONT_BASE64 === 'string' ? ZUPU_PDF_FONT_BASE64 : '') : fontBase64;
-    if (typeof source !== 'string' || !source) fail('Missing embedded font ZUPU_PDF_FONT_BASE64');
+  let fonts;
+  const selections = new Map();
+  function getFonts() {
+    if (fonts) return fonts;
+    const sources = [];
+    if (fontBase64 != null) sources.push(['Selected font', fontBase64]);
+    if (typeof ZUPU_PDF_FONT_BASE64 !== 'undefined') sources.push(['Default font', ZUPU_PDF_FONT_BASE64]);
+    else if (fontBase64 == null) fail('Missing embedded font ZUPU_PDF_FONT_BASE64');
+    if (typeof ZUPU_PDF_SUPPLEMENT_BASE64 !== 'undefined') sources.push(['Supplement font', ZUPU_PDF_SUPPLEMENT_BASE64]);
+    // Validate every configured font, even when an earlier font covers the text.
+    // Publish only after all succeed so a failed validation cannot be bypassed on retry.
+    fonts = sources.map(([label, source], i) => {
+      try { return { ...parseFont(source), index: i + 1, characters: new Map() }; }
+      catch (e) { fail(label + ': ' + e.message); }
+    });
+    return fonts;
+  }
+  function selectGlyph(cp) {
+    if (selections.has(cp)) return selections.get(cp);
+    const available = getFonts();
+    for (const f of available) {
+      const gid = f.glyph(cp);
+      if (gid) {
+        const selected = { f, gid, vector: false };
+        selections.set(cp, selected);
+        return selected;
+      }
+    }
+    if (cp === 0x25b8) {
+      const selected = { f: available[0], gid: 0, vector: true };
+      selections.set(cp, selected);
+      return selected;
+    }
+    /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
+    const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
+    fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+  }
+  function parseFont(source) {
+    if (typeof source !== 'string' || !source) fail('Invalid base64 font data');
     let data;
     try { data = unbase64(source); }
     catch (_) { fail('Invalid base64 font data'); }
@@ -5780,7 +5818,9 @@ function createVectorPdfContext(width, height, fontBase64) {
     }
     cmaps.sort((a, b) => b.format - a.format);
     if (!cmaps.length) fail('Font has no Unicode cmap format 4/12');
-    function glyph(cp, allowMissing = false) {
+    const glyphCache = new Map();
+    function glyph(cp) {
+      if (glyphCache.has(cp)) return glyphCache.get(cp);
       for (const c of cmaps) {
         let gid = 0, lo = 0, hi = c.n - 1;
         if (c.format === 12) {
@@ -5808,12 +5848,10 @@ function createVectorPdfContext(width, height, fontBase64) {
             }
           }
         }
-        if (gid && gid < glyphCount) return gid;
+        if (gid && gid < glyphCount) { glyphCache.set(cp, gid); return gid; }
       }
-      if (allowMissing) return 0;
-      /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
-      const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-      fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+      glyphCache.set(cp, 0);
+      return 0;
     }
     function subset(gids) {
       if (!canSubset) return data.slice();
@@ -5879,7 +5917,7 @@ function createVectorPdfContext(width, height, fontBase64) {
       ov.setUint32(headOffset + 8, (0xb1b0afba - checksum(out)) >>> 0);
       return out;
     }
-    fontData = {
+    return {
       glyph, pdfWidth, subset, units, canSubset, ascent: i16(hhea + 4), descent: i16(hhea + 6),
       bbox: [i16(head + 36), i16(head + 38), i16(head + 40), i16(head + 42)],
       glyphBox(gid) {
@@ -5887,7 +5925,6 @@ function createVectorPdfContext(width, height, fontBase64) {
         return locations[gid + 1] - locations[gid] >= 10 ? [i16(p + 2), i16(p + 4), i16(p + 6), i16(p + 8)] : [0, 0, 0, 0];
       }
     };
-    return fontData;
   }
 
   let state = {
@@ -5896,7 +5933,7 @@ function createVectorPdfContext(width, height, fontBase64) {
     textAlign: 'start', textBaseline: 'alphabetic', direction: 'ltr', globalAlpha: 1,
     lineDashOffset: 0, dash: [], matrix: [1, 0, 0, 1, 0, 0]
   };
-  const stack = [], ops = [], characters = new Map(), alphas = new Map(), images = [], imageCache = new WeakMap();
+  const stack = [], ops = [], alphas = new Map(), images = [], imageCache = new WeakMap();
   let path = [], current = null, subpath = null;
   const point = (x, y, m = state.matrix) => [m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]];
   function inverse(m) {
@@ -5954,7 +5991,7 @@ function createVectorPdfContext(width, height, fontBase64) {
     return +m[1];
   }
   function textRun(text) {
-    const f = getFont(), size = fontSize(), glyphs = [];
+    const f = getFonts()[0], size = fontSize(), glyphs = [];
     let width = 0;
     for (const ch of String(text)) {
       let cp = ch.codePointAt(0);
@@ -5962,9 +5999,9 @@ function createVectorPdfContext(width, height, fontBase64) {
          多行备注（应用自己的续行格式）曾因 U+000A 无字形而整单导出失败 */
       if (cp === 0x0a || cp === 0x0d || cp === 0x09 || cp === 0x2028 || cp === 0x2029) cp = 0x20;
       if ((cp >= 0x200b && cp <= 0x200f) || cp === 0xfe0e || cp === 0xfe0f || cp === 0x2060) continue;
-      const gid = f.glyph(cp, cp === 0x25b8), vector = !gid && cp === 0x25b8;
-      const advance = (vector ? 650 : f.pdfWidth(gid)) * size / 1000;
-      glyphs.push({ ch, cp, gid, vector, x: width }); width += advance;
+      const selected = selectGlyph(cp);
+      const advance = (selected.vector ? 650 : selected.f.pdfWidth(selected.gid)) * size / 1000;
+      glyphs.push({ ch: String.fromCodePoint(cp), cp, ...selected, x: width }); width += advance;
     }
     return { f, size, glyphs, width };
   }
@@ -6061,19 +6098,29 @@ function createVectorPdfContext(width, height, fontBase64) {
     },
     fillRect(x, y, w, h) { finite(x, y, w, h); draw([x, y, w, h].map(num).join(' ') + ' re f', false); },
     measureText(text) {
-      const run = textRun(text), f = run.f, k = run.size / f.units;
-      let left = Infinity, right = -Infinity, top = 0, bottom = 0;
+      const run = textRun(text), baseline = baselineOffset(run.f, run.size);
+      let left = Infinity, right = -Infinity, top = -Infinity, bottom = -Infinity;
+      let fontTop = -Infinity, fontBottom = -Infinity;
       for (const g of run.glyphs) {
+        const f = g.f, k = run.size / f.units;
         const box = g.vector ? [0.1 * f.units, 0, 0.55 * f.units, 0.6 * f.units] : f.glyphBox(g.gid);
         left = Math.min(left, g.x + box[0] * k); right = Math.max(right, g.x + box[2] * k);
-        top = Math.max(top, box[3] * k); bottom = Math.max(bottom, -box[1] * k);
+        top = Math.max(top, Math.max(0, box[3] * k) - baseline);
+        bottom = Math.max(bottom, Math.max(0, -box[1] * k) + baseline);
+        fontTop = Math.max(fontTop, f.ascent * k - baseline);
+        fontBottom = Math.max(fontBottom, -f.descent * k + baseline);
       }
-      const align = alignment(run.width), baseline = baselineOffset(f, run.size);
+      if (!run.glyphs.length) {
+        const f = run.f, k = run.size / f.units;
+        top = -baseline; bottom = baseline;
+        fontTop = f.ascent * k - baseline; fontBottom = -f.descent * k + baseline;
+      }
+      const align = alignment(run.width);
       return {
         width: run.width, actualBoundingBoxLeft: run.glyphs.length ? align - left : 0,
         actualBoundingBoxRight: run.glyphs.length ? right - align : 0,
-        actualBoundingBoxAscent: top - baseline, actualBoundingBoxDescent: bottom + baseline,
-        fontBoundingBoxAscent: f.ascent * k - baseline, fontBoundingBoxDescent: -f.descent * k + baseline
+        actualBoundingBoxAscent: top, actualBoundingBoxDescent: bottom,
+        fontBoundingBoxAscent: fontTop, fontBoundingBoxDescent: fontBottom
       };
     },
     fillText(text, x, y, maxWidth) {
@@ -6082,24 +6129,28 @@ function createVectorPdfContext(width, height, fontBase64) {
       const run = textRun(text);
       if (!run.glyphs.length) return;
       const factor = maxWidth === undefined || !run.width ? 1 : Math.min(1, maxWidth / run.width);
-      x -= alignment(run.width * factor); y += baselineOffset(run.f, run.size);
-      let encoded = '', runX = x;
+      x -= alignment(run.width * factor);
+      // Canvas establishes one baseline for the whole run, including fallback glyphs.
+      const baseY = y + baselineOffset(run.f, run.size);
+      let encoded = '', runX = x, runFont;
       const flush = () => {
-        if (encoded) draw('BT /F1 ' + num(run.size) + ' Tf ' + num(factor) + ' 0 0 -1 ' + num(runX) + ' ' + num(y) + ' Tm <' + encoded + '> Tj ET', false);
+        if (encoded) draw('BT /F' + runFont.index + ' ' + num(run.size) + ' Tf ' + num(factor) + ' 0 0 -1 ' + num(runX) + ' ' + num(baseY) + ' Tm <' + encoded + '> Tj ET', false);
         encoded = '';
       };
       for (const g of run.glyphs) {
         if (g.vector) {
           // Only the UI disclosure marker may fall back to a vector triangle.
           flush();
-          const vx = x + (g.x + run.size * 0.1) * factor, vy = y - run.size * 0.6;
-          draw(num(vx) + ' ' + num(vy) + ' m ' + num(vx + run.size * 0.45 * factor) + ' ' + num(vy + run.size * 0.3) + ' l ' + num(vx) + ' ' + num(y) + ' l h f', false);
+          const vx = x + (g.x + run.size * 0.1) * factor, vy = baseY - run.size * 0.6;
+          draw(num(vx) + ' ' + num(vy) + ' m ' + num(vx + run.size * 0.45 * factor) + ' ' + num(vy + run.size * 0.3) + ' l ' + num(vx) + ' ' + num(baseY) + ' l h f', false);
           continue;
         }
-        if (!encoded) runX = x + g.x * factor;
+        if (encoded && runFont !== g.f) flush();
+        if (!encoded) { runX = x + g.x * factor; runFont = g.f; }
+        const characters = g.f.characters;
         if (!characters.has(g.cp)) {
-          if (characters.size >= 65535) fail('Too many distinct characters on one page (maximum 65535)');
-          characters.set(g.cp, { ...g, cid: characters.size + 1 });
+          if (characters.size >= 65535) fail('Too many distinct characters in one font (maximum 65535)');
+          characters.set(g.cp, { ch: g.ch, cp: g.cp, gid: g.gid, cid: characters.size + 1 });
         }
         encoded += hex(characters.get(g.cp).cid);
       }
@@ -6129,7 +6180,8 @@ function createVectorPdfContext(width, height, fontBase64) {
     },
     async toBytes() {
       // Snapshot before the first await; drawing may continue while compression runs.
-      const chars = [...characters.values()], alphaEntries = [...alphas], photoEntries = images.slice();
+      const fontEntries = (fonts || []).filter(f => f.characters.size).map(f => ({ f, chars: [...f.characters.values()] }));
+      const alphaEntries = [...alphas], photoEntries = images.slice();
       const pageScale = Math.min(1, 14400 / Math.max(width, height));
       const pageW = +num(width * pageScale), pageH = +num(height * pageScale);
       // Keep tiny page scales precise; rounding to coordinate precision could clip a long tree.
@@ -6149,11 +6201,12 @@ function createVectorPdfContext(width, height, fontBase64) {
         return add(concat([bytes('<< /Length ' + data.length + filter + entries.replace(/\$LENGTH1/g, String(length1)) + ' >>\nstream\n'), data, bytes('\nendstream')]));
       }
       const catalog = add(null), pages = add(null), page = add(null);
-      let fontId;
-      if (chars.length) {
-        const f = getFont(), subset = f.subset(chars.map(c => c.gid));
+      const fontResources = [];
+      for (const { f, chars } of fontEntries) {
+        const subset = f.subset(chars.map(c => c.gid));
         const fontFile = await stream(subset, ' /Length1 $LENGTH1');
-        const metric = x => num(x * 1000 / f.units), name = (f.canSubset ? 'ZUPUAA+' : '') + 'ZupuVector';
+        const metric = x => num(x * 1000 / f.units);
+        const name = (f.canSubset ? 'ZUPUA' + String.fromCharCode(64 + f.index) + '+' : '') + 'ZupuVector' + f.index;
         const descriptor = add(bytes('<< /Type /FontDescriptor /FontName /' + name + ' /Flags 4 /FontBBox [' + f.bbox.map(metric).join(' ') + '] /ItalicAngle 0 /Ascent ' + metric(f.ascent) + ' /Descent ' + metric(f.descent) + ' /CapHeight ' + metric(f.ascent) + ' /StemV 80 /FontFile2 ' + fontFile + ' 0 R >>'));
         const mapping = new Uint8Array((chars.length + 1) * 2), mv = new DataView(mapping.buffer);
         for (const c of chars) mv.setUint16(c.cid * 2, c.gid);
@@ -6173,7 +6226,8 @@ function createVectorPdfContext(width, height, fontBase64) {
         }
         unicode += 'endcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n';
         const toUnicode = await stream(bytes(unicode));
-        fontId = add(bytes('<< /Type /Font /Subtype /Type0 /BaseFont /' + name + ' /Encoding /Identity-H /DescendantFonts [' + cidFont + ' 0 R] /ToUnicode ' + toUnicode + ' 0 R >>'));
+        const fontId = add(bytes('<< /Type /Font /Subtype /Type0 /BaseFont /' + name + ' /Encoding /Identity-H /DescendantFonts [' + cidFont + ' 0 R] /ToUnicode ' + toUnicode + ' 0 R >>'));
+        fontResources.push('/F' + f.index + ' ' + fontId + ' 0 R');
       }
       const gs = alphaEntries.map(([alpha, name]) => '/' + name + ' ' + add(bytes('<< /Type /ExtGState /ca ' + alpha + ' /CA ' + alpha + ' >>')) + ' 0 R');
       const xobjects = [];
@@ -6184,7 +6238,7 @@ function createVectorPdfContext(width, height, fontBase64) {
       const contents = await stream(content);
       objects[catalog] = bytes('<< /Type /Catalog /Pages ' + pages + ' 0 R >>');
       objects[pages] = bytes('<< /Type /Pages /Kids [' + page + ' 0 R] /Count 1 >>');
-      objects[page] = bytes('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 ' + num(pageW) + ' ' + num(pageH) + '] /Resources <<' + (fontId ? ' /Font << /F1 ' + fontId + ' 0 R >>' : '') + ' /ExtGState << ' + gs.join(' ') + ' >> /XObject << ' + xobjects.join(' ') + ' >> >> /Contents ' + contents + ' 0 R >>');
+      objects[page] = bytes('<< /Type /Page /Parent ' + pages + ' 0 R /MediaBox [0 0 ' + num(pageW) + ' ' + num(pageH) + '] /Resources <<' + (fontResources.length ? ' /Font << ' + fontResources.join(' ') + ' >>' : '') + ' /ExtGState << ' + gs.join(' ') + ' >> /XObject << ' + xobjects.join(' ') + ' >> >> /Contents ' + contents + ' 0 R >>');
       const chunks = [bytes('%PDF-1.7\n%'), new Uint8Array([0xe2, 0xe3, 0xcf, 0xd3, 10])], offsets = [0];
       let offset = chunks.reduce((sum, c) => sum + c.length, 0);
       for (let i = 1; i < objects.length; i++) {
@@ -6451,17 +6505,19 @@ function paintTreeBody(ctx, photoImgs){
       const gen = GENS.get(n.id);
       let chipW = 0;
       if (gen){
-        const zi = gen.zi || zbList[gen.gen - 1] || '';
-        const t = genLabel(gen.gen) + (zi ? '·' + zi : '');
         ctx.font = '600 10px ' + FONT;
-        chipW = ctx.measureText(t).width + 10;
         const match = gen.src === 'match';
-        rr(x + 14 + avOff, y + 4, chipW, 16, 5);
-        ctx.fillStyle = match ? '#e8f1fa' : '#eef2f7'; ctx.fill();
-        ctx.lineWidth = 1; ctx.strokeStyle = match ? '#b9d6ee' : '#dbe3ec'; ctx.stroke();
-        ctx.fillStyle = match ? '#2f6390' : '#66768c';
-        ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-        ctx.fillText(t, x + 19 + avOff, y + 12.5);
+        [genLabel(gen.gen), zibeiLabel(gen)].filter(Boolean).forEach(t => {
+          const bw = ctx.measureText(t).width + 10;
+          rr(x + 14 + avOff + chipW, y + 4, bw, 16, 5);
+          ctx.fillStyle = match ? '#e8f1fa' : '#eef2f7'; ctx.fill();
+          ctx.lineWidth = 1; ctx.strokeStyle = match ? '#b9d6ee' : '#dbe3ec'; ctx.stroke();
+          ctx.fillStyle = match ? '#2f6390' : '#66768c';
+          ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+          ctx.fillText(t, x + 19 + avOff + chipW, y + 12.5);
+          chipW += bw + 7;
+        });
+        chipW -= 7;
         ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       }
 
@@ -6572,9 +6628,22 @@ function paintTreeBody(ctx, photoImgs){
   ctx.font = '600 13.5px ' + FONT;
   ctx.fillStyle = '#9aa9bb'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   rowMarkers.forEach(m => {
-    if (m.horizontal){ ctx.fillText(m.text, m.x, m.y + 8); return; }
-    const startY = m.y - m.text.length * 8;
-    for (let i = 0; i < m.text.length; i++) ctx.fillText(m.text[i], m.x + 7, startY + 8 + i * 16);
+    const genText = m.genText || m.text || '';
+    if (m.horizontal){
+      ctx.font = '600 13.5px ' + FONT;
+      ctx.fillText(genText, m.x, m.y + 8);
+      if (m.ziText){ ctx.font = '500 10.5px ' + FONT; ctx.fillText(m.ziText, m.x, m.y + 22); }
+      return;
+    }
+    /* 竖排：世祖一列、辈序一小列，各自按列长居中；合并成长串会压到邻代 */
+    const gl = Array.from(genText), gy0 = m.y - (gl.length - 1) * 8;
+    ctx.font = '600 13.5px ' + FONT;
+    gl.forEach((ch, i) => ctx.fillText(ch, m.x + 7, gy0 + i * 16));
+    if (m.ziText){
+      const zl = Array.from(m.ziText), zy0 = m.y - (zl.length - 1) * 6.25;
+      ctx.font = '500 10.5px ' + FONT;
+      zl.forEach((ch, i) => ctx.fillText(ch, m.x + 25, zy0 + i * 12.5));
+    }
   });
   ctx.textBaseline = 'alphabetic';
 }
@@ -6749,15 +6818,7 @@ function openPdfExport(n){
   if (NO_PDF) return;
   _pdfSubtree = n;
   document.querySelector('input[name="pdfMode"][value="vector"]').checked = true;
-  /* 超大谱预选「A4 分页」：矢量页上限 14400pt，布局超过 ~13000px 时单页名字
-     会小于 13pt，预选分页更实用；用户仍可改回单页高清。不用 pdfNeedsPaging——
-     那是旧 12000px 栅格启发式，对矢量页过于激进 */
-  try {
-    const dims = exportDims();
-    if (Math.max(dims.W, dims.H) > 13000) {
-      document.querySelector('input[name="pdfMode"][value="paged"]').checked = true;
-    }
-  } catch (e) { /* 画布尚未渲染时保持默认单页 */ }
+  /* 默认始终单页矢量，方便整谱缩放阅读；A4 分页仅在用户选择打印模式时启用。 */
   document.getElementById('__pdfFont').value = '';
   document.getElementById('__pdfModal').classList.add('open');
   document.getElementById('__pdfGo').focus();
@@ -7007,11 +7068,10 @@ function printMemberRow(n, gen, rank){
   const b = (n.birth || '').trim(), de = (n.death || '').trim();
   if (b || de) extra += '<span class="pmeta">（' + esc([b, de].filter(Boolean).join(' – ')) + '）</span>';
   if (n.note) extra += '<span class="pmeta">— ' + esc(n.note) + '</span>';
-  /* 字辈字与卡片/搜索/竖排同规则：推算代回退到本代字辈字，打印书不缺「·X」 */
-  const zbP = Array.isArray(treeData.zibei) ? treeData.zibei : [];
-  const ziShow = gen ? (gen.zi || zbP[gen.gen - 1] || '') : '';
-  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen) + (ziShow ? '·' + ziShow : '')) + '</span>'
-                      : (rank ? '<span class="pgen">' + esc(rank) + '</span>' : '');
+  /* 打印与成员卡同样分列世祖和辈序；谱名容器不显示世祖或字辈。 */
+  const ziShow = zibeiLabel(gen);
+  const genChip = gen ? '<span class="pgen">' + esc(genLabel(gen.gen)) + '</span>' +
+    (ziShow ? '<span class="pzibei">' + esc(ziShow) + '</span> ' : '') : '';
   return genChip + core + (zx.length ? '<span class="pzi">（' + esc(zx.join('·')) + '）</span>' : '') + sps + extra;
 }
 function buildPrintDomReal(){

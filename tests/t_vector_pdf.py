@@ -198,6 +198,94 @@ def t_vector_four_directions_and_vertical_text_bounds(b):
 
 
 @testcase
+def t_vector_default_font_28ee7_searchable(b):
+    """网友真实姓名缺字回归：默认离线字体必须包含 U+28EE7，不靠替换文字或位图。"""
+    from fontTools.ttLib import TTFont
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        goto(page)
+        tree = {"id": "root", "name": "生僻字族谱", "spouses": [], "expanded": True,
+                "children": [{"id": "rare", "name": "周\U00028ee7", "spouses": ["李氏"],
+                              "note": "姓名含\U00028ee7，按原字记录", "expanded": True, "children": []}]}
+        install_tree(page, tree)
+        path = save_pdf(page, 'rare_28ee7.pdf', mode='vector')
+        assert_vector(path, ['周\U00028ee7', '李氏'])
+        with fitz.open(path) as doc:
+            text = ''.join(doc[0].get_text().split())
+            check('周\U00028ee7' in text, '默认字体的生僻姓名可完整搜索/复制', text[:80])
+            rare_fonts = []
+            for font_info in doc[0].get_fonts():
+                embedded = doc.extract_font(font_info[0])[3]
+                font = TTFont(io.BytesIO(embedded))
+                cmap = font.getBestCmap()
+                if 0x28ee7 in cmap:
+                    rare_fonts.append((font, cmap[0x28ee7]))
+            check(rare_fonts, '至少一个 PDF 内嵌子集确有 U+28EE7 字形')
+            font, glyph_name = rare_fonts[0]
+            glyph = font['glyf'][glyph_name]
+            check(glyph.numberOfContours != 0, '生僻字使用真实轮廓而非空白占位')
+            pix = doc[0].get_pixmap(matrix=fitz.Matrix(1, 1), alpha=False)
+            check(min(pix.samples) < 160, '含生僻姓名的 PDF 可渲染')
+        check(not errs, '生僻姓名导出无 JS 错误', str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
+def t_vector_default_font_28ee7_vertical_and_branch(b):
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        goto(page)
+        tree = {"id": "root", "name": "生僻字族谱", "spouses": [], "expanded": True,
+                "children": [{"id": "rare", "name": "周\U00028ee7", "spouses": [], "expanded": True,
+                              "children": [{"id": "kid", "name": "周明", "spouses": [], "children": []}]}]}
+        install_tree(page, tree)
+        page.evaluate('() => {cfg.vertical=true;render()}')
+        path = save_pdf(page, 'rare_28ee7_vertical.pdf', mode='vector')
+        with fitz.open(path) as doc:
+            check('\U00028ee7' in doc[0].get_text(), '竖排按 Unicode 码点保留 U+28EE7')
+        page.locator('.node[data-id="rare"]').click(button='right')
+        page.locator('#__ctxMenu .mi', has_text='导出此支').click()
+        page.locator('#__subtreePdf').click()
+        with page.expect_download(timeout=90000) as dl:
+            page.locator('#__pdfGo').click()
+        out = Path(LOCAL_OUT) / 'rare_28ee7_branch.pdf'
+        dl.value.save_as(str(out))
+        with fitz.open(out) as doc:
+            check('\U00028ee7' in doc[0].get_text(), '分支导出保留 U+28EE7')
+        check(not errs, '竖排/分支生僻姓名导出无 JS 错误', str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
+def t_vector_custom_rare_only_font_keeps_common_names(b):
+    """只含扩展字的本机 TTF 不能替掉常用字：用户字体优先，缺的常用汉字自动后备。"""
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        goto(page)
+        tree = {"id": "root", "name": "生僻字族谱", "spouses": [], "expanded": True,
+                "children": [{"id": "rare", "name": "周\U00028ee7", "spouses": ["李氏"],
+                              "expanded": True, "children": []}]}
+        install_tree(page, tree)
+        open_pdf_menu(page)
+        page.locator('#__pdfModal details').evaluate('(el) => {el.open=true}')
+        selected = Path(LOCAL_HTML).parent / 'third_party/zupu-rare-font/ZupuRareSupport.ttf'
+        page.locator('#__pdfFont').set_input_files(str(selected))
+        with page.expect_download(timeout=90000) as dl:
+            page.locator('#__pdfGo').click()
+        out = Path(LOCAL_OUT) / 'custom_rare_fallback.pdf'
+        dl.value.save_as(str(out))
+        assert_vector(out, ['周\U00028ee7', '李氏'])
+        with fitz.open(out) as doc:
+            check(len(doc[0].get_fonts()) == 2, '稀字字体与常用字字体分别嵌入，避免缺字')
+            check(not doc.is_repaired, '多字体 PDF 结构有效，无修复打开')
+        check(not errs, '生僻字字体补充时无 JS 错误', str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
 def t_vector_multiline_note_and_invisible_chars(b):
     """多行备注（应用续行格式）/零宽字符/emoji 变体选择符：画布把它们当空白或不可见，
     PDF 曾因 U+000A 无字形而整单失败。"""
@@ -370,6 +458,12 @@ def t_vector_branch_export_keeps_absolute_generations(b):
                     {"id": "b1", "name": "周乙", "spouses": [], "expanded": True, "children": []}]},
             ],
         }
+        # 用真实的九层祖先构成第十世分支，不再借名字票选制造“第六代”。
+        children = tree['children']
+        for level in range(9, 0, -1):
+            children = [{'id': 'ancestor%d' % level, 'name': '先祖%d' % level,
+                         'spouses': [], 'expanded': True, 'children': children}]
+        tree['children'] = children
         app = open(LOCAL_HTML, encoding="utf-8").read()
         seed = _json.dumps(tree, ensure_ascii=False)
         fixture, n = re.subn(
@@ -384,6 +478,7 @@ def t_vector_branch_export_keeps_absolute_generations(b):
         page.reload()
         page.wait_for_load_state("domcontentloaded")
         page.wait_for_timeout(300)
+        page.evaluate('() => {cfg.zibeiStart=10;render();fitToScreen()}')
         page.locator('.node[data-id="b"]').click(button='right')
         page.locator('#__ctxMenu .mi', has_text='导出此支').click()
         page.locator('#__subtreePdf').click()
@@ -392,9 +487,9 @@ def t_vector_branch_export_keeps_absolute_generations(b):
         out = Path(LOCAL_OUT) / "branch_gen.pdf"
         dl.value.save_as(str(out))
         text = "".join(fitz.open(out)[0].get_text().split())
-        check("6代" in text, "分支根沿用原谱第6代（而非1代）", text[:120])
-        check("7代" in text, "分支子代沿用第7代", text[:120])
-        check("1代" not in text.replace("11代", ""), "分支不从1代重新编号", text[:120])
+        check("10世" in text, "分支根沿用原谱第十世，不按名字重编", text[:120])
+        check("11世" in text, "分支子代沿用原谱第十一世", text[:120])
+        check("辈序1·多" in text and "辈序2·士" in text, "第十世起字辈独立从第一字开始", text[:120])
         check(not errs, "分支世代导出无 JS 错误", str(errs))
     finally:
         ctx.close()
@@ -508,7 +603,7 @@ def t_vector_subtree_scope_cancel_and_state_isolation(b):
 
 
 def ascii_font_base64():
-    """生成合法但缺少中文的微型 TTF，确定性验证 fontBase64 参数和缺字拒绝。"""
+    """生成只含 ASCII 的合法微型 TTF，用于验证用户字体缺字时后备常用汉字。"""
     from fontTools.fontBuilder import FontBuilder
     from fontTools.pens.ttGlyphPen import TTGlyphPen
     fb = FontBuilder(1000, isTTF=True)
@@ -552,14 +647,17 @@ def t_vector_invalid_font_and_injected_missing_glyph_abort(b):
         downloads = []
         page.on('download', lambda d: downloads.append(d.suggested_filename))
         before = ui_state(page)
-        for font, label in [('AAAA', '损坏字体'), (ascii_font_base64(), '合法字体缺中文字形')]:
+        for font, label in [('AAAA', '损坏字体')]:
             page.evaluate("() => document.getElementById('__toast').textContent=''")
             page.evaluate("font => exportPdfAs(undefined,'vector',font)", font)
             toast = assert_failed_export_recovers(page, downloads, before, label)
             check(re.search('失败|缺|不支持|字体|字形', toast), label + '有明确失败提示', toast)
-            if label == '合法字体缺中文字形':
-                check(re.search('缺|字形|不支持|missing character|glyph', toast, re.I),
-                      '缺字提示明确说明文字问题', toast)
+        # 用户的合法字体缺字时应自动后备，不能把常用汉字也导成错误。
+        with page.expect_download(timeout=90000) as dl:
+            page.evaluate("font => exportPdfAs(undefined,'vector',font)", ascii_font_base64())
+        out = Path(LOCAL_OUT) / 'custom_ascii_fallback.pdf'
+        dl.value.save_as(str(out))
+        assert_vector(out, [n['name'] for n in members(SAMPLE_DATA)])
         check(not errs, '字体失败已被 UI 处理，无未捕获 JS 异常', str(errs))
     finally:
         ctx.close()
