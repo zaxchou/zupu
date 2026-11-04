@@ -342,4 +342,6 @@ with sync_playwright() as p:
 
 | v15.51 | **屏幕竖排行标修复（2026-11-04）**：`#nodes` 尺寸为 0 时 `.vrow` 的 auto 宽高把竖排文字压成横排/单字折行（PDF 正常、屏幕异常）；加 `width/height:max-content` 后上/下=竖排两列、左/右=上下两行；打印克隆同步；21 模块 114 用例。 |
 
+| v15.52 | **根容器 id 归一（2026-11-04）**：`migrate` 拆成顶层 `migrate`（先 `adoptRoot`）与递归 `migrateNode`；所有载入/导回/撤销/重做都是顶层调用，Markdown 导回（`genId('r')`）或外部 JSON 带来的非 `root` 根 id 统一归为 `root`，子节点占用 `root` 时换发新 id；修复谱名被当一世祖、全体世数 +1、统计多算一人；`withTempRender` 的分支临时根不经 migrate，`_genRoot` 语义不变；新增 t_markdown_and_external_root_id（md 往返逐项不变、外部 JSON 归一）与空辈序 `display:none` 断言；21 模块 115 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

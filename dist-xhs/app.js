@@ -240,7 +240,27 @@ function sortSiblings(p){
  * JS 里不再复制一份初始数据（v12 的双份手工同步必然漂移）。
  * 「初始模板」即本文件内嵌内容的克隆；若内嵌缺失/损坏则退化为空白根，
  * 可通过「恢复备份」救回数据（json / 旧版 HTML 均支持）。 */
+/* 根容器 id 归一：谱名容器永远使用保留 id 'root'。
+   Markdown 导回、外部 JSON、旧草稿可能带来别的 id；而计数、统计、世祖、族姓识别
+   都以 id 'root' 认定标题容器——id 不符时谱名会被当成一世祖，全体世数偏大一位。
+   子节点里若已占用 'root'，先改发新 id，保证唯一。 */
+function adoptRoot(d){
+  if (!d || typeof d !== 'object' || Array.isArray(d) || !Array.isArray(d.children)) return d;
+  if (d.id === 'root') return d;
+  (function relabel(n){
+    if (n !== d && n.id === 'root') n.id = genId('n');
+    if (n.children) n.children.forEach(relabel);
+  })(d);
+  d.id = 'root';
+  return d;
+}
 function migrate(d){
+  /* 顶层入口：先归一根 id，再按节点递归清洗 */
+  if (!d || typeof d !== 'object') return d;
+  adoptRoot(d);
+  return migrateNode(d);
+}
+function migrateNode(d){
   if (!d || typeof d !== 'object') return d;
   Object.keys(d).forEach(k => { if (k[0] === '_') delete d[k]; });
   if ('spouse' in d){ d.spouses = d.spouse ? [d.spouse] : []; delete d.spouse; }
@@ -266,7 +286,7 @@ function migrate(d){
   if (typeof d.expanded !== 'boolean') d.expanded = true;
   if ('zibei' in d && !Array.isArray(d.zibei)) delete d.zibei;   // 字辈表（根节点字段，随文件走）
   if ('clan' in d && (typeof d.clan !== 'object' || d.clan === null || Array.isArray(d.clan))) delete d.clan;   // 谱序（堂号/源流）
-  d.children.forEach(migrate);
+  d.children.forEach(migrateNode);
   return d;
 }
 

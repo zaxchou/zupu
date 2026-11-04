@@ -102,7 +102,9 @@ def t_md_rich_roundtrip(b):
     check("- 雷豫发 | 嗣出" in md_text and "- 雷豫发 | 兼祧" in md_text, "嗣出/兼祧段", md_text)
     # 导回：隐藏 input set_input_files（真实 change → FileReader → importMarkdown）
     page.locator("#__importFile").set_input_files(local)
-    page.wait_for_function("() => window.__ZP.data.id.indexOf('r_') === 0", timeout=5000)
+    # 根容器固定 id 'root'（v15.52）：改看首个子节点的新生成 id 判断导入完成
+    page.wait_for_function("() => window.__ZP.data.children[0] && window.__ZP.data.children[0].id.indexOf('r_') === 0", timeout=5000)
+    check(page.evaluate("window.__ZP.data.id") == "root", "导回后根容器 id 归一为 'root'")
     check(norm_deep_eq(page), "往返后 treeData deepEqual（忽略 id/expanded，含 clan/zibei）")
     check(dlg.count() == 0, "成功导入零弹窗", str(dlg.records))
     check(not errs, "无 JS 错误", str(errs))
@@ -145,7 +147,7 @@ def t_md_pipe_and_paren_names(b):
     check("备注甲｜备注乙（全角竖线原样）" in md_text, "全角｜原样输出", md_text)
     check("注：半角竖线a|b" in md_text, "半角｜在备注段内输出", md_text)
     page.locator("#__importFile").set_input_files(local)
-    page.wait_for_function("() => window.__ZP.data.id.indexOf('r_') === 0", timeout=5000)
+    page.wait_for_function("() => window.__ZP.data.children[0] && window.__ZP.data.children[0].id.indexOf('r_') === 0", timeout=5000)
     r = page.evaluate("""() => {
       const k = window.__ZP.data.children;
       return { n0: k[0].name, note0: k[0].note,
@@ -216,7 +218,7 @@ def t_md_dup_children_roundtrip(b):
     md_text = open(local, encoding="utf-8").read()
     check(md_text.count("  - 雷同\n") == 3, "三个同名子女各占一行", md_text)
     page.locator("#__importFile").set_input_files(local)
-    page.wait_for_function("() => window.__ZP.data.id.indexOf('r_') === 0", timeout=5000)
+    page.wait_for_function("() => window.__ZP.data.children[0] && window.__ZP.data.children[0].id.indexOf('r_') === 0", timeout=5000)
     kids = page.evaluate("() => window.__ZP.data.children.map(c => c.name)")
     check(kids == ["雷同", "雷同", "雷同"], "重名同辈不吞并、保序", str(kids))
     check(norm_deep_eq(page), "重名树往返 deepEqual")

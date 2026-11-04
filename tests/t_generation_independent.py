@@ -4,6 +4,7 @@ from helper import *
 import json
 import os
 import re
+import shutil
 import sys
 
 
@@ -56,6 +57,8 @@ def t_tenth_generation_and_migration(b):
         check(node.locator('.zibei').text_content() == expected, '卡片独立辈序正确')
     check(page.locator('#stage .node[data-id="root"] .gen, #stage .node[data-id="root"] .zibei').count() == 0,
           '谱名容器没有世祖或辈序')
+    check(page.evaluate("getComputedStyle(document.querySelector('#stage .node[data-id=\"g1\"] .zibei')).display") == 'none',
+          '起用之前的空辈序不占位（不留下空隙）')
     tip = page.locator('#stage .node[data-id="g1"] .gen').get_attribute('title')
     check('核对' not in tip and '1世' in tip and '尚未起用字辈' in tip,
           '起用前误命中字辈只显示留空说明，不产生冲突警告', tip)
@@ -142,6 +145,56 @@ def t_no_zibei_keeps_generations(b):
           '没有字辈表也计算完整世祖')
     check(page.locator('#stage .gen').all_text_contents() == [f'{i}世' for i in range(1, 13)], '无表也显示一至十二世')
     check(all(t == '' for t in page.locator('#stage .zibei').all_text_contents()), '无表所有字辈为空')
+    check(not errs, '无 JS 错误', str(errs))
+    ctx.close()
+
+
+@testcase
+def t_markdown_and_external_root_id(b):
+    """导回 Markdown / 外部 JSON 后根容器 id 归一：谱名不被当成一世祖，世数不整体偏移"""
+    ctx, page, errs, cons = fresh_page(b, downloads=True)
+    generation_fixture(page)
+    set_start(page, 10)
+    before = page.evaluate("""() => ({
+      id: treeData.id,
+      gens: Array.from(computeGenerations().values(), g => [g.gen, g.ziIndex, g.zi]),
+      stats: document.getElementById('statsChip').textContent,
+      labels: Array.from(document.querySelectorAll('#stage .gen'), e => e.textContent)
+        .concat(Array.from(document.querySelectorAll('#stage .zibei'), e => e.textContent))
+    })""")
+    with page.expect_download() as dl:
+        page.evaluate('exportMarkdown()')
+    md = os.path.join(LOCAL_OUT, 'generation_independent.md')
+    shutil.copyfile(dl.value.path(), md)
+    page.locator('#__importFile').set_input_files(md)
+    page.wait_for_function(
+        "() => window.__ZP.data.children[0] && window.__ZP.data.children[0].id.indexOf('r_') === 0",
+        timeout=5000)
+    after = page.evaluate("""() => ({
+      id: treeData.id,
+      gens: Array.from(computeGenerations().values(), g => [g.gen, g.ziIndex, g.zi]),
+      stats: document.getElementById('statsChip').textContent,
+      labels: Array.from(document.querySelectorAll('#stage .gen'), e => e.textContent)
+        .concat(Array.from(document.querySelectorAll('#stage .zibei'), e => e.textContent))
+    })""")
+    check(after['id'] == 'root', '导回 Markdown 后根容器 id 归一为 root', after['id'])
+    check(after == before, '导回后世祖、辈序与统计完全不变', str(after)[:300])
+    check(page.locator('#stage .node[data-id="root"] .gen').count() == 0, '导回后谱名容器不冒充一世祖')
+
+    ext = page.evaluate("""() => {
+      const d = migrate({ id: 'external-root', name: '外部族谱', spouses: [], expanded: true,
+        children: [{ id: 'root', name: '甲', spouses: [], expanded: true, children: [
+          { id: 'b', name: '乙', spouses: [], expanded: true, children: [] } ] }] });
+      treeData = d; selectedId = null; render();
+      return { rootId: d.id, firstId: d.children[0].id,
+               gens: Array.from(computeGenerations().values(), g => g.gen),
+               rootChips: document.querySelectorAll('#stage .node[data-id="root"] .gen').length,
+               stats: document.getElementById('statsChip').textContent };
+    }""")
+    check(ext['rootId'] == 'root', '外部 JSON 根 id 归一为 root', str(ext))
+    check(ext['firstId'] != 'root', '子节点里原有的 root id 改发新 id，保持唯一', str(ext))
+    check(ext['gens'] == [1, 2], '外部 JSON 世祖从第一层真实成员起算', str(ext))
+    check(ext['rootChips'] == 0 and '2 位成员' in ext['stats'], '标题容器不计成员、不带世祖角标', str(ext))
     check(not errs, '无 JS 错误', str(errs))
     ctx.close()
 
