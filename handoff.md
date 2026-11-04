@@ -340,4 +340,6 @@ with sync_playwright() as p:
 
 | v15.50 | **世祖与字辈独立 + PDF 生僻字后备字体（2026-11-04）**：①`computeGenerations` 只按结构（root 容器不计，孩子=1，父子+1），删票选；新增 `cfg.zibeiStart`（旧 `genBase` 迁移 alias），字辈 `ziIndex=gen-start`，起用前空；卡片 `.gen` 与 `.zibei` 双 span；竖排行标两列（辈序 10.5px），左右方向上下两行；统计/帮助/搜索/打印/世系录/PDF/branch `_genRoot` 同步；②PDF 多字体：默认 Droid + 约 16KB OFL `ZupuRareSupport`（含 U+28EE7 𨻧、U+20BB7、U+212A8、U+20000）独立 FontFile2/CID/ToUnicode，自选字体优先且缺常用字回退；`build_pdf.py` 内联 `ZUPU_PDF_SUPPLEMENT_BASE64`；③PDF 弹窗恢复始终默认单页矢量（不按尺寸预选分页）；④修起用前 `ziConflict` 误报；⑤21 模块 114 用例（含 t_generation_independent、真实缺字/双字体/分支第十世 PDF）。 |
 
+| v15.51 | **屏幕竖排行标修复（2026-11-04）**：`#nodes` 尺寸为 0 时 `.vrow` 的 auto 宽高把竖排文字压成横排/单字折行（PDF 正常、屏幕异常）；加 `width/height:max-content` 后上/下=竖排两列、左/右=上下两行；打印克隆同步；21 模块 114 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

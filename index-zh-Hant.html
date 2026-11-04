@@ -272,6 +272,7 @@ body{
 .vrow{
   position:absolute;left:8px;transform:translateY(-50%);
   writing-mode:vertical-rl;text-orientation:upright;
+  width:max-content;height:max-content;   /* 父層 #nodes 尺寸為 0 時，auto 寬高會把文字壓成/折成單字列 */
   font-size:13.5px;font-weight:600;
   color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
 }
