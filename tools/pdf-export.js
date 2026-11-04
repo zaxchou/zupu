@@ -55,7 +55,7 @@ function buildVectorPdf(dims, fontBase64){
   ctx.translate((dims.W - dims.baseW) / 2, 46);
   return exportPhotoImages().then(photoImgs => {
     paintTreeBody(ctx, photoImgs);
-    return ctx.toBytes();
+    return ctx.toBytes().then(bytes => ({ bytes, raster: ctx.rasterCount }));
   });
 }
 function exportPdfAs(base, mode, fontBase64){
@@ -68,11 +68,12 @@ function exportPdfAs(base, mode, fontBase64){
   /* 让忙碌提示先绘制，再进行字体解析与矢量绘图。 */
   return new Promise(resolve => setTimeout(resolve, 20)).then(() => {
     if (mode === 'paged') return buildPagedPdf(dims);
-    return buildVectorPdf(dims, fontBase64).then(bytes => ({ bytes, pages: 1 }));
+    return buildVectorPdf(dims, fontBase64).then(r => ({ ...r, pages: 1 }));
   }).then(r => {
     if (!r) return;
     download(stampName('.pdf', base), r.bytes, 'application/pdf');
     if (mode === 'paged') toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');
+    else if (r.raster) toast('单页高清 PDF 已下载；内置字体缺的 ' + r.raster + ' 个字已用系统字体转成小图（其余文字仍可搜索、可缩放）');
     else toast('单页高清 PDF 已下载（文字与线条可放大查看）');
   }).catch(e => toast('导出失败：' + ((e && e.message) || e)))
     .then(() => exportBusy(false));

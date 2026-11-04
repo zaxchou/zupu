@@ -65,9 +65,63 @@ function createVectorPdfContext(width, height, fontBase64) {
       selections.set(cp, selected);
       return selected;
     }
+    /* 内置字体没有这个字：借浏览器自己的系统字体（与屏幕上显示的一致）栅格化，
+       只把这一个字做成小图，其余文字仍是可搜索的矢量文本。
+       系统也画不出来（.notdef 方框）时仍然明确报错，绝不悄悄嵌入方框。 */
+    const raster = rasterInfo(cp);
+    if (raster) return { f: available[0], gid: 0, raster };
     /* 只报码点不引原字符：控制符等不可见字符在 toast 里看不见，还像乱码 */
     const code = 'U+' + cp.toString(16).toUpperCase().padStart(4, '0');
-    fail('Embedded font is missing character ' + code + (cp >= 0xd800 && cp <= 0xdfff ? '; isolated surrogate detected, iterate text by Unicode code point' : '; select a local TTF font containing this character in the export dialog'));
+    const isolated = cp >= 0xd800 && cp <= 0xdfff;
+    const visible = !isolated && cp > 0x20 && cp !== 0x7f && !(cp >= 0x80 && cp <= 0x9f);
+    fail('Embedded font is missing character ' + code + (visible ? ' (' + String.fromCodePoint(cp) + ')' : '') +
+      (isolated ? '; isolated surrogate detected, iterate text by Unicode code point'
+                : '; the browser cannot draw it either, so select a local TTF font containing this character in the export dialog'));
+  }
+  /* 缺字兜底的真检测：U+10FFFF 是非字符，任何字体都没有它的字形；
+     把候选字和它按同一字体画到 64px 画布上比 alpha 通道，完全一致即系统也画不出（方框）。 */
+  const rasterCache = new Map(), rasterKeys = new Set();
+  function rasterInfo(cp) {
+    const fontSpec = String(state.font);
+    const key = cp + '|' + fontSpec + '|' + String(state.fillStyle);
+    if (rasterCache.has(key)) return rasterCache.get(key);
+    let info = null;
+    try {
+      const px = 160;
+      const sizeAt = (spec, n) => spec.replace(/(^|\s)(\d+(?:\.\d+)?|\.\d+)px(?=\s|\/|$)/i, '$1' + n + 'px');
+      const mask = (code, spec) => {
+        const c = document.createElement('canvas'); c.width = c.height = 64;
+        const x = c.getContext('2d');
+        x.font = sizeAt(spec, 48); x.textBaseline = 'alphabetic'; x.fillStyle = '#000';
+        x.fillText(String.fromCodePoint(code), 4, 56);
+        const d = x.getImageData(0, 0, 64, 64).data, out = new Uint8Array(64 * 64);
+        for (let i = 0; i < out.length; i++) out[i] = d[i * 4 + 3];
+        return out;
+      };
+      const a = mask(cp, fontSpec), b = mask(0x10ffff, fontSpec);
+      let same = true;
+      for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) { same = false; break; }
+      if (!same) {
+        const ch = String.fromCodePoint(cp), drawFont = sizeAt(fontSpec, px);
+        const measure = document.createElement('canvas').getContext('2d');
+        measure.font = drawFont;
+        const mt = measure.measureText(ch);
+        const asc = mt.actualBoundingBoxAscent, desc = mt.actualBoundingBoxDescent;
+        const adv = mt.width;
+        if (adv > 0 && (asc > 0 || desc > 0)) {
+          const pad = 3, canvas = document.createElement('canvas');
+          canvas.width = Math.ceil(adv) + pad * 2;
+          canvas.height = Math.ceil(asc + desc) + pad * 2;
+          const c = canvas.getContext('2d');
+          c.font = drawFont; c.textBaseline = 'alphabetic'; c.fillStyle = String(state.fillStyle);
+          c.fillText(ch, pad, pad + asc);
+          info = { canvas, advanceEm: adv / px, ascentEm: Math.max(0, asc) / px, descentEm: Math.max(0, desc) / px };
+        }
+      }
+    } catch (_) { info = null; }
+    rasterCache.set(key, info);
+    if (info) rasterKeys.add(key);
+    return info;
   }
   function parseFont(source) {
     if (typeof source !== 'string' || !source) fail('Invalid base64 font data');
@@ -314,7 +368,8 @@ function createVectorPdfContext(width, height, fontBase64) {
       if (cp === 0x0a || cp === 0x0d || cp === 0x09 || cp === 0x2028 || cp === 0x2029) cp = 0x20;
       if ((cp >= 0x200b && cp <= 0x200f) || cp === 0xfe0e || cp === 0xfe0f || cp === 0x2060) continue;
       const selected = selectGlyph(cp);
-      const advance = (selected.vector ? 650 : selected.f.pdfWidth(selected.gid)) * size / 1000;
+      const advance = selected.raster ? selected.raster.advanceEm * size
+        : (selected.vector ? 650 : selected.f.pdfWidth(selected.gid)) * size / 1000;
       glyphs.push({ ch: String.fromCodePoint(cp), cp, ...selected, x: width }); width += advance;
     }
     return { f, size, glyphs, width };
@@ -416,6 +471,16 @@ function createVectorPdfContext(width, height, fontBase64) {
       let left = Infinity, right = -Infinity, top = -Infinity, bottom = -Infinity;
       let fontTop = -Infinity, fontBottom = -Infinity;
       for (const g of run.glyphs) {
+        if (g.raster) {
+          const r = g.raster, s = run.size;
+          left = Math.min(left, g.x);
+          right = Math.max(right, g.x + r.advanceEm * s);
+          top = Math.max(top, r.ascentEm * s - baseline);
+          bottom = Math.max(bottom, r.descentEm * s + baseline);
+          fontTop = Math.max(fontTop, run.f.ascent * run.size / run.f.units - baseline);
+          fontBottom = Math.max(fontBottom, -run.f.descent * run.size / run.f.units + baseline);
+          continue;
+        }
         const f = g.f, k = run.size / f.units;
         const box = g.vector ? [0.1 * f.units, 0, 0.55 * f.units, 0.6 * f.units] : f.glyphBox(g.gid);
         left = Math.min(left, g.x + box[0] * k); right = Math.max(right, g.x + box[2] * k);
@@ -452,6 +517,14 @@ function createVectorPdfContext(width, height, fontBase64) {
         encoded = '';
       };
       for (const g of run.glyphs) {
+        if (g.raster) {
+          // 系统字体栅格化的缺字：按基线对齐贴一张小图，前后文字各自成段，仍可搜索。
+          flush();
+          const r = g.raster, s = run.size;
+          ctx.drawImage(r.canvas, x + g.x * factor, baseY - r.ascentEm * s,
+                        r.advanceEm * s * factor, (r.ascentEm + r.descentEm) * s);
+          continue;
+        }
         if (g.vector) {
           // Only the UI disclosure marker may fall back to a vector triangle.
           flush();
@@ -492,6 +565,7 @@ function createVectorPdfContext(width, height, fontBase64) {
       }
       ops.push('q\n' + state.matrix.map(num).join(' ') + ' cm\n' + alphaCommand(1) + '\n' + [w, 0, 0, -h, x, y + h].map(num).join(' ') + ' cm /' + item.name + ' Do\nQ');
     },
+    get rasterCount() { return rasterKeys.size; },
     async toBytes() {
       // Snapshot before the first await; drawing may continue while compression runs.
       const fontEntries = (fonts || []).filter(f => f.characters.size).map(f => ({ f, chars: [...f.characters.values()] }));

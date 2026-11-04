@@ -39,6 +39,10 @@ def t_i18n_en_smoke(b):
     check("Saved" in page.locator("#saveState").inner_text(), "EN: save light is English",
           page.locator("#saveState").inner_text())
     check("View" in page.locator("#btnView").inner_text(), "EN: View menu is English")
+    page.locator("#btnView").click()
+    check(page.locator("#__ctxMenu .mi", has_text="Expand to generation").count() == 1,
+          "EN: partial-expand menu item is English", page.locator("#__ctxMenu").inner_text())
+    page.evaluate("closeMenu()")
     stats = page.locator("#statsChip").inner_text()
     check("members" in stats and "gens" in stats, "EN: stats chip is English", stats)
     # 世祖按父子结构编号，字辈在独立角标中按辈序显示。
@@ -83,6 +87,10 @@ def t_i18n_ja_smoke(b):
     check("保存済み" in page.locator("#saveState").inner_text(), "JA: 保存ライトが日本語",
           page.locator("#saveState").inner_text())
     check("表示" in page.locator("#btnView").inner_text(), "JA: 表示メニューが日本語")
+    page.locator("#btnView").click()
+    check(page.locator("#__ctxMenu .mi", has_text="第何世まで展開").count() == 1,
+          "JA: 部分展開メニューが日本語", page.locator("#__ctxMenu").inner_text())
+    page.evaluate("closeMenu()")
     stats = page.locator("#statsChip").inner_text()
     check("人" in stats and "代" in stats, "JA: 統計チップが日本語", stats)
     # 世代は親子関係から数え、字輩順序は別のバッジで表示する。

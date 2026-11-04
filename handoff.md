@@ -344,4 +344,6 @@ with sync_playwright() as p:
 
 | v15.52 | **根容器 id 归一（2026-11-04）**：`migrate` 拆成顶层 `migrate`（先 `adoptRoot`）与递归 `migrateNode`；所有载入/导回/撤销/重做都是顶层调用，Markdown 导回（`genId('r')`）或外部 JSON 带来的非 `root` 根 id 统一归为 `root`，子节点占用 `root` 时换发新 id；修复谱名被当一世祖、全体世数 +1、统计多算一人；`withTempRender` 的分支临时根不经 migrate，`_genRoot` 语义不变；新增 t_markdown_and_external_root_id（md 往返逐项不变、外部 JSON 归一）与空辈序 `display:none` 断言；21 模块 115 用例。 |
 
+| v15.53 | **缺字栅格兜底 + 部分展开（2026-11-04，用户反馈单页导出仍失败/希望展开一部分）**：①`tools/pdf-vector.js` `selectGlyph` 在全部内置字体无字形时调用 `rasterInfo`——用 `state.font`（与屏幕同一字体栈）把该字画到 160px 画布，按 64px 与非字符 U+10FFFF 的 alpha 位图比对判 .notdef；可画则按基线贴 JPEG 小图（`rasterCount` 统计，toast 说明），系统也画不出才 fail（提示带字符与码点）；`measureText`/`fillText` 支持 raster 宽度与 `maxWidth` 缩放。②查看 ▾ 新增「展开到第几世…」→ `expandToGeneration()`：`expanded = gen < N`，可撤销、非法输入不改；EN/JA/繁表与 PDF 弹窗缺字说明同步。③测试：t_view `t_expand_to_generation`、t_vector_pdf `t_vector_system_font_raster_fallback`（emoji 缺字单页成功、JPEG XObject、基线与文字对齐、仍有 FontFile2/ToUnicode）；21 模块 117 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

@@ -664,6 +664,41 @@ def t_vector_invalid_font_and_injected_missing_glyph_abort(b):
 
 
 @testcase
+def t_vector_system_font_raster_fallback(b):
+    """内置字体没有、系统字体能画的字（如 emoji/扩展 B）：整单不再失败，缺字转小图。"""
+    ctx, page, errs, _ = fresh_page(b, downloads=True)
+    try:
+        goto(page)
+        rare = '\U0001F600'   # 不在内置字体；Chromium 可用系统字体绘制
+        page.evaluate("name => {findNode('b2').name=name;render()}", '少群' + rare)
+        path = save_pdf(page, 'vector_raster_fallback.pdf')
+        toast = page.locator('#__toast').text_content()
+        check('1 个字' in toast and ('小图' in toast or 'system font' in toast),
+              '成功提示说明缺字已转为小图', toast)
+        raw = path.read_bytes()
+        check(b'/DCTDecode' in raw, '缺字以 JPEG 图片 XObject 嵌入')
+        with fitz.open(path) as doc:
+            pdf_page = doc[0]
+            check(len(doc) == 1, '仍为单页')
+            text = pdf_page.get_text()
+            check('少群' in text, '同姓名的其余文字仍是矢量、可提取', text[:80])
+            check(rare not in text, '栅格化的字不再作为文本（已在提示中说明）')
+            imgs = [i for i in pdf_page.get_image_info()]
+            check(len(imgs) == 1, '恰好一张缺字小图', str(len(imgs)))
+            group = [c for block in pdf_page.get_text('rawdict')['blocks'] if block['type'] == 0
+                     for line in block['lines'] for span in line['spans']
+                     for c in span['chars'] if c['c'] == '群']
+            check(group, '可定位到同姓名文字')
+            check(abs(imgs[0]['bbox'][3] - group[0]['bbox'][3]) <= 4,
+                  '缺字小图与同一行文字基线对齐',
+                  'img_bottom=%.2f char_bottom=%.2f' % (imgs[0]['bbox'][3], group[0]['bbox'][3]))
+        check(b'/FontFile2' in raw and b'/ToUnicode' in raw, '其余文字仍走矢量字体子集')
+        check(not errs, '无未捕获 JS 异常', str(errs))
+    finally:
+        ctx.close()
+
+
+@testcase
 def t_vector_default_font_missing_character_no_partial_file(b):
     ctx, page, errs, _ = fresh_page(b, downloads=True)
     try:

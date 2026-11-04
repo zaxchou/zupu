@@ -230,6 +230,43 @@ def t_print_document_tree(b):
     ctx.close()
 
 
+@testcase
+def t_expand_to_generation(b):
+    """部分展开：只展开到第 N 世，更深的支收起；可撤销，非法输入不动数据。"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto(page)
+    total = page.locator('#stage .node').count()
+    check(total == 13, '夹具默认全展开', str(total))
+    page.locator('#btnView').click()
+    page.locator('#__ctxMenu .mi', has_text='展开到第几世').click()
+    dep = page.locator('#__uipInput').input_value()
+    check(dep == '3', '默认值取当前最大世数', dep)
+    page.locator('#__uipInput').fill('2')
+    page.locator('#__uipOk').click()
+    page.wait_for_timeout(250)
+    shown = page.locator('#stage .node').count()
+    check(shown == 9, '只渲染到第二世（谱名容器 + 4 + 4）', str(shown))
+    chips = page.locator('#stage .gen').all_text_contents()
+    check(sorted(chips) == sorted(['1世'] * 4 + ['2世'] * 4),
+          '卡片世祖只到二世', str(chips))
+    check('已展开到第2世' in page.locator('#__toast').text_content(), '提示展开到的世数',
+          page.locator('#__toast').text_content())
+    check(page.locator('#stage .node[data-id="b1a1"]').count() == 0, '第三世节点未渲染')
+    page.evaluate('undo()')
+    page.wait_for_timeout(200)
+    check(page.locator('#stage .node').count() == total, '撤销恢复全展开')
+    page.locator('#btnView').click()
+    page.locator('#__ctxMenu .mi', has_text='展开到第几世').click()
+    page.locator('#__uipInput').fill('0')
+    page.locator('#__uipOk').click()
+    page.wait_for_timeout(150)
+    check('请输入大于 0 的世数' in page.locator('#__toast').text_content(), '非法世数提示',
+          page.locator('#__toast').text_content())
+    check(page.locator('#stage .node').count() == total, '非法输入不改折叠状态')
+    check(not errs, '无 JS 错误', str(errs))
+    ctx.close()
+
+
 if __name__ == "__main__":
     import sys as _sys
     ok = run_module(_sys.modules[__name__], "t_view 缩放/平移/打印")

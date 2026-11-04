@@ -859,7 +859,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <p class="help-note">照片清晰度取决于原图片。单页模式内嵌字体，离线查看也能正常显示。</p>
     <details><summary>生僻字与其他文字</summary>
       <label>字体文件（可选，TTF，仅供本次导出）<input id="__pdfFont" type="file" accept=".ttf,font/ttf"></label>
-      <p class="help-note">已补充「𨻧、𠮷、𡊨、𠀀」等字形。其他缺字可选择包含该字、允许嵌入的本机 TrueType 字体；常用字会自动后备，字体不会上传。内置字库不涵盖所有生僻字或韩文。</p>
+      <p class="help-note">已补充「𨻧、𠮷、𡊨、𠀀」等字形。其他缺字会先用本机系统字体转成小图放进 PDF（其余文字仍可搜索、可缩放）；系统也画不出时才需选择包含该字、允许嵌入的本机 TrueType 字体。字体不会上传。内置字库不涵盖所有生僻字或韩文。</p>
     </details>
     <div class="modal-btns"><button id="__pdfCancel">关闭</button><button class="primary" id="__pdfGo">导出</button></div>
   </div>

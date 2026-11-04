@@ -1494,6 +1494,7 @@ document.getElementById('btnView').addEventListener('click', e => {
     m.appendChild(msep());
     m.appendChild(mi('全展开', '', '', () => expandAll(true)));
     m.appendChild(mi('全折叠', '', '', () => expandAll(false)));
+    m.appendChild(mi('展开到第几世…', '', '', expandToGeneration));
     m.appendChild(msep());
     m.appendChild(mi('适应屏幕', '', '', fitToScreen));
     m.appendChild(mi('实际大小', '', '1:1', resetZoom));
@@ -1954,6 +1955,27 @@ function expandAll(v){
   pushHistory('expandAll:' + v);
   (function w(n){ n.expanded = v; if (n.children) n.children.forEach(w); })(treeData);
   render();
+}
+/* 部分展开：只展开到第 N 世，更深的支收起（谱大了比「全展开/全折叠」好用，找某一代更快） */
+function expandToGeneration(){
+  const G = computeGenerations();
+  let max = 1;
+  G.forEach(g => { if (g.gen > max) max = g.gen; });
+  uiPrompt('展开到第几世？（如填 3：只展开到第 3 世，更深的支收起；可 Ctrl+Z 撤销）', String(Math.min(max, 3)))
+    .then(function(t){
+      if (t === null) return;
+      const n = Math.round(Number(String(t).trim()));
+      if (!Number.isFinite(n) || n < 1){ toast('请输入大于 0 的世数'); return; }
+      pushHistory('expandTo:' + n);
+      (function w(node){
+        const g = G.get(node.id);
+        node.expanded = !g || g.gen < n;
+        if (node.children) node.children.forEach(w);
+      })(treeData);
+      render(); fitToScreen();
+      if (n >= max) toast('已展开到第' + genLabel(max) + '（已是全部世代）');
+      else toast('已展开到第' + genLabel(n) + '，更深的支保持收起');
+    });
 }
 function sortAllByBirth(){
   let touched = 0;
@@ -3595,7 +3617,7 @@ function buildVectorPdf(dims, fontBase64){
   ctx.translate((dims.W - dims.baseW) / 2, 46);
   return exportPhotoImages().then(photoImgs => {
     paintTreeBody(ctx, photoImgs);
-    return ctx.toBytes();
+    return ctx.toBytes().then(bytes => ({ bytes, raster: ctx.rasterCount }));
   });
 }
 function exportPdfAs(base, mode, fontBase64){
@@ -3608,11 +3630,12 @@ function exportPdfAs(base, mode, fontBase64){
   /* 让忙碌提示先绘制，再进行字体解析与矢量绘图。 */
   return new Promise(resolve => setTimeout(resolve, 20)).then(() => {
     if (mode === 'paged') return buildPagedPdf(dims);
-    return buildVectorPdf(dims, fontBase64).then(bytes => ({ bytes, pages: 1 }));
+    return buildVectorPdf(dims, fontBase64).then(r => ({ ...r, pages: 1 }));
   }).then(r => {
     if (!r) return;
     download(stampName('.pdf', base), r.bytes, 'application/pdf');
     if (mode === 'paged') toast('树较大，已分为 ' + r.pages + ' 页（A4 横向，可打印）');
+    else if (r.raster) toast('单页高清 PDF 已下载；内置字体缺的 ' + r.raster + ' 个字已用系统字体转成小图（其余文字仍可搜索、可缩放）');
     else toast('单页高清 PDF 已下载（文字与线条可放大查看）');
   }).catch(e => toast('导出失败：' + ((e && e.message) || e)))
     .then(() => exportBusy(false));
