@@ -193,6 +193,44 @@ def t_delete_count_and_undo_redo(b):
     ctx.close()
 
 
+@testcase
+def t_touch_double_tap_spouse_and_name(b):
+    """网友反馈：手机上双击配偶没反应。触屏双轻点按位置分派：
+       配偶→改配偶弹窗，名字→改名弹窗（与桌面 dblclick 同一入口）。"""
+    ctx, page, errs, cons = fresh_page(b, 390, 844, touch=True, mobile=True)
+    goto(page)
+    page.evaluate("setTargetScale(1.8)")
+    page.wait_for_timeout(400)
+    sp = page.locator('.node[data-id="b1"] .sp[data-sp="0"]').first
+    sp.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    box = sp.bounding_box()
+    x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+    page.touchscreen.tap(x, y)
+    page.wait_for_timeout(80)
+    page.touchscreen.tap(x, y)
+    page.wait_for_timeout(300)
+    title = page.locator("#__uipTitle").text_content()
+    check("配偶" in title, "触屏双轻点配偶 → 改配偶弹窗", title)
+    page.evaluate("document.getElementById('__uipCancel').click()")
+    page.wait_for_timeout(150)
+    nm = page.locator('.node[data-id="b2"] .node-label').first
+    nm.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    nb = nm.bounding_box()
+    nx, ny = nb["x"] + nb["width"] / 2, nb["y"] + nb["height"] / 2
+    page.touchscreen.tap(nx, ny)
+    page.wait_for_timeout(80)
+    page.touchscreen.tap(nx, ny)
+    page.wait_for_timeout(300)
+    title2 = page.locator("#__uipTitle").text_content()
+    check("修改姓名" in title2, "触屏双轻点名字 → 改名弹窗", title2)
+    page.evaluate("document.getElementById('__uipCancel').click()")
+    page.wait_for_timeout(100)
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
 if __name__ == "__main__":
     import sys as _sys
     ok = run_module(_sys.modules[__name__], "t_edit 菜单/弹窗键盘/配偶/删除撤销")

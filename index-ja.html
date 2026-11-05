@@ -2267,6 +2267,8 @@ function render(){
     }
   });
   nodesEl.addEventListener('dblclick', e => {
+    /* 触屏双轻点已处理过的同一手势，webview 可能再补一个原生 dblclick：只算一次 */
+    if (_synthDblEl && _synthDblEl.contains(e.target) && Date.now() - _synthDblAt < 500) return;
     const t = e.target;
     const label = t.closest('.node-label');
     if (!label || label.isContentEditable) return;
@@ -2275,12 +2277,7 @@ function render(){
     e.stopPropagation();
     if (t.closest('.fold')) return;                      // ▾/▸ 有自己的单击行为
     if (t.closest('.node-avatar')) return;               // 头像只开灯箱，不进改名
-    if (t.closest('.sp')){
-      editSpouseAt(n, parseInt(t.closest('.sp').dataset.sp, 10));
-      return;
-    }
-    if (t.closest('.meta')){ editDetails(n); return; }
-    editNameInline(label, n);
+    labelDblCore(t, n, label, false);
   });
 })();
 
@@ -2362,6 +2359,18 @@ function editNameInline(labelEl, n){
   }
   labelEl.addEventListener('blur', commit);
   labelEl.addEventListener('keydown', onKey);
+}
+/* 双击动作的统一入口：配偶→改配偶、生卒行→档案、其余→改名。
+   桌面 dblclick 与触屏双轻点都走这里；同一手势两种事件都来时只算一次（见下方 _synthDbl 去重）。 */
+let _synthDblAt = 0, _synthDblEl = null;
+function labelDblCore(t, n, label, touch){
+  if (t.closest('.sp')){
+    editSpouseAt(n, parseInt(t.closest('.sp').dataset.sp, 10));
+    return;
+  }
+  if (t.closest('.meta')){ editDetails(n); return; }
+  if (touch) editName(n);   // 触屏沿用弹窗改名（行内 contentEditable 在手机上不好用）
+  else editNameInline(label, n);
 }
 
 /* ---------- 页内输入/文本弹窗（容器禁 window.prompt；触屏统一体验） ---------- */
@@ -3430,6 +3439,7 @@ function applyZoom(recenter){
 }
 /* 滚轮缩放：倍速（触控板小增量也顺滑）+ rAF 插值动画，光标锚点全程保持 */
 let targetScale = 1, zoomRaf = null, zoomAnchor = null;
+let _userZoomed = false;   // 用户手动缩放过：resize（手机键盘开合/改窗口）不再自动缩回适应屏
 function animateZoom(){
   if (zoomRaf) return;
   const step = () => {
@@ -3472,7 +3482,7 @@ function zoomBy(d){
   applyZoom();
   return scale;
 }
-function resetZoom(){ stopZoom(); scale = 1; targetScale = 1; applyZoom(); }
+function resetZoom(){ stopZoom(); _userZoomed = true; scale = 1; targetScale = 1; applyZoom(); }
 function availableCanvasRect(){
   const vp = document.getElementById('viewport'), r = vp.getBoundingClientRect();
   let top = 15, bottom = vp.clientHeight - 15;
@@ -3493,6 +3503,7 @@ function centerStage(){
 }
 function fitToScreen(){
   stopZoom();
+  _userZoomed = false;   // 回到自动适应：之后的窗口变化恢复随视口适配
   const vp = document.getElementById('viewport');
   const st = document.getElementById('stage');
   const w = st._baseW, h = st._baseH;
@@ -3505,7 +3516,11 @@ function fitToScreen(){
 }
 window.addEventListener('resize', () => {
   const stage = document.getElementById('stage');
-  if (stage._baseW) requestAnimationFrame(fitToScreen);
+  /* 网友反馈：放大后编辑确认，手机键盘收起触发 resize，整棵树被缩到很小。
+     手动缩放过后只重算滚动范围、保持倍率；没动过缩放才维持原来的自动适应。 */
+  if (stage._baseW) requestAnimationFrame(() => {
+    if (_userZoomed){ stopZoom(); applyZoom(); } else fitToScreen();
+  });
 });
 document.getElementById('viewport').addEventListener('wheel', e => {
   if (cfg.wheelZoom || e.ctrlKey){
@@ -3518,6 +3533,7 @@ document.getElementById('viewport').addEventListener('wheel', e => {
   }
 }, { passive: false });
 function setTargetScale(ns){
+  _userZoomed = true;   // 滚轮/捏合/复位都算用户意图：此后 resize 不再自动适应
   targetScale = Math.min(2.5, Math.max(0.12, ns));
   animateZoom();
 }
@@ -3587,7 +3603,13 @@ function setTargetScale(ns){
     if (id && id === lastTapId && now - lastTapT < 320){
       lastTapT = 0; lastTapId = '';
       const n = findNode(id);
-      if (n){ selectNode(id); editName(n); }
+      /* 双轻点也按位置分派：配偶→改配偶、生卒行→档案、其余→改名（v15.55 修复
+         触屏双击配偶只会弹本人改名的问题）；行内改名进行中/折叠钮不响应 */
+      if (n && !label.isContentEditable && !(e.target.closest && e.target.closest('.fold'))){
+        selectNode(id);
+        _synthDblAt = Date.now(); _synthDblEl = e.target;   // 供原生 dblclick 去重
+        labelDblCore(e.target, n, label, true);
+      }
       return;
     }
     lastTapT = now; lastTapId = id;

@@ -348,4 +348,6 @@ with sync_playwright() as p:
 
 | v15.54 | **配偶「氏」默认关闭（2026-11-05，网友反馈现代姓名加氏不妥）**：`cfg.bookSpouse` 默认 true→false，配偶按原名显示；旧谱在视觉设置「其他显示项」勾选「配偶按谱书式显示」恢复丁氏嘉（仅显示层，数据/搜索/备份仍原名）；已保存 cfg 的浏览器保持原选择。build_i18n 里 EN/JA 原来单独覆盖 bookSpouse:false 的两条表项删除（母本已一致）。t_bookfmt 默认态/开启态/持久化与世系录配偶列断言同步；21 模块 117 用例。 |
 
+| v15.55 | **resize 保倍率 + 触屏双轻点分派（2026-11-06，网友反馈编辑后视图缩没、双击配偶无反应）**：①`window resize` 旧逻辑一律 `fitToScreen()`——手机键盘开合/拖窗口都会把手动放大缩回整树（复现：220%→56%）。新增 `_userZoomed`（`setTargetScale`/`resetZoom` 置 true、`fitToScreen` 清 false），resize 时用户动过缩放就 `stopZoom()+applyZoom()` 保倍率，没动过才自动适应。②触屏双轻点原先不分位置一律 `editName(n)`；抽出顶层 `labelDblCore(t,n,label,touch)`（sp→editSpouseAt、meta→editDetails、名字：触屏 editName 弹窗/桌面 editNameInline），dblclick 与 pointerup 双轻点共用；`_synthDblEl/_synthDblAt` 只对「同一手势 webview 补发的原生 dblclick」去重（勿用全局时间戳去重，会把连续编辑同一个人挡掉——t_edit 双击改名+清空移除回归曾挂）。测试：t_visual `t_resize_keeps_manual_zoom`、t_edit `t_touch_double_tap_spouse_and_name`（helper `fresh_page` 新增 touch/mobile 参数）；21 模块 119 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

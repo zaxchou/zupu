@@ -224,6 +224,28 @@ def t_horizontal_book_export_generation_marker(b):
     check(not errs, '无JS错误', str(errs));ctx.close()
 
 
+@testcase
+def t_resize_keeps_manual_zoom(b):
+    """网友反馈：放大后编辑确认（手机键盘开合触发 resize），视图被缩到很小。
+       手动缩放过后 resize 只重算滚动范围；没动过缩放才维持自动适应。"""
+    ctx, page, errs, cons = fresh_page(b, 1280, 720)
+    goto(page)
+    page.evaluate('setTargetScale(2.2)')
+    page.wait_for_timeout(400)
+    page.set_viewport_size({'width': 1280, 'height': 420})   # 键盘收起同类的视口变化
+    page.wait_for_timeout(400)
+    s = page.evaluate('window.__ZP.scale')
+    check(abs(s - 2.2) < 1e-6, '手动缩放后 resize 保持倍率', str(s))
+    page.evaluate('fitToScreen()')
+    page.wait_for_timeout(250)
+    check(page.evaluate('window.__ZP.scale') < 1, '适应屏幕回到整树视图')
+    page.set_viewport_size({'width': 900, 'height': 700})
+    page.wait_for_timeout(400)
+    s2 = page.evaluate('window.__ZP.scale')
+    check(s2 < 1 and abs(s2 - s) > 1e-6, '未手动缩放时 resize 仍自动适应', str((s, s2)))
+    check(not errs, '无JS错误', str(errs)); ctx.close()
+
+
 if __name__ == '__main__':
     import sys
     sys.exit(0 if run_module(globals(), 't_visual 即时视觉设置与四向布局') else 1)

@@ -91,9 +91,10 @@ class DialogRecorder:
         return [m for _, m in self.records]
 
 
-def fresh_page(browser, width=1400, height=900, downloads=False):
+def fresh_page(browser, width=1400, height=900, downloads=False, touch=False, mobile=False):
     ctx = browser.new_context(viewport={"width": width, "height": height},
-                              accept_downloads=downloads)
+                              accept_downloads=downloads,
+                              has_touch=touch, is_mobile=mobile)
     page = ctx.new_page()
     errs = []
     cons = []

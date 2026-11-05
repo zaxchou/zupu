@@ -2,14 +2,14 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | [English](README.en.md) | **日本語**
 
-<img src="docs/cover-ja.jpg?v=15.54" alt="家系図・伝代ツリー" width="100%">
+<img src="docs/cover-ja.jpg?v=15.55" alt="家系図・伝代ツリー" width="100%">
 
 # 家系図・伝代ツリー (Zupu)
 
 **ダブルクリックで使える電子家系図：家族を記録し、親子関係で世代を数え、印刷して製本**
 
-[![Version](https://img.shields.io/badge/version-v15.54-b03a2e)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/tests-117%20passing-2f6390)](tests)
+[![Version](https://img.shields.io/badge/version-v15.55-b03a2e)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-119%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
 [![オンラインで試す](https://img.shields.io/badge/オンライン-デモ-b03a2e)](https://zaxchou.github.io/zupu/)
