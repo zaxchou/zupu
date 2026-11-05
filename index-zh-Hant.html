@@ -1298,13 +1298,14 @@ function heirTitle(n){
 
 /* ---------- 視覺設定（本瀏覽器配置，與族譜資料分開存） ----------
  * zibeiStart：字輩第 1 字從第幾世起用；genBase 為舊設定的相容別名，均不改變世祖編號
- * bookSpouse：配偶按譜書式顯示（丁嘉 → 丁氏嘉），僅顯示層，儲存與搜尋仍用原名
+ * bookSpouse：配偶按譜書式顯示（丁嘉 → 丁氏嘉），僅顯示層，儲存與搜尋仍用原名；
+ *             預設關（現代姓名加「氏」不妥，舊譜需要時在視覺設定裡開啟）
  * showSurname：姓名是否帶姓氏（姓氏隨資料自動識別；關 = 只報名）
  * cnNum：世數用漢字（廿三世）；vertical：譜書豎排古法排版（世代成行、名字豎書、行左標世數）
  * theme：配色主題（parchment 羊皮紙=預設 / sky 晴空=經典藍 / dark 暗色）；匯出與列印永遠保持紙面
  * showPhotos：成員照片頭像（卡片顯示照片/剪影，點頭像看大圖） */
 const CFG_KEY = 'zupu_cfg_v1_hant';
-let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
 Object.defineProperty(cfg, 'genBase', {
   enumerable: true,
   get(){ return this.zibeiStart; },

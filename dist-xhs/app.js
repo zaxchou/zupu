@@ -82,13 +82,14 @@ function heirTitle(n){
 
 /* ---------- 视觉设置（本浏览器配置，与族谱数据分开存） ----------
  * zibeiStart：字辈第 1 字从第几世起用；genBase 为旧设置的兼容别名，均不改变世祖编号
- * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名
+ * bookSpouse：配偶按谱书式显示（丁嘉 → 丁氏嘉），仅显示层，存储与搜索仍用原名；
+ *             默认关（现代姓名加「氏」不妥，旧谱需要时在视觉设置里开启）
  * showSurname：姓名是否带姓氏（姓氏随数据自动识别；关 = 只报名）
  * cnNum：世数用汉字（廿三世）；vertical：谱书竖排古法排版（世代成行、名字竖书、行左标世数）
  * theme：配色主题（parchment 羊皮纸=默认 / sky 晴空=经典蓝 / dark 暗色）；导出与打印永远保持纸面
  * showPhotos：成员照片头像（卡片显示照片/剪影，点头像看大图） */
 const CFG_KEY = 'zupu_cfg_v1';
-let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: true, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
+let cfg = { direction: 'down', theme: 'parchment', wheelZoom: true, zibeiStart: 1, bookSpouse: false, showSurname: true, cnNum: false, vertical: false, showPhotos: true };
 Object.defineProperty(cfg, 'genBase', {
   enumerable: true,
   get(){ return this.zibeiStart; },

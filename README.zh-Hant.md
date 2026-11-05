@@ -2,13 +2,13 @@
 
 [简体中文](README.md) | **繁體中文** | [English](README.en.md) | [日本語](README.ja.md)
 
-<img src="docs/cover-zh-Hant.jpg?v=15.53" alt="家族族譜 · 傳代樹" width="100%">
+<img src="docs/cover-zh-Hant.jpg?v=15.54" alt="家族族譜 · 傳代樹" width="100%">
 
 # 家族族譜 · 傳代樹 (Zupu)
 
 **雙擊就能用的電子族譜：錄入家人、按世系編號、列印裝訂成冊**
 
-[![Version](https://img.shields.io/badge/version-v15.53-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.54-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-117%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)
@@ -54,8 +54,8 @@
   文字可搜尋；也可選 A4 橫向分頁列印。主選單按目前摺疊狀態匯出，右鍵「匯出此支…」則包含全部後代
 - **Markdown 也能匯回來** — 「檔案 ▾ → 匯出 Markdown（可導回）」產生可讀的譜序、字輩和成員資訊，
   從「恢復備份」可匯回本工具格式的 `.md`；完整備份請用含照片原圖的 JSON
-- **配偶寫法跟著老譜走** — 「丁嘉」顯示成「丁氏嘉」；
-  配 / 繼配 / 嗣子 / 嗣出 / 兼祧 / 止，老譜的體例這裡都有
+- **配偶寫法跟著老譜走（可選）** — 視覺設定裡可開啟「丁嘉」→「丁氏嘉」，
+  預設關（現代姓名不加「氏」）；配 / 繼配 / 嗣子 / 嗣出 / 兼祧 / 止，老譜的體例這裡都有
 - **資料只在你自己手裡** — 不連線、無帳號、不上傳任何伺服器；
   一鍵匯出備份檔，換電腦或傳給親戚，雙擊匯入就回來
 - **幾十年後也打得開** — 不依賴任何軟體和服務：一個 HTML 檔案，隨身碟存一份就能傳給下一代

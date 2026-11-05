@@ -504,7 +504,7 @@ EN = [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('Tree restored from this browser’s historical data');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('Auto-save is on: every edit is saved, nothing to do');"),
   # ---- 结构默认值 ----
-  ('zibeiStart: 1, bookSpouse: true, showSurname: true', 'zibeiStart: 1, bookSpouse: false, showSurname: true'),
+  # v15.54：母本 bookSpouse 默认已改为关，EN/JA 不再需要单独覆盖。
   # ---- 触摸手势提示 / 输入弹窗 / 文本弹窗 / 粘贴导入 / XHS 提示 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">One finger: pan · Pinch: zoom · Long-press a card for more</div>'),
@@ -1013,7 +1013,7 @@ JA += [
   ("if (_seededFrom === 'legacy-draft') toast('已从本浏览器的历史数据恢复族谱');", "if (_seededFrom === 'legacy-draft') toast('このブラウザの履歴データから家系図を復元しました');"),
   ("else if (_seededFrom === 'file') toast('自动保存已就绪：编辑即保存，无需手动操作');", "else if (_seededFrom === 'file') toast('自動保存の準備完了：編集は即保存されます');"),
   # ---- 结构默认值 ----
-  ('zibeiStart: 1, bookSpouse: true, showSurname: true', 'zibeiStart: 1, bookSpouse: false, showSurname: true'),
+  # v15.54：母本 bookSpouse 默认已改为关，EN/JA 不再需要单独覆盖。
   # ---- タッチ操作ヒント / 入力モーダル / テキストモーダル / 貼り付け導入 / XHS 用 ----
   ('<div id="__gestureHint">单指拖动平移 · 双指捏合缩放 · 长按卡片更多操作</div>',
    '<div id="__gestureHint">1 本指でドラッグ移動 · ピンチで拡大縮小 · カード長押しでメニュー</div>'),

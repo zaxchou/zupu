@@ -74,16 +74,13 @@ def open_settings(page, base=None, spouse=None):
 def t_spouse_book_display_and_gender_badge(b):
     ctx, page, errs, cons = fresh_page(b)
     goto_book(page)
-    # 默认开启谱书式：丁嘉 → 丁氏嘉（显示层），原始数据不变
+    # 默认关闭谱书式：现代姓名不自动加「氏」，按原名显示；数据不变
     sp = page.locator('.node[data-id="z3"] .sp[data-sp="0"]').inner_text().replace("\n", "")
-    check("丁氏嘉" in sp, "配偶谱书式显示：丁嘉→丁氏嘉", sp)
+    check("丁嘉" in sp and "丁氏嘉" not in sp, "默认按原名显示", sp)
     raw = page.evaluate('window.__ZP.findNode("z3").spouses')
     check(raw == ["丁嘉"], "存储仍为原名", str(raw))
-    sp1 = page.locator('.node[data-id="z1"] .sp[data-sp="0"]').inner_text().replace("\n", "")
-    check("翁氏秀英" in sp1, "配偶谱书式显示：翁秀英→翁氏秀英", sp1)
-    # 已含「氏」/ 复姓 / 只有姓 的边界
-    cases = page.evaluate('[spouseDisplay("郭马氏"), spouseDisplay("欧阳明"), spouseDisplay("黄"), spouseDisplay("丁嘉"), spouseDisplay("欧阳")]')
-    check(cases == ["郭马氏", "欧阳氏明", "黄氏", "丁氏嘉", "欧阳氏"], "边界：已有氏/复姓/只有姓补氏", str(cases))
+    cases_off = page.evaluate('[spouseDisplay("郭马氏"), spouseDisplay("欧阳明"), spouseDisplay("黄"), spouseDisplay("丁嘉"), spouseDisplay("欧阳")]')
+    check(cases_off == ["郭马氏", "欧阳明", "黄", "丁嘉", "欧阳"], "关闭时全部原名", str(cases_off))
     # 搜索按原名命中（显示层不影响搜索）
     page.evaluate("openSearch()")
     page.fill("#sbInput", "李平")
@@ -97,17 +94,22 @@ def t_spouse_book_display_and_gender_badge(b):
     check(page.locator('.node[data-id="w1"] .gx').count() == 1, "女性成员显示「女」徽标")
     check(page.locator('.node[data-id="w1"] .gx').inner_text() == "女", "徽标文字为女")
     check(page.locator('.node[data-id="z1"] .gx').count() == 0, "男性不标（谱书惯例）")
-    # 关闭谱书式 → 恢复原名
-    open_settings(page, spouse=False)
+    # 旧谱需要时手动开启 → 丁嘉 → 丁氏嘉（显示层）
+    open_settings(page, spouse=True)
     page.locator("#__setDone").click()
     page.wait_for_timeout(120)
-    sp_off = page.locator('.node[data-id="z3"] .sp[data-sp="0"]').inner_text().replace("\n", "")
-    check("丁嘉" in sp_off and "丁氏嘉" not in sp_off, "关闭后恢复原名显示", sp_off)
-    # 设置持久化：刷新后仍为原名、女性徽标仍在（数据自动保存）
+    sp_on = page.locator('.node[data-id="z3"] .sp[data-sp="0"]').inner_text().replace("\n", "")
+    check("丁氏嘉" in sp_on, "开启后谱书式显示：丁嘉→丁氏嘉", sp_on)
+    sp1 = page.locator('.node[data-id="z1"] .sp[data-sp="0"]').inner_text().replace("\n", "")
+    check("翁氏秀英" in sp1, "开启后：翁秀英→翁氏秀英", sp1)
+    cases_on = page.evaluate('[spouseDisplay("郭马氏"), spouseDisplay("欧阳明"), spouseDisplay("黄"), spouseDisplay("丁嘉"), spouseDisplay("欧阳")]')
+    check(cases_on == ["郭马氏", "欧阳氏明", "黄氏", "丁氏嘉", "欧阳氏"],
+          "边界：已有氏/复姓/只有姓补氏", str(cases_on))
+    # 设置持久化：刷新后仍为开启态、女性徽标仍在（数据自动保存）
     page.reload()
     page.wait_for_load_state("domcontentloaded")
     sp2 = page.locator('.node[data-id="z3"] .sp[data-sp="0"]').inner_text().replace("\n", "")
-    check("丁氏嘉" not in sp2, "设置刷新后持久（关闭态）", sp2)
+    check("丁氏嘉" in sp2, "设置刷新后持久（开启态）", sp2)
     check(page.locator('.node[data-id="w1"] .gx').count() == 1, "性别随数据持久化")
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
@@ -478,7 +480,7 @@ def t_shixilu_export(b):
     check('<td class="c">二世</td><td class="c"></td><td><b>周少群</b>' in txt,
           "少群行：二世且辈序列留空")
     check("<b>周昭凤</b>" in txt, "昭凤行存在", "昭凤" in txt)
-    check("原配 李氏平" in txt, "配偶列", "李氏平" in txt)
+    check("原配 李平" in txt and "李氏平" not in txt, "配偶列按默认原名", "李平" in txt)
     check("勤善" in txt and "少群" in txt, "子女列含后代名", "少群" in txt)
     check("共 4 人" in txt, "人数统计", "共 4 人" in txt)
     check(not errs, "无 JS 错误", str(errs))
