@@ -562,6 +562,12 @@ body{
 #__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+/* 页内确认弹窗（v15.56）：系统 confirm 在部分内嵌浏览器/小程序里被禁用，触屏上也不顺手 */
+#__ucfModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:97}
+#__ucfModal.open{display:flex}
+#__ucfModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__ucfModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__ucfModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
 #__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
@@ -604,7 +610,7 @@ body{
 #__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
-html{touch-action:manipulation}
+html{touch-action:manipulation;overscroll-behavior:none}   /* overscroll：防手机下拉刷新/地址栏拖拽抢手势 */
 #viewport{touch-action:none}
 .topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
 @media (max-width: 860px){
@@ -615,6 +621,8 @@ html{touch-action:manipulation}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
   .modal{width:92vw;max-height:80vh;overflow:auto}
+  /* 弹窗按钮吸底：手机上长表单（档案/谱序/帮助）不必再滚到底才找得到按钮 */
+  .modal .modal-btns{position:sticky;bottom:-20px;margin-top:14px;padding:10px 0 2px;background:inherit;border-radius:0 0 12px 12px}
   .topbar [data-act="help"]{display:inline-flex}
   .topbar [data-act="reset"]{display:none}
   #saveState{margin-left:auto}
@@ -625,6 +633,7 @@ html{touch-action:manipulation}
   #searchBox input{width:auto;flex:1;min-width:0}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
+  #__ucfModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   #__batchModal{align-items:flex-start;padding-top:9vh}
   #__parentModal{align-items:flex-start;padding-top:9vh}
@@ -805,6 +814,12 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3 id="__uipTitle">输入</h3>
     <input id="__uipInput" autocomplete="off">
     <div class="modal-btns"><button id="__uipCancel">取消</button><button class="primary" id="__uipOk">确定</button></div>
+  </div>
+</div>
+<div id="__ucfModal">
+  <div class="uip-box">
+    <h3 id="__ucfTitle">请确认</h3>
+    <div class="modal-btns"><button id="__ucfCancel">取消</button><button class="primary" id="__ucfOk">确定</button></div>
   </div>
 </div>
 <div id="__textModal">

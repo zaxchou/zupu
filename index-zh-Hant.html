@@ -562,6 +562,12 @@ body{
 #__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+/* 頁內確認彈窗（v15.56）：系統 confirm 在部分內嵌瀏覽器/小程式裡被禁用，觸屏上也不順手 */
+#__ucfModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:97}
+#__ucfModal.open{display:flex}
+#__ucfModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__ucfModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__ucfModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
 #__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
@@ -604,7 +610,7 @@ body{
 #__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
-html{touch-action:manipulation}
+html{touch-action:manipulation;overscroll-behavior:none}   /* overscroll：防手機下拉重新整理/位址列拖拽搶手勢 */
 #viewport{touch-action:none}
 .topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
 @media (max-width: 860px){
@@ -615,6 +621,8 @@ html{touch-action:manipulation}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
   .modal{width:92vw;max-height:80vh;overflow:auto}
+  /* 彈窗按鈕吸底：手機上長表單（檔案/譜序/幫助）不必再滾到底才找得到按鈕 */
+  .modal .modal-btns{position:sticky;bottom:-20px;margin-top:14px;padding:10px 0 2px;background:inherit;border-radius:0 0 12px 12px}
   .topbar [data-act="help"]{display:inline-flex}
   .topbar [data-act="reset"]{display:none}
   #saveState{margin-left:auto}
@@ -625,6 +633,7 @@ html{touch-action:manipulation}
   #searchBox input{width:auto;flex:1;min-width:0}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
+  #__ucfModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   #__batchModal{align-items:flex-start;padding-top:9vh}
   #__parentModal{align-items:flex-start;padding-top:9vh}
@@ -985,6 +994,12 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3 id="__uipTitle">輸入</h3>
     <input id="__uipInput" autocomplete="off">
     <div class="modal-btns"><button id="__uipCancel">取消</button><button class="primary" id="__uipOk">確定</button></div>
+  </div>
+</div>
+<div id="__ucfModal">
+  <div class="uip-box">
+    <h3 id="__ucfTitle">請確認</h3>
+    <div class="modal-btns"><button id="__ucfCancel">取消</button><button class="primary" id="__ucfOk">確定</button></div>
   </div>
 </div>
 <div id="__textModal">
@@ -2402,6 +2417,29 @@ function uiPrompt(title, def){
     m.addEventListener('mousedown', out);
   });
 }
+/* 頁內確認（替代系統 confirm）：內嵌瀏覽器/小程式常禁用原生對話方塊，手機上也更順手 */
+function ucfIsOpen(){ return document.getElementById('__ucfModal').classList.contains('open'); }
+function uiConfirm(msg){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__ucfModal');
+    document.getElementById('__ucfTitle').textContent = msg;
+    m.classList.add('open');
+    setTimeout(function(){ try { document.getElementById('__ucfOk').focus(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__ucfOk').removeEventListener('click', ok);
+      document.getElementById('__ucfCancel').removeEventListener('click', no);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function ok(){ done(true); }
+    function no(){ done(false); }
+    function out(e){ if (e.target.id === '__ucfModal') done(false); }
+    document.getElementById('__ucfOk').addEventListener('click', ok);
+    document.getElementById('__ucfCancel').addEventListener('click', no);
+    m.addEventListener('mousedown', out);
+  });
+}
 function showTextModal(title, text){
   var m = document.getElementById('__textModal');
   document.getElementById('__textTitle').textContent = title;
@@ -3007,15 +3045,17 @@ function editSpouseAt(n, i){
   if (t === null) return;
   const v = t.trim();
   if (!v){
-    if (confirm('確定移除配偶「' + cur + '」？')){
+    uiConfirm('確定移除配偶「' + cur + '」？').then(function(yes){
+      if (!yes) return;
       pushHistory('rmSpouse:' + n.id + ':' + i);
       n.spouses.splice(i, 1);
-    } else return;
-  } else {
-    if (v === cur) return;
-    pushHistory('editSpouse:' + n.id + ':' + i);
-    n.spouses[i] = v;
+      render();
+    });
+    return;
   }
+  if (v === cur) return;
+  pushHistory('editSpouse:' + n.id + ':' + i);
+  n.spouses[i] = v;
   render();
   });
 }
@@ -3045,13 +3085,15 @@ function deleteNode(n){
   const msg = desc
     ? '刪除「' + displayName(n) + '」及其全部 ' + desc + ' 位後代？'
     : '刪除「' + displayName(n) + '」？';
-  if (!confirm(msg)) return;
-  pushHistory('delete:' + n.id);
-  const p = findParent(n.id);
-  if (p) p.children = p.children.filter(c => c.id !== n.id);
-  if (selectedId === n.id) selectedId = null;
-  render();
-  toast('已刪除（可用 Ctrl+Z 撤銷）');
+  uiConfirm(msg).then(function(yes){
+    if (!yes) return;
+    pushHistory('delete:' + n.id);
+    const p = findParent(n.id);
+    if (p) p.children = p.children.filter(c => c.id !== n.id);
+    if (selectedId === n.id) selectedId = null;
+    render();
+    toast('已刪除（可用 Ctrl+Z 撤銷）');
+  });
 }
 
 function addSibling(n){
@@ -4221,13 +4263,15 @@ document.getElementById('__photoImpModal').addEventListener('mousedown', e => {
 });
 
 function resetData(){
-  if (!confirm('確定重置？當前族譜將被清空，恢復到本檔案自帶的初始資料。\n（如需保留，先「備份到檔案」；誤刪可用 Ctrl+Z）')) return;
-  pushHistory('reset');
-  treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
-  selectedId = null;
-  render();
-  fitToScreen();
-  toast('已重置為本檔案的初始資料（再次「儲存到檔案」可固化）');
+  uiConfirm('確定重置？當前族譜將被清空，恢復到本檔案自帶的初始資料。\n（如需保留，先「備份到檔案」；誤刪可用 Ctrl+Z）').then(function(yes){
+    if (!yes) return;
+    pushHistory('reset');
+    treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+    selectedId = null;
+    render();
+    fitToScreen();
+    toast('已重置為本檔案的初始資料（再次「儲存到檔案」可固化）');
+  });
 }
 
 /* 備份到檔案：純下載一份 json（無彈窗、不寫任何已有檔案）。

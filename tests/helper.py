@@ -130,6 +130,15 @@ def testcase(fn):
     return fn
 
 
+def confirm_page(page, yes=True, timeout=5000):
+    """页内确认弹窗（v15.56 起替代系统 confirm，内嵌浏览器里原生对话框被禁）：
+       等待 #__ucfModal 出现后按 确定/取消。"""
+    page.wait_for_selector("#__ucfModal.open", timeout=timeout)
+    page.locator("#__ucfOk" if yes else "#__ucfCancel").click()
+    page.wait_for_timeout(150)
+    return page.locator("#__ucfTitle").text_content() or ""
+
+
 def run_module(module_or_globals, title):
     """执行本文件中 @testcase 注册的全部用例；返回是否全绿。"""
     if not isinstance(module_or_globals, dict):

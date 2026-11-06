@@ -2,13 +2,13 @@
 
 [简体中文](README.md) | [繁體中文](README.zh-Hant.md) | **English** | [日本語](README.ja.md)
 
-<img src="docs/cover-en.jpg?v=15.55" alt="Zupu · Family Tree" width="100%">
+<img src="docs/cover-en.jpg?v=15.56" alt="Zupu · Family Tree" width="100%">
 
 # Zupu · Family Tree
 
 **A double-click electronic genealogy: record family, number generations by lineage, print & bind**
 
-[![Version](https://img.shields.io/badge/version-v15.55-b03a2e)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v15.56-b03a2e)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/tests-119%20passing-2f6390)](tests)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-3c7a4e)]()
 [![License](https://img.shields.io/badge/license-MIT-8a7d68)](LICENSE)

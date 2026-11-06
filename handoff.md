@@ -350,4 +350,6 @@ with sync_playwright() as p:
 
 | v15.55 | **resize 保倍率 + 触屏双轻点分派（2026-11-06，网友反馈编辑后视图缩没、双击配偶无反应）**：①`window resize` 旧逻辑一律 `fitToScreen()`——手机键盘开合/拖窗口都会把手动放大缩回整树（复现：220%→56%）。新增 `_userZoomed`（`setTargetScale`/`resetZoom` 置 true、`fitToScreen` 清 false），resize 时用户动过缩放就 `stopZoom()+applyZoom()` 保倍率，没动过才自动适应。②触屏双轻点原先不分位置一律 `editName(n)`；抽出顶层 `labelDblCore(t,n,label,touch)`（sp→editSpouseAt、meta→editDetails、名字：触屏 editName 弹窗/桌面 editNameInline），dblclick 与 pointerup 双轻点共用；`_synthDblEl/_synthDblAt` 只对「同一手势 webview 补发的原生 dblclick」去重（勿用全局时间戳去重，会把连续编辑同一个人挡掉——t_edit 双击改名+清空移除回归曾挂）。测试：t_visual `t_resize_keeps_manual_zoom`、t_edit `t_touch_double_tap_spouse_and_name`（helper `fresh_page` 新增 touch/mobile 参数）；21 模块 119 用例。 |
 
+| v15.56 | **移动端深审（2026-11-06）**：①`confirm()` 全部替换为页内 `uiConfirm`（`#__ucfModal`，与 uiPrompt 同款）：deleteNode/editSpouseAt 清空移除/resetData 三处；内嵌浏览器常禁原生对话框。测试 DialogRecorder 的 `queue("confirm")` 改用 helper `confirm_page(page, yes)`，并断言 `dlg.count()==0`（不再弹系统框）。②`html{overscroll-behavior:none}` 防手机下拉刷新抢手势。③≤860px 时 `.modal .modal-btns{position:sticky;bottom:-20px;background:inherit}` 长弹窗按钮吸底。④CDP 触摸实测：单指平移/双指捏合/卡片拖动换位/长按菜单全部正常（脚本 tests/_out/mobile_touch_audit.py）；弹窗布局审计 390×844 与 320×568（tests/_out/mobile_layout_audit.py）。build_i18n 按钮 count（取消 9/确定 2）与 confirm→uiConfirm 三条表项同步。21 模块 119 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*

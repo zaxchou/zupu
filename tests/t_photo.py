@@ -472,9 +472,9 @@ def t_delete_undo_and_lazy_gc(b):
     page.keyboard.press("Escape")
     page.wait_for_function("() => !document.getElementById('__detailModal').classList.contains('open')")
     dlg = DialogRecorder(page)
-    dlg.queue("confirm", True)
     page.locator('.node[data-id="b1a1"] .node-label').click(button="right")
     page.locator("#__ctxMenu .mi", has_text="删除").click()
+    confirm_page(page, True)
     page.wait_for_function("() => document.querySelectorAll('.node[data-id=\"b1a1\"]').length === 0")
     check(page.locator("img.node-avatar").count() == 0, "删人后其照片头像消失")
     # Ctrl+Z：人与照片一起回来（thumb 在数据里，原图未即时删除）
@@ -482,15 +482,15 @@ def t_delete_undo_and_lazy_gc(b):
     page.wait_for_function("() => document.querySelectorAll('.node[data-id=\"b1a1\"] img.node-avatar').length === 1")
     check(page.evaluate("() => !!findNode('b1a1').photoThumb"), "撤销后 thumb 恢复")
     check(idb_has(page, "b1a1"), "撤销后 IDB 原图仍在")
-    check(dlg.count() == 1, "删除经确认框", str(dlg.records))
+    check(dlg.count() == 0, "删除经页内确认框（系统 confirm 已弃用）", str(dlg.records))
     # 刷新：惰性 GC 只清理当前树外孤儿；b1a1 在树上应保留
     page.reload()
     page.wait_for_function("() => document.querySelectorAll('.node[data-id=\"b1a1\"] img.node-avatar').length === 1")
     check(idb_has(page, "b1a1"), "刷新 GC 后树上成员原图保留")
     # 再删人 + 刷新 → GC 清孤儿
-    dlg.queue("confirm", True)
     page.locator('.node[data-id="b1a1"] .node-label').click(button="right")
     page.locator("#__ctxMenu .mi", has_text="删除").click()
+    confirm_page(page, True)
     page.wait_for_function("() => document.querySelectorAll('.node[data-id=\"b1a1\"]').length === 0")
     page.reload()
     page.wait_for_function("() => document.querySelectorAll('.node[data-id=\"b1a1\"]').length === 0")

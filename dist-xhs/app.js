@@ -1186,6 +1186,29 @@ function uiPrompt(title, def){
     m.addEventListener('mousedown', out);
   });
 }
+/* 页内确认（替代系统 confirm）：内嵌浏览器/小程序常禁用原生对话框，手机上也更顺手 */
+function ucfIsOpen(){ return document.getElementById('__ucfModal').classList.contains('open'); }
+function uiConfirm(msg){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__ucfModal');
+    document.getElementById('__ucfTitle').textContent = msg;
+    m.classList.add('open');
+    setTimeout(function(){ try { document.getElementById('__ucfOk').focus(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__ucfOk').removeEventListener('click', ok);
+      document.getElementById('__ucfCancel').removeEventListener('click', no);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function ok(){ done(true); }
+    function no(){ done(false); }
+    function out(e){ if (e.target.id === '__ucfModal') done(false); }
+    document.getElementById('__ucfOk').addEventListener('click', ok);
+    document.getElementById('__ucfCancel').addEventListener('click', no);
+    m.addEventListener('mousedown', out);
+  });
+}
 function showTextModal(title, text){
   var m = document.getElementById('__textModal');
   document.getElementById('__textTitle').textContent = title;
@@ -1791,15 +1814,17 @@ function editSpouseAt(n, i){
   if (t === null) return;
   const v = t.trim();
   if (!v){
-    if (confirm('确定移除配偶「' + cur + '」？')){
+    uiConfirm('确定移除配偶「' + cur + '」？').then(function(yes){
+      if (!yes) return;
       pushHistory('rmSpouse:' + n.id + ':' + i);
       n.spouses.splice(i, 1);
-    } else return;
-  } else {
-    if (v === cur) return;
-    pushHistory('editSpouse:' + n.id + ':' + i);
-    n.spouses[i] = v;
+      render();
+    });
+    return;
   }
+  if (v === cur) return;
+  pushHistory('editSpouse:' + n.id + ':' + i);
+  n.spouses[i] = v;
   render();
   });
 }
@@ -1829,13 +1854,15 @@ function deleteNode(n){
   const msg = desc
     ? '删除「' + displayName(n) + '」及其全部 ' + desc + ' 位后代？'
     : '删除「' + displayName(n) + '」？';
-  if (!confirm(msg)) return;
-  pushHistory('delete:' + n.id);
-  const p = findParent(n.id);
-  if (p) p.children = p.children.filter(c => c.id !== n.id);
-  if (selectedId === n.id) selectedId = null;
-  render();
-  toast('已删除（可用 Ctrl+Z 撤销）');
+  uiConfirm(msg).then(function(yes){
+    if (!yes) return;
+    pushHistory('delete:' + n.id);
+    const p = findParent(n.id);
+    if (p) p.children = p.children.filter(c => c.id !== n.id);
+    if (selectedId === n.id) selectedId = null;
+    render();
+    toast('已删除（可用 Ctrl+Z 撤销）');
+  });
 }
 
 function addSibling(n){
@@ -3005,13 +3032,15 @@ document.getElementById('__photoImpModal').addEventListener('mousedown', e => {
 });
 
 function resetData(){
-  if (!confirm('确定重置？当前族谱将被清空，恢复到本文件自带的初始数据。\n（如需保留，先「备份到文件」；误删可用 Ctrl+Z）')) return;
-  pushHistory('reset');
-  treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
-  selectedId = null;
-  render();
-  fitToScreen();
-  toast('已重置为本文件的初始数据（再次「保存到文件」可固化）');
+  uiConfirm('确定重置？当前族谱将被清空，恢复到本文件自带的初始数据。\n（如需保留，先「备份到文件」；误删可用 Ctrl+Z）').then(function(yes){
+    if (!yes) return;
+    pushHistory('reset');
+    treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+    selectedId = null;
+    render();
+    fitToScreen();
+    toast('已重置为本文件的初始数据（再次「保存到文件」可固化）');
+  });
 }
 
 /* 备份到文件：纯下载一份 json（无弹窗、不写任何已有文件）。

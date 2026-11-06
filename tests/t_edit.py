@@ -128,11 +128,11 @@ def t_spouse_add_edit_remove(b):
     page.wait_for_timeout(120)
     sps2 = page.evaluate('window.__ZP.findNode("b1a1").spouses')
     check(sps2 == ["王秀兰", "王改嫁"], "双击配偶改名", str(sps2))
-    # 双击清空 + confirm → 移除
-    dlg.queue("confirm", True)      # 清空提交后的确认框
+    # 双击清空 + 页内确认 → 移除（v15.56 起不再用系统 confirm）
     page.locator('.node[data-id="b1a1"] .sp[data-sp="1"]').dblclick()
     page.fill("#__uipInput", "")
     page.click("#__uipOk")
+    confirm_page(page, True)
     page.wait_for_timeout(150)
     sps3 = page.evaluate('window.__ZP.findNode("b1a1").spouses')
     check(sps3 == ["王秀兰"], "清空确认后移除配偶", str(sps3))
@@ -155,18 +155,19 @@ def t_delete_count_and_undo_redo(b):
     dlg = DialogRecorder(page)
     page.locator('.node[data-id="b1"] .node-label').click()
     page.keyboard.press("Delete")
+    title = confirm_page(page, False)      # 页内确认出现，先取消
     page.wait_for_timeout(100)
-    msgs = dlg.messages()
-    check(len(msgs) == 1 and "5 位后代" in msgs[0], "删除确认统计全部后代(v12 只报直系)",
-          str(msgs))
-    dlg.queue("confirm", False)      # 先取消
-    # 上一步已经消耗一次 dialog；重新按 Delete 出现的 confirm 由脚本应答
+    check("5 位后代" in title, "删除确认统计全部后代(v12 只报直系，文案在页内弹窗)",
+          title)
+    check(dlg.count() == 0, "确认走页内弹窗，不再弹系统 confirm", str(dlg.records))
+    # 再次按 Delete，仍出确认；取消则不删
     page.keyboard.press("Delete")
+    confirm_page(page, False)
     page.wait_for_timeout(100)
     alive = page.evaluate('!!window.__ZP.findNode("b1")')
     check(alive, "取消则不删")
-    dlg.clear(); dlg.queue("confirm", True)
     page.keyboard.press("Delete")
+    confirm_page(page, True)
     page.wait_for_timeout(200)
     gone = page.evaluate('!!window.__ZP.findNode("b1")')
     check(not gone, "确认后整支删除")
@@ -227,6 +228,35 @@ def t_touch_double_tap_spouse_and_name(b):
     check("修改姓名" in title2, "触屏双轻点名字 → 改名弹窗", title2)
     page.evaluate("document.getElementById('__uipCancel').click()")
     page.wait_for_timeout(100)
+    # 长按菜单 → 删除：确认走页内弹窗（系统 confirm 在部分内嵌浏览器被禁）
+    dlg = DialogRecorder(page)
+    card = page.locator('.node[data-id="b1"]').first
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    cb = card.bounding_box()
+    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
+    page.evaluate("""() => {
+      const v = document.getElementById('viewport');
+      const r = document.querySelector('.node[data-id="b1"]').getBoundingClientRect();
+      v.scrollLeft += r.left + r.width / 2 - innerWidth / 2;
+      v.scrollTop += r.top + r.height / 2 - innerHeight / 2;
+    }""")
+    page.wait_for_timeout(150)
+    cb = card.bounding_box()
+    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
+    # 用 CDP 触摸长按（Playwright touchscreen 无长按）
+    cdp = ctx.new_cdp_session(page)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": cx, "y": cy}]})
+    page.wait_for_timeout(700)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(250)
+    check(page.evaluate("() => document.getElementById('__ctxMenu').style.display === 'block'"),
+          "触屏长按弹出成员菜单")
+    page.locator("#__ctxMenu .mi", has_text="删除").click()
+    confirm_page(page, True)
+    page.wait_for_timeout(200)
+    check(not page.evaluate("!!window.__ZP.findNode('b1')"), "页内确认后整支删除")
+    check(dlg.count() == 0, "手机路径同样不弹系统 confirm", str(dlg.records))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 

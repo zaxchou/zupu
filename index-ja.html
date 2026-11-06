@@ -562,6 +562,12 @@ body{
 #__uipInput{width:100%;font-size:16px;padding:9px 12px;border:1.5px solid var(--node-border);color:var(--text);border-radius:9px;outline:none;font-family:inherit;box-sizing:border-box}
 #__uipInput:focus{border-color:var(--accent)}
 #__uipModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+/* 页内确认弹窗（v15.56）：系统 confirm 在部分内嵌浏览器/小程序里被禁用，触屏上也不顺手 */
+#__ucfModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:97}
+#__ucfModal.open{display:flex}
+#__ucfModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__ucfModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__ucfModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
 #__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
@@ -604,7 +610,7 @@ body{
 #__parentInput:focus{border-color:var(--accent)}
 #__pasteModal .modal-btns{display:flex;justify-content:flex-end;gap:0;margin-top:12px}
 body{-webkit-tap-highlight-color:transparent}
-html{touch-action:manipulation}
+html{touch-action:manipulation;overscroll-behavior:none}   /* overscroll：防手机下拉刷新/地址栏拖拽抢手势 */
 #viewport{touch-action:none}
 .topbar{padding-top:calc(8px + var(--safe-area-inset-top, env(safe-area-inset-top, 0px)))}
 @media (max-width: 860px){
@@ -615,6 +621,8 @@ html{touch-action:manipulation}
   #statsChip{display:none}
   #__puName{font-size:15px;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
   .modal{width:92vw;max-height:80vh;overflow:auto}
+  /* 弹窗按钮吸底：手机上长表单（档案/谱序/帮助）不必再滚到底才找得到按钮 */
+  .modal .modal-btns{position:sticky;bottom:-20px;margin-top:14px;padding:10px 0 2px;background:inherit;border-radius:0 0 12px 12px}
   .topbar [data-act="help"]{display:inline-flex}
   .topbar [data-act="reset"]{display:none}
   #saveState{margin-left:auto}
@@ -625,6 +633,7 @@ html{touch-action:manipulation}
   #searchBox input{width:auto;flex:1;min-width:0}
   #__toast{top:auto;bottom:calc(18px + var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)));max-width:92vw}
   #__uipModal{align-items:flex-start;padding-top:9vh}
+  #__ucfModal{align-items:flex-start;padding-top:9vh}
   #__pasteModal{align-items:flex-start;padding-top:5vh}
   #__batchModal{align-items:flex-start;padding-top:9vh}
   #__parentModal{align-items:flex-start;padding-top:9vh}
@@ -986,6 +995,12 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
     <h3 id="__uipTitle">入力</h3>
     <input id="__uipInput" autocomplete="off">
     <div class="modal-btns"><button id="__uipCancel">キャンセル</button><button class="primary" id="__uipOk">确定</button></div>
+  </div>
+</div>
+<div id="__ucfModal">
+  <div class="uip-box">
+    <h3 id="__ucfTitle">確認</h3>
+    <div class="modal-btns"><button id="__ucfCancel">キャンセル</button><button class="primary" id="__ucfOk">确定</button></div>
   </div>
 </div>
 <div id="__textModal">
@@ -2403,6 +2418,29 @@ function uiPrompt(title, def){
     m.addEventListener('mousedown', out);
   });
 }
+/* 页内确认（替代系统 confirm）：内嵌浏览器/小程序常禁用原生对话框，手机上也更顺手 */
+function ucfIsOpen(){ return document.getElementById('__ucfModal').classList.contains('open'); }
+function uiConfirm(msg){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__ucfModal');
+    document.getElementById('__ucfTitle').textContent = msg;
+    m.classList.add('open');
+    setTimeout(function(){ try { document.getElementById('__ucfOk').focus(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__ucfOk').removeEventListener('click', ok);
+      document.getElementById('__ucfCancel').removeEventListener('click', no);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function ok(){ done(true); }
+    function no(){ done(false); }
+    function out(e){ if (e.target.id === '__ucfModal') done(false); }
+    document.getElementById('__ucfOk').addEventListener('click', ok);
+    document.getElementById('__ucfCancel').addEventListener('click', no);
+    m.addEventListener('mousedown', out);
+  });
+}
 function showTextModal(title, text){
   var m = document.getElementById('__textModal');
   document.getElementById('__textTitle').textContent = title;
@@ -3008,15 +3046,17 @@ function editSpouseAt(n, i){
   if (t === null) return;
   const v = t.trim();
   if (!v){
-    if (confirm('配偶者「' + cur + '」を削除しますか？')){
+    uiConfirm('配偶者「' + cur + '」を削除しますか？').then(function(yes){
+      if (!yes) return;
       pushHistory('rmSpouse:' + n.id + ':' + i);
       n.spouses.splice(i, 1);
-    } else return;
-  } else {
-    if (v === cur) return;
-    pushHistory('editSpouse:' + n.id + ':' + i);
-    n.spouses[i] = v;
+      render();
+    });
+    return;
   }
+  if (v === cur) return;
+  pushHistory('editSpouse:' + n.id + ':' + i);
+  n.spouses[i] = v;
   render();
   });
 }
@@ -3046,13 +3086,15 @@ function deleteNode(n){
   const msg = desc
     ? '「' + displayName(n) + '」と子孫全員（' + desc + '人）を削除しますか？'
     : '「' + displayName(n) + '」を削除しますか？';
-  if (!confirm(msg)) return;
-  pushHistory('delete:' + n.id);
-  const p = findParent(n.id);
-  if (p) p.children = p.children.filter(c => c.id !== n.id);
-  if (selectedId === n.id) selectedId = null;
-  render();
-  toast('削除しました（Ctrl+Z で元に戻せます）');
+  uiConfirm(msg).then(function(yes){
+    if (!yes) return;
+    pushHistory('delete:' + n.id);
+    const p = findParent(n.id);
+    if (p) p.children = p.children.filter(c => c.id !== n.id);
+    if (selectedId === n.id) selectedId = null;
+    render();
+    toast('削除しました（Ctrl+Z で元に戻せます）');
+  });
 }
 
 function addSibling(n){
@@ -4222,13 +4264,15 @@ document.getElementById('__photoImpModal').addEventListener('mousedown', e => {
 });
 
 function resetData(){
-  if (!confirm('リセットしますか？現在の家系図は消去され、このファイルの初期データに戻ります。\n（残す場合は先に「バックアップ保存」。誤削除は Ctrl+Z）')) return;
-  pushHistory('reset');
-  treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
-  selectedId = null;
-  render();
-  fitToScreen();
-  toast('このファイルの初期データにリセットしました');
+  uiConfirm('リセットしますか？現在の家系図は消去され、このファイルの初期データに戻ります。\n（残す場合は先に「バックアップ保存」。誤削除は Ctrl+Z）').then(function(yes){
+    if (!yes) return;
+    pushHistory('reset');
+    treeData = JSON.parse(JSON.stringify(INIT_TEMPLATE));
+    selectedId = null;
+    render();
+    fitToScreen();
+    toast('このファイルの初期データにリセットしました');
+  });
 }
 
 /* 备份到文件：纯下载一份 json（无弹窗、不写任何已有文件）。
