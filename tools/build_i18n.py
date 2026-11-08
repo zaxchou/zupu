@@ -258,7 +258,8 @@ EN = [
   ("'<span class=\"zhi\" title=\"止：谱书凡例，无传者以黑圈标止\">止</span>'", "'<span class=\"zhi\" title=\"No issue (d.s.p.): black circle per genealogical rule\">dsp</span>'"),
   ("'<span class=\"xh\" title=\"字\">字' + esc(n.zi) + '</span>'", "'<span class=\"xh\" title=\"Zi (courtesy name)\">zi ' + esc(n.zi) + '</span>'"),
   ("'<span class=\"xh\" title=\"号\">号' + esc(n.hao) + '</span>'", "'<span class=\"xh\" title=\"Hao (art name)\">hao ' + esc(n.hao) + '</span>'"),
-  ('title="双击：改名 / 清空移除"><i class="role">', 'title="Double-click: rename / clear to remove"><i class="role">'),
+  ('轻点或双击：改名 / 清空移除', 'Tap or double-click: rename / clear to remove'),
+  ('双击：改名 / 清空移除', 'Double-click: rename / clear to remove'),
   ("'双击备注行可编辑生卒年与备注'", "'Double-click the meta line to edit dates & notes'"),
   ("pill.title = '点击折叠此支（共 ' + cnt + ' 位后代）';", "pill.title = 'Click to collapse this branch (' + cnt + ' descendants)';"),
   ("pill.title = '此支已折叠，共 ' + cnt + ' 位后代 —— 点击展开';", "pill.title = 'Branch collapsed — ' + cnt + ' descendants. Click to expand';"),
@@ -833,7 +834,8 @@ JA = [
   ("rk.title = '同辈第 ' + (orderIdx + 1) + ' 位（最左为长）。补填出生年即可自动排序';", None),  # placeholder removed below
   ("'\">嗣</span>'", None),
   # EN 表にのみ存在していた既存 1 件（ユーザー可視 tooltip）の JA 補完
-  ('title="双击：改名 / 清空移除"><i class="role">', 'title="ダブルクリック：名前変更 / 空で削除"><i class="role">'),
+  ('轻点或双击：改名 / 清空移除', 'タップまたはダブルクリック：名前変更 / 空で削除'),
+  ('双击：改名 / 清空移除', 'ダブルクリック：名前変更 / 空で削除'),
 ]
 
 # 上の JA 配列で None を入れた箇所は「変更なし」を意味する（フィルタで除去）

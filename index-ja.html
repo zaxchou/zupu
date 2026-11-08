@@ -2028,7 +2028,7 @@ function render(){
       (n.zi ? '<span class="xh" title="字">字' + esc(n.zi) + '</span>' : '') +
       (n.hao ? '<span class="xh" title="号">号' + esc(n.hao) + '</span>' : '') +
       (n.spouses || []).map((s, i) =>
-      (cfg.vertical ? '' : ' ') + '<span class="sp" data-sp="' + i + '" title="ダブルクリック：名前変更 / 空で削除"><i class="role">' + esc(spouseRoleAt(n, i)) + '</i>' + esc(spouseDisplay(s)) + '</span>'
+      (cfg.vertical ? '' : ' ') + '<span class="sp" data-sp="' + i + '" title="' + (IS_TOUCH ? 'タップまたはダブルクリック：名前変更 / 空で削除' : 'ダブルクリック：名前変更 / 空で削除') + '"><i class="role">' + esc(spouseRoleAt(n, i)) + '</i>' + esc(spouseDisplay(s)) + '</span>'
     ).join('') + (meta ? '<span class="meta">' + esc(meta) + '</span>' : '');
     label.title = [displayName(n), fullDatesLine(n), meta, '双击备注行可编辑生卒年与备注'].filter(Boolean).join('\n');
 
@@ -2278,12 +2278,22 @@ function render(){
     const label = t.closest('.node-label');
     if (label){
       const n = nodeOf(e);
-      if (n){ e.stopPropagation(); selectNode(n.id); }
+      if (n){
+        e.stopPropagation();
+        /* 触屏：轻点配偶直接进编辑（部分内核双击不触发/不可发现，网友实测「双击没反应」） */
+        if (t.closest('.sp') && Date.now() - _lastTouchAt < 600){
+          editSpouseAt(n, parseInt(t.closest('.sp').dataset.sp, 10));
+          return;
+        }
+        selectNode(n.id);
+      }
     }
   });
   nodesEl.addEventListener('dblclick', e => {
-    /* 触屏双轻点已处理过的同一手势，webview 可能再补一个原生 dblclick：只算一次 */
-    if (_synthDblEl && _synthDblEl.contains(e.target) && Date.now() - _synthDblAt < 500) return;
+    /* 触屏双轻点已处理过的同一手势，webview 可能再补一个原生 dblclick：只算一次
+       （按成员 id 去重：render 后元素可能已重建，contains 会失效） */
+    const n0 = nodeOf(e);
+    if (_synthDblId && n0 && _synthDblId === n0.id && Date.now() - _synthDblAt < 500) return;
     const t = e.target;
     const label = t.closest('.node-label');
     if (!label || label.isContentEditable) return;
@@ -2376,8 +2386,9 @@ function editNameInline(labelEl, n){
   labelEl.addEventListener('keydown', onKey);
 }
 /* 双击动作的统一入口：配偶→改配偶、生卒行→档案、其余→改名。
-   桌面 dblclick 与触屏双轻点都走这里；同一手势两种事件都来时只算一次（见下方 _synthDbl 去重）。 */
-let _synthDblAt = 0, _synthDblEl = null;
+   桌面 dblclick 与触屏双轻点都走这里；同一手势两种事件都来时只算一次（见上方 _synthDbl 去重）。 */
+let _synthDblAt = 0, _synthDblId = '';
+let _lastTouchAt = 0;   // 最近一次真实触屏：click 判断「这次点击来自手指」用
 function labelDblCore(t, n, label, touch){
   if (t.closest('.sp')){
     editSpouseAt(n, parseInt(t.closest('.sp').dataset.sp, 10));
@@ -2396,6 +2407,7 @@ function uiPrompt(title, def){
     var inp = document.getElementById('__uipInput');
     inp.value = def || '';
     m.classList.add('open');
+    const openedAt = Date.now();
     setTimeout(function(){ try { inp.focus(); inp.select(); } catch(e){} }, 80);
     function done(v){
       m.classList.remove('open');
@@ -2407,7 +2419,9 @@ function uiPrompt(title, def){
     }
     function ok(){ done(inp.value); }
     function no(){ done(null); }
-    function out(e){ if (e.target.id === '__uipModal') done(null); }
+    /* 遮罩关闭只在弹窗打开超过 350ms 后生效：双击的第二下/迟到的 ghost click
+       不会把刚打开的编辑弹窗瞬间关掉（v15.57） */
+    function out(e){ if (e.target.id === '__uipModal' && Date.now() - openedAt > 350) done(null); }
     function onKey(e){
       if (e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); done(inp.value); }
       if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done(null); }
@@ -2425,6 +2439,7 @@ function uiConfirm(msg){
     var m = document.getElementById('__ucfModal');
     document.getElementById('__ucfTitle').textContent = msg;
     m.classList.add('open');
+    const openedAt = Date.now();
     setTimeout(function(){ try { document.getElementById('__ucfOk').focus(); } catch(e){} }, 80);
     function done(v){
       m.classList.remove('open');
@@ -2435,7 +2450,7 @@ function uiConfirm(msg){
     }
     function ok(){ done(true); }
     function no(){ done(false); }
-    function out(e){ if (e.target.id === '__ucfModal') done(false); }
+    function out(e){ if (e.target.id === '__ucfModal' && Date.now() - openedAt > 350) done(false); }
     document.getElementById('__ucfOk').addEventListener('click', ok);
     document.getElementById('__ucfCancel').addEventListener('click', no);
     m.addEventListener('mousedown', out);
@@ -3638,18 +3653,19 @@ function setTargetScale(ns){
   document.addEventListener('pointerup', e => {
     clearLP();
     if (e.pointerType !== 'touch') return;
+    _lastTouchAt = Date.now();
     if (e.target.closest && e.target.closest('.node-avatar')){ lastTapT = 0; lastTapId = ''; return; }   // 触屏双击头像不进改名
     const label = e.target.closest ? e.target.closest('.node-label') : null;
     const id = label ? (label.closest('.node') ? label.closest('.node').getAttribute('data-id') : '') : '';
     const now = Date.now();
-    if (id && id === lastTapId && now - lastTapT < 320){
+    if (id && id === lastTapId && now - lastTapT < 450){
       lastTapT = 0; lastTapId = '';
       const n = findNode(id);
       /* 双轻点也按位置分派：配偶→改配偶、生卒行→档案、其余→改名（v15.55 修复
          触屏双击配偶只会弹本人改名的问题）；行内改名进行中/折叠钮不响应 */
       if (n && !label.isContentEditable && !(e.target.closest && e.target.closest('.fold'))){
         selectNode(id);
-        _synthDblAt = Date.now(); _synthDblEl = e.target;   // 供原生 dblclick 去重
+        _synthDblAt = Date.now(); _synthDblId = id;   // 供原生 dblclick 去重
         labelDblCore(e.target, n, label, true);
       }
       return;
@@ -3669,7 +3685,7 @@ function setTargetScale(ns){
       setTargetScale(pinch.s0 * tdist(e.touches) / pinch.d0);
     }
   }, { passive: false });
-  vp.addEventListener('touchend', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
+  vp.addEventListener('touchend', () => { _lastTouchAt = Date.now(); pinch = null; window.__pinchActive = false; }, { passive: true });
   vp.addEventListener('touchcancel', () => { pinch = null; window.__pinchActive = false; }, { passive: true });
 })();
 

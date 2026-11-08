@@ -196,8 +196,9 @@ def t_delete_count_and_undo_redo(b):
 
 @testcase
 def t_touch_double_tap_spouse_and_name(b):
-    """网友反馈：手机上双击配偶没反应。触屏双轻点按位置分派：
-       配偶→改配偶弹窗，名字→改名弹窗（与桌面 dblclick 同一入口）。"""
+    """网友反馈：手机上双击配偶没反应。v15.57：触屏轻点配偶即进编辑；
+       双击窗口放宽到 450ms（慢节奏双击也生效）；弹窗打开后 350ms 内的
+       第二下点击不会把刚弹出的编辑框关掉。"""
     ctx, page, errs, cons = fresh_page(b, 390, 844, touch=True, mobile=True)
     goto(page)
     page.evaluate("setTargetScale(1.8)")
@@ -208,11 +209,19 @@ def t_touch_double_tap_spouse_and_name(b):
     box = sp.bounding_box()
     x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
     page.touchscreen.tap(x, y)
-    page.wait_for_timeout(80)
-    page.touchscreen.tap(x, y)
     page.wait_for_timeout(300)
     title = page.locator("#__uipTitle").text_content()
-    check("配偶" in title, "触屏双轻点配偶 → 改配偶弹窗", title)
+    check("配偶" in title, "触屏轻点配偶 → 改配偶弹窗", title)
+    page.evaluate("document.getElementById('__uipCancel').click()")
+    page.wait_for_timeout(150)
+    # 快速双击配偶：第二下落在遮罩上，不能把刚打开的弹窗瞬间关掉
+    page.touchscreen.tap(x, y)
+    page.wait_for_timeout(120)
+    page.touchscreen.tap(x, y)
+    page.wait_for_timeout(150)
+    title_d = page.locator("#__uipTitle").text_content()
+    check(page.locator("#__uipModal").get_attribute("class") == "open"
+          and "配偶" in title_d, "双击的第二下不会关掉刚打开的编辑框", title_d)
     page.evaluate("document.getElementById('__uipCancel').click()")
     page.wait_for_timeout(150)
     nm = page.locator('.node[data-id="b2"] .node-label').first
@@ -226,6 +235,15 @@ def t_touch_double_tap_spouse_and_name(b):
     page.wait_for_timeout(300)
     title2 = page.locator("#__uipTitle").text_content()
     check("修改姓名" in title2, "触屏双轻点名字 → 改名弹窗", title2)
+    page.evaluate("document.getElementById('__uipCancel').click()")
+    page.wait_for_timeout(100)
+    # 慢节奏双击（间隔 ~400ms，超出旧 320ms 窗口）也要生效
+    page.touchscreen.tap(nx, ny)
+    page.wait_for_timeout(400)
+    page.touchscreen.tap(nx, ny)
+    page.wait_for_timeout(300)
+    title3 = page.locator("#__uipTitle").text_content()
+    check("修改姓名" in title3, "400ms 间隔的慢双击 → 改名弹窗", title3)
     page.evaluate("document.getElementById('__uipCancel').click()")
     page.wait_for_timeout(100)
     # 长按菜单 → 删除：确认走页内弹窗（系统 confirm 在部分内嵌浏览器被禁）

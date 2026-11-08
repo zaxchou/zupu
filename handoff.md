@@ -352,4 +352,8 @@ with sync_playwright() as p:
 
 | v15.56 | **移动端深审（2026-11-06）**：①`confirm()` 全部替换为页内 `uiConfirm`（`#__ucfModal`，与 uiPrompt 同款）：deleteNode/editSpouseAt 清空移除/resetData 三处；内嵌浏览器常禁原生对话框。测试 DialogRecorder 的 `queue("confirm")` 改用 helper `confirm_page(page, yes)`，并断言 `dlg.count()==0`（不再弹系统框）。②`html{overscroll-behavior:none}` 防手机下拉刷新抢手势。③≤860px 时 `.modal .modal-btns{position:sticky;bottom:-20px;background:inherit}` 长弹窗按钮吸底。④CDP 触摸实测：单指平移/双指捏合/卡片拖动换位/长按菜单全部正常（脚本 tests/_out/mobile_touch_audit.py）；弹窗布局审计 390×844 与 320×568（tests/_out/mobile_layout_audit.py）。build_i18n 按钮 count（取消 9/确定 2）与 confirm→uiConfirm 三条表项同步。21 模块 119 用例。 |
 
+| v15.57 | **触屏轻点配偶即编辑（2026-11-08，网友实测 v15.55 后仍「双击配偶没反应」）**：①click 委托里 `.sp` + `Date.now()-_lastTouchAt<600` → 直接 editSpouseAt（轻点即编辑，不再依赖双击；`_lastTouchAt` 由 pointerup(touch) 与 viewport touchend 维护，覆盖无 PointerEvent 的内核）。②双击判定窗口 320→450ms（慢双击生效）。③uiPrompt/uiConfirm 的遮罩关闭加 `Date.now()-openedAt>350` 防护：双击第二下落在遮罩不会瞬间关掉刚弹出的编辑框。④dblclick 去重 `_synthDblEl.contains` 改按成员 id（render 后元素重建 contains 会失效）。⑤`.sp` title 触屏改「轻点或双击：…」（i18n 表两条新键）。t_edit 触屏用例改：轻点编辑、双击第二下不关框、400ms 慢双击改名；21 模块 119 用例。 |
+
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
+
