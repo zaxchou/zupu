@@ -246,13 +246,11 @@ def t_touch_double_tap_spouse_and_name(b):
     check("修改姓名" in title3, "400ms 间隔的慢双击 → 改名弹窗", title3)
     page.evaluate("document.getElementById('__uipCancel').click()")
     page.wait_for_timeout(100)
-    # 长按菜单 → 删除：确认走页内弹窗（系统 confirm 在部分内嵌浏览器被禁）
+    # 轻点选中 → 操作条「⋯」→ 菜单 → 删除（v15.58 长按改为拾起拖动，菜单入口迁移）
     dlg = DialogRecorder(page)
     card = page.locator('.node[data-id="b1"]').first
     card.scroll_into_view_if_needed()
     page.wait_for_timeout(150)
-    cb = card.bounding_box()
-    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
     page.evaluate("""() => {
       const v = document.getElementById('viewport');
       const r = document.querySelector('.node[data-id="b1"]').getBoundingClientRect();
@@ -260,16 +258,13 @@ def t_touch_double_tap_spouse_and_name(b):
       v.scrollTop += r.top + r.height / 2 - innerHeight / 2;
     }""")
     page.wait_for_timeout(150)
-    cb = card.bounding_box()
-    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
-    # 用 CDP 触摸长按（Playwright touchscreen 无长按）
-    cdp = ctx.new_cdp_session(page)
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": cx, "y": cy}]})
-    page.wait_for_timeout(700)
-    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-    page.wait_for_timeout(250)
+    page.locator('.node[data-id="b1"] .node-label').click()
+    page.wait_for_timeout(200)
+    check(page.locator('#__selBar').count() == 1, "触屏轻点选中出现操作条")
+    page.locator('#__selBar .sa-btn[title*="更多"]').click()
+    page.wait_for_timeout(200)
     check(page.evaluate("() => document.getElementById('__ctxMenu').style.display === 'block'"),
-          "触屏长按弹出成员菜单")
+          "操作条「⋯」打开成员菜单")
     page.locator("#__ctxMenu .mi", has_text="删除").click()
     confirm_page(page, True)
     page.wait_for_timeout(200)

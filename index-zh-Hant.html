@@ -277,6 +277,17 @@ body{
   color:#9aa9bb;letter-spacing:2px;text-indent:2px;pointer-events:none;user-select:none;
 }
 .vrow.row-zibei{font-size:10.5px;font-weight:500;letter-spacing:1px;text-indent:1px;color:#a9b6c6}
+/* ---------- 選中卡片操作條（v15.58）：⋯ 更多 + 前移/後移/最前/最後 ---------- */
+#__selBar{
+  position:absolute;transform:translateX(-50%);display:flex;gap:2px;
+  background:rgba(12,20,34,.92);border-radius:16px;padding:4px;z-index:35;
+  box-shadow:0 4px 14px rgba(10,20,40,.35);
+}
+#__selBar .sa-btn{
+  border:0;background:transparent;color:#fff;font-size:13px;line-height:1;
+  padding:6px 9px;border-radius:12px;cursor:pointer;user-select:none;font-family:inherit;
+}
+#__selBar .sa-btn:active{background:rgba(255,255,255,.22)}
 /* 譜書豎排·紙面化（v15.24）：框退後、墨字當主角——hover/選中才現淡框 */
 #stage.v .node-label,.ps.v .node-label{
   background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
@@ -988,7 +999,7 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
 </div>
 
 <div id="__ctxMenu" style="display: none;"></div>
-<div id="__gestureHint">單指拖動平移 · 雙指捏合縮放 · 長按卡片更多操作</div>
+<div id="__gestureHint">單指滑動平移 · 雙指捏合縮放 · 長按卡片拖動 · 輕點選中可排序</div>
 <div id="__uipModal">
   <div class="uip-box">
     <h3 id="__uipTitle">輸入</h3>
@@ -1096,13 +1107,14 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
       <tr><td><kbd>Ctrl+Shift+S</kbd></td><td>加配偶（可多次，支援元配/繼室）</td></tr>
       <tr><td><kbd>Ctrl+I</kbd> / <kbd>F2</kbd></td><td>檔案 / 改名</td></tr>
       <tr><td><kbd>Delete</kbd></td><td>刪除（含後代，可撤銷）</td></tr>
-      <tr><td>按住節點拖動</td><td>調長幼次序（橫向世代沿上下拖動，其餘沿左右拖動；最上或最左為長）</td></tr>
+      <tr><td>按住節點拖動（手機：長按拾起）</td><td>調長幼次序（橫向世代沿上下拖動，其餘沿左右拖動；最上或最左為長）；拖到視口邊緣畫布自動滾動</td></tr>
       <tr><td>按住拖到某卡片上停一下</td><td>過繼：TA（連同後代整支）成為此人子女，Ctrl+Z 可撤銷</td></tr>
+      <tr><td>輕點選中 → 卡片下方操作條</td><td>前移 / 後移 / 最前 / 最後精確排序（手機推薦），「⋯」開啟成員選單</td></tr>
     </tbody></table>
     <h4>檢視與資料</h4>
     <table class="hk-table">
       <tbody><tr><td><kbd>滾輪</kbd></td><td>以游標為中心縮放；在視覺設定中可關閉，改用 Ctrl＋滾輪縮放</td></tr>
-      <tr><td>左鍵按住空白拖動</td><td>平移畫布；觸屏單指拖動、雙指縮放</td></tr>
+      <tr><td>左鍵按住空白拖動</td><td>平移畫布；觸屏單指滑動（按在卡片上滑動也是平移，長按拾起才拖動）、雙指縮放</td></tr>
       <tr><td><kbd>Ctrl+F</kbd></td><td>搜尋（姓名/配偶/年份/備註），Enter 迴圈跳轉</td></tr>
       <tr><td><kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Y</kbd></td><td>撤銷 / 重做</td></tr>
       <tr><td><kbd>Ctrl+S</kbd></td><td>已自動儲存（攔截瀏覽器另存，無需手動操作）</td></tr>
@@ -2244,6 +2256,7 @@ function render(){
   if (_lastQuery) applySearchHighlight();
 
   applyZoom();
+  updateSelBar();     /* 選中卡片的操作條隨渲染重建（排序 / 更多，v15.58） */
   updateStats(GENS);
   updateClanTags();   /* 撤銷/重做/匯入也會改變譜序，頂欄隨渲染同步 */
   saveData();         /* 每次渲染（即每次編輯）自動儲存到本瀏覽器 —— 無感 */
@@ -2356,6 +2369,64 @@ function selectNode(id){
   document.querySelectorAll('.node').forEach(w => {
     w.classList.toggle('selected', w.dataset.id === id);
   });
+  updateSelBar();   /* 選中即出操作條（排序 / ⋯ 更多）；render 後也會重建定位 */
+}
+/* ---------- 選中卡片的操作條（v15.58）：排序按鈕 + 「⋯」更多 ----------
+   網友反饋手機上拖動排序費勁、容易誤拖；點選後直接給 前移/後移/最前/最後。 */
+function reorderSibling(n, action){
+  const p = findParent(n.id);
+  if (!p) return false;
+  const arr = p.children;
+  const i = arr.findIndex(c => c.id === n.id);
+  if (i < 0 || arr.length < 2) return false;
+  let j = i;
+  if (action === 'first') j = 0;
+  else if (action === 'last') j = arr.length - 1;
+  else if (action === 'prev') j = i - 1;
+  else j = i + 1;
+  if (j < 0 || j >= arr.length || j === i){
+    toast('「' + n.name + '」已經是同輩' + (i === 0 ? '最前（最長）' : i === arr.length - 1 ? '最後（最幼）' : '第 ' + (i + 1) + ' 位') + '，無需再移');
+    return false;
+  }
+  pushHistory('reorder:' + n.id + ':' + action);
+  arr.splice(j, 0, arr.splice(i, 1)[0]);
+  render();
+  selectNode(n.id);
+  toast('已換位：' + n.name + ' 現在是同輩第 ' + (j + 1) + ' 位（排行「' + rankWord(j) + '」）');
+  return true;
+}
+function updateSelBar(){
+  const nodesEl = document.getElementById('nodes');
+  const old = document.getElementById('__selBar');
+  if (old) old.remove();
+  if (!selectedId || _renderSilent || _exportLock) return;
+  const n = findNode(selectedId);
+  if (!n || n.id === 'root') return;
+  const r = nodeRects.get(selectedId);
+  if (!r) return;
+  const bar = document.createElement('div');
+  bar.id = '__selBar';
+  function btn(txt, title, fn){
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sa-btn'; b.textContent = txt; b.title = title;
+    b.addEventListener('pointerdown', ev => ev.stopPropagation());
+    b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
+    return b;
+  }
+  bar.appendChild(btn('⋯', '更多操作（改名 / 檔案 / 刪除…）', () => {
+    const w = document.querySelector('.node[data-id="' + selectedId + '"]');
+    if (w) openMenu(w, n);
+  }));
+  const p = findParent(n.id);
+  if (p && p.children.length > 1){
+    bar.appendChild(btn('⇤', '移到最前（最長）', () => reorderSibling(n, 'first')));
+    bar.appendChild(btn('←', '前移一位', () => reorderSibling(n, 'prev')));
+    bar.appendChild(btn('→', '後移一位', () => reorderSibling(n, 'next')));
+    bar.appendChild(btn('⇥', '移到最後（最幼）', () => reorderSibling(n, 'last')));
+  }
+  bar.style.left = (r.x + r.w / 2) + 'px';
+  bar.style.top = (r.y + r.h + 6) + 'px';
+  nodesEl.appendChild(bar);
 }
 
 /* ---------- ⑤ 行內編輯 ---------- */
@@ -2721,6 +2792,14 @@ function buildMenuItems(n){
   if (n.id !== 'root'){
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('匯出此支…', '', '', () => openSubtreeExport(n), '匯出該成員及其全部後代（大譜可分批匯出）'));
+    const p = findParent(n.id);
+    if (p && p.children.length > 1){
+      ctxMenu.appendChild(msep());
+      ctxMenu.appendChild(mi('移到最前', '', '', () => reorderSibling(n, 'first'), '排序：成為同輩中最長'));
+      ctxMenu.appendChild(mi('前移一位', '', '', () => reorderSibling(n, 'prev')));
+      ctxMenu.appendChild(mi('後移一位', '', '', () => reorderSibling(n, 'next')));
+      ctxMenu.appendChild(mi('移到最後', '', '', () => reorderSibling(n, 'last')));
+    }
     ctxMenu.appendChild(msep());
     ctxMenu.appendChild(mi('刪除', 'danger', '', () => deleteNode(n)));
   }
@@ -3321,11 +3400,47 @@ function reparentNode(n, newParent){
     }, 400);
   }
 
+  function makeDrag(n, parent, x, y, picked){
+    const d = {
+      id: n.id, n, parent,
+      oldIdx: parent.children.findIndex(c => c.id === n.id),
+      ids: [], baseLeft: new Map(), baseTop: new Map(),
+      moved: false, picked: !!picked, historyPushed: false,
+      startX: x, startY: y, curX: x, curY: y,
+      insertIdx: -1,
+      hoverId: null, targetId: null
+    };
+    (function collect(x0){ d.ids.push(x0.id); if (x0.children) x0.children.forEach(collect); })(n);
+    return d;
+  }
+  function cacheEls(d){
+    d.els = new Map();   // 快取元素引用：拖動期間零 DOM 查詢（效能）
+    d.ids.forEach(iid => {
+      const w = document.querySelector('.node[data-id="' + iid + '"]');
+      if (w){ d.baseTop.set(iid, parseFloat(w.style.top) || 0); d.baseLeft.set(iid, parseFloat(w.style.left) || 0); w.classList.add('dragging'); d.els.set(iid, w); }
+    });
+  }
+  function applyFollow(d, dx, dy){
+    /* 整個子樹跟隨平移（連線落位後重畫） */
+    d.ids.forEach(iid => {
+      const w = d.els && d.els.get(iid);
+      if (w && d.baseLeft.has(iid)){
+        w.style.left = (d.baseLeft.get(iid) + dx / scale) + 'px';
+        w.style.top = (d.baseTop.get(iid) + dy / scale) + 'px';
+      }
+    });
+  }
+  function pointerWorld(x, y){
+    const rect = stage.getBoundingClientRect();
+    return [(x - rect.left) / scale, (y - rect.top) / scale];
+  }
+
   document.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     /* 選單內按下：絕不觸發關閉邏輯（mousedown 先於 click，先銷燬選單則 click 落空） */
     if (e.target.closest && (e.target.closest('#__ctxMenu') || e.target.closest('#searchBox'))) return;
     closeMenu();
+    if (e.pointerType === 'touch') return;   // 觸屏走「長按拾起」（v15.58）：按下即拖會誤拖
     if (e.target.closest && e.target.closest('.node-avatar')) return;   // 頭像：點按=燈箱，絕不進拖拽
     const label = e.target.closest && e.target.closest('.node-label');
     if (!label) return;
@@ -3336,90 +3451,112 @@ function reparentNode(n, newParent){
     const n = findNode(id);
     const parent = findParent(id);
     if (!n || !parent) return;   // 獨子也可拖：拖去別人名下（過繼）；同輩多時左右拖=換長幼
-    drag = {
-      id, n, parent,
-      oldIdx: parent.children.findIndex(c => c.id === id),
-      ids: [], baseLeft: new Map(), baseTop: new Map(),
-      moved: false, startX: e.clientX, startY: e.clientY,
-      insertIdx: -1,
-      hoverId: null, targetId: null
-    };
-    (function collect(x){ drag.ids.push(x.id); if (x.children) x.children.forEach(collect); })(n);
+    drag = makeDrag(n, parent, e.clientX, e.clientY, false);
   });
 
   document.addEventListener('pointermove', e => {
     if (!drag) return;
     const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
     if (!drag.moved){
-      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      const th = drag.picked ? 2 : 8;   // 拾起後的任何移動都算拖；滑鼠保持 8px 閾值
+      if (Math.abs(dx) < th && Math.abs(dy) < th) return;
       drag.moved = true;
       pushHistory('drag');
-      drag.els = new Map();   // 快取元素引用：拖動期間零 DOM 查詢（效能）
-      drag.ids.forEach(iid => {
-        const w = document.querySelector('.node[data-id="' + iid + '"]');
-        if (w){ drag.baseTop.set(iid, parseFloat(w.style.top) || 0); drag.baseLeft.set(iid, parseFloat(w.style.left) || 0); w.classList.add('dragging'); drag.els.set(iid, w); }
-      });
+      cacheEls(drag);
     }
-    /* 整個子樹跟隨平移（連線落位後重畫） */
-    drag.ids.forEach(iid => {
-      const w = drag.els && drag.els.get(iid);
-      if (w && drag.baseLeft.has(iid)){
-        w.style.left = (drag.baseLeft.get(iid) + dx / scale) + 'px';
-        w.style.top = (drag.baseTop.get(iid) + dy / scale) + 'px';
-      }
-    });
-    /* 指標換算畫布座標 */
-    const rect = stage.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / scale;
-    const py = (e.clientY - rect.top) / scale;
+    drag.curX = e.clientX; drag.curY = e.clientY;
+    applyFollow(drag, dx, dy);
+    const [px, py] = pointerWorld(e.clientX, e.clientY);
+    updateHover(drag, px, py);
+    if (!drag.targetId) updateInsertMarker(drag, px, py);
+    startEdgeScroll();
+  });
 
-    /* —— 懸停命中：游標停在誰身上（數學命中，被拖子樹 pointer-events:none）—— */
+  /* —— 懸停命中：游標停在誰身上（數學命中，被拖子樹 pointer-events:none）—— */
+  function updateHover(d, px, py){
     let hover = null;
     nodeRects.forEach((r0, nid) => {
-      if (nid === drag.id || subtreeContains(drag.n, nid)) return;
+      if (nid === d.id || subtreeContains(d.n, nid)) return;
       if (Math.abs(px - r0.x) <= r0.w / 2 + 4 && py >= r0.y - 4 && py <= r0.y + r0.h + 26) hover = nid;
     });
-    if (drag.targetId && hover !== drag.targetId) clearTarget();
-    drag.hoverId = hover;
-    if (hover && hover !== drag.targetId){
+    if (d.targetId && hover !== d.targetId) clearTarget();
+    d.hoverId = hover;
+    if (hover && hover !== d.targetId){
       const w = wrapOf(hover);
       if (w && !w.classList.contains('drop-bad')){
         clearHoverMarks();
-        if (subtreeContains(drag.n, hover)){
+        if (subtreeContains(d.n, hover)){
           w.classList.add('drop-bad');                    // 自己的後代：紅框拒絕
         } else {
           scheduleDwell(hover);
         }
       }
     }
-    if (drag.targetId){ return; }                          // 過繼模式下不再更新插行線
+  }
 
-    /* —— 兄弟換位邏輯（原有行為）—— */
-    const sibs = drag.parent.children.filter(c => c.id !== drag.id);
+  /* —— 兄弟換位插行線（原有行為）—— */
+  function updateInsertMarker(d, px, py){
+    const sibs = d.parent.children.filter(c => c.id !== d.id);
     let idx = 0;
     const horizontal = horizontalLayout();
     const breadth = n => horizontal ? n._y + nodeRects.get(n.id).h / 2 : n._x;
     const pointerB = horizontal ? py : px;
     for (const s of sibs){ if (pointerB > breadth(s)) idx++; else break; }
-    drag.insertIdx = idx;
+    d.insertIdx = idx;
     const m = document.getElementById('__dropMarker');
     const prev = idx ? nodeRects.get(sibs[idx - 1].id) : null;
     const next = idx < sibs.length ? nodeRects.get(sibs[idx].id) : null;
     const end = r => horizontal ? r.y + r.h : r.x + r.w / 2;
     const start = r => horizontal ? r.y : r.x - r.w / 2;
-    const markerB = prev && next ? (end(prev) + start(next)) / 2 : prev ? end(prev) + H_SPACE / 2 : next ? start(next) - H_SPACE / 2 : breadth(drag.n);
-    m.style.left = (horizontal ? drag.n._x - nodeRects.get(drag.id).w / 2 : markerB) + 'px';
-    m.style.top = (horizontal ? markerB : drag.n._y + 12) + 'px';
-    m.style.width = horizontal ? nodeRects.get(drag.id).w + 'px' : '0';
+    const markerB = prev && next ? (end(prev) + start(next)) / 2 : prev ? end(prev) + H_SPACE / 2 : next ? start(next) - H_SPACE / 2 : breadth(d.n);
+    m.style.left = (horizontal ? d.n._x - nodeRects.get(d.id).w / 2 : markerB) + 'px';
+    m.style.top = (horizontal ? markerB : d.n._y + 12) + 'px';
+    m.style.width = horizontal ? nodeRects.get(d.id).w + 'px' : '0';
     m.style.height = horizontal ? '0' : '88px';
     m.style.borderLeftWidth = horizontal ? '0' : '2px';
     m.style.borderTop = horizontal ? '2px dashed var(--rank-bg)' : '0';
     m.style.display = 'block';
-  });
+  }
+
+  /* —— 邊緣自動滾動（v15.58，網友反饋拖到視野外沒有反饋）——
+     指標停在視口邊緣 64px 內時畫布漸速滾動；滾動量計入拖動起點，
+     卡片保持釘在指尖，懸停/插行線隨滾動重新整理，可夠到螢幕外的目標 */
+  let asRaf = null;
+  function stopEdgeScroll(){
+    if (asRaf){ cancelAnimationFrame(asRaf); asRaf = null; }
+  }
+  function edgeScrollTick(){
+    asRaf = null;
+    if (!drag || !drag.moved) return;
+    const vp = document.getElementById('viewport');
+    const r = vp.getBoundingClientRect();
+    const EDGE = 64, MAXV = 22;
+    let sx = 0, sy = 0;
+    const x = drag.curX, y = drag.curY;
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom){
+      if (x - r.left < EDGE) sx = -Math.max(1, Math.round(MAXV * (1 - (x - r.left) / EDGE)));
+      else if (r.right - x < EDGE) sx = Math.max(1, Math.round(MAXV * (1 - (r.right - x) / EDGE)));
+      if (y - r.top < EDGE) sy = -Math.max(1, Math.round(MAXV * (1 - (y - r.top) / EDGE)));
+      else if (r.bottom - y < EDGE) sy = Math.max(1, Math.round(MAXV * (1 - (r.bottom - y) / EDGE)));
+    }
+    if (sx || sy){
+      vp.scrollLeft += sx; vp.scrollTop += sy;
+      drag.startX += sx; drag.startY += sy;
+      applyFollow(drag, drag.curX - drag.startX, drag.curY - drag.startY);
+      const [px, py] = pointerWorld(drag.curX, drag.curY);
+      updateHover(drag, px, py);
+      if (!drag.targetId) updateInsertMarker(drag, px, py);
+      asRaf = requestAnimationFrame(edgeScrollTick);
+    }
+  }
+  function startEdgeScroll(){
+    if (!asRaf) asRaf = requestAnimationFrame(edgeScrollTick);
+  }
 
   document.addEventListener('pointercancel', () => {
     if (!drag) return;
     drag = null;
+    stopEdgeScroll();
     if (dwellT){ clearTimeout(dwellT); dwellT = null; }
     const m2 = document.getElementById('__dropMarker');
     if (m2) m2.style.display = 'none';
@@ -3430,16 +3567,15 @@ function reparentNode(n, newParent){
   document.addEventListener('pointerup', () => {
     if (!drag) return;
     const d = drag; drag = null;
+    stopEdgeScroll();
     if (dwellT){ clearTimeout(dwellT); dwellT = null; }
     const m = document.getElementById('__dropMarker');
     if (m) m.style.display = 'none';
     clearHoverMarks();
-    if (!d.moved) return;               // 未達拖動閾值 = 普通點選（歷史快照只在 move 閾值時入棧）
+    document.querySelectorAll('.node.dragging').forEach(w => w.classList.remove('dragging'));
+    if (!d.moved) return;               // 拾起未移動 / 未達閾值 = 普通點選（歷史只在真正拖動時入棧）
     suppressClickUntil = Date.now() + 350;
-    d.ids.forEach(iid => {
-      const w = document.querySelector('.node[data-id="' + iid + '"]');
-      if (w) w.classList.remove('dragging');
-    });
+    window.__zpLastDropAt = Date.now(); // 觸屏雙擊判定跳過剛結束的拖動
 
     /* —— 過繼落點：鬆手時若停在有效目標上 → 掛到 TA 名下 —— */
     if (d.targetId){
@@ -3470,6 +3606,17 @@ function reparentNode(n, newParent){
   document.addEventListener('click', e => {
     if (Date.now() < suppressClickUntil){ e.stopPropagation(); e.preventDefault(); }
   }, true);
+
+  /* 觸屏長按拾起入口（v15.58）：picked 拖動；未移動鬆手 = 原樣放回、不寫歷史 */
+  window.__zpBeginTouchDrag = function(n, x, y){
+    const parent = findParent(n.id);
+    if (!n || !parent) return false;
+    drag = makeDrag(n, parent, x, y, true);
+    const w = wrapOf(n.id);
+    if (w) w.classList.add('dragging');   // 拾起即浮起（後續移動由 cacheEls 統一加類）
+    return true;
+  };
+  window.__zpLastDropAt = 0;
 })();
 
 /* ---------- ⑩ 縮放 / 平移 ---------- */
@@ -3594,21 +3741,24 @@ function setTargetScale(ns){
   animateZoom();
 }
 
-/* 平移：拖空白處（避開標籤/選單/搜尋框） */
+/* 平移：拖空白處（避開標籤/選單/搜尋框/選中操作條） */
 (function(){
   const vp = document.getElementById('viewport');
   let down = false, sx = 0, sy = 0, sl = 0, st = 0;
+  function begin(x0, y0){
+    stopZoom();
+    down = true; sx = x0; sy = y0;
+    sl = vp.scrollLeft; st = vp.scrollTop;
+    vp.classList.add('panning');
+  }
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox')) return;
-    stopZoom();
-    down = true; sx = e.clientX; sy = e.clientY;
-    sl = vp.scrollLeft; st = vp.scrollTop;
+    if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox') || e.target.closest('#__selBar')) return;
+    begin(e.clientX, e.clientY);
     if (e.pointerType === 'mouse'){
       e.preventDefault();
       vp.setPointerCapture(e.pointerId);
     }
-    vp.classList.add('panning');
   });
   window.addEventListener('pointermove', e => {
     if (!down) return;
@@ -3617,12 +3767,15 @@ function setTargetScale(ns){
   });
   window.addEventListener('pointerup', () => { down = false; vp.classList.remove('panning'); });
   window.addEventListener('pointercancel', () => { down = false; vp.classList.remove('panning'); });
+  /* 觸屏「按在卡片上直接滑動 = 平移」（v15.58）：由觸屏 IIFE 在滑動超閾值時從按下點起算 */
+  window.__zpStartPan = function(x0, y0){ begin(x0, y0); };
+  window.__zpStopPan = function(){ down = false; vp.classList.remove('panning'); };
 })();
 
-/* ---------- 觸屏：長按=選單 / 雙擊=改名 / 雙指=縮放（容器與移動端） ---------- */
+/* ---------- 觸屏：長按=拾起拖動 / 輕點=選中 / 卡上滑動=平移 / 雙指=縮放 / 雙擊=編輯 ---------- */
 (function(){
   const vp = document.getElementById('viewport');
-  let lpTimer = null, lpX = 0, lpY = 0;
+  let lpTimer = null, lpX = 0, lpY = 0, panFromCard = false;
   let lastTapT = 0, lastTapId = '';
   let pinch = null;
   function clearLP(){ if (lpTimer){ clearTimeout(lpTimer); lpTimer = null; } }
@@ -3630,29 +3783,45 @@ function setTargetScale(ns){
     const dx = ts[0].clientX - ts[1].clientX, dy = ts[0].clientY - ts[1].clientY;
     return Math.sqrt(dx * dx + dy * dy) || 1;
   }
+  /* 按在卡片上：300ms 長按 = 拾起進入拖動（v15.58 取代「長按彈選單」——
+     網友反饋滑動畫布碰到人員就會誤拖位置；選單改從選中操作條「⋯」或卡片「＋」進入） */
   vp.addEventListener('pointerdown', e => {
     if (e.pointerType !== 'touch' || !e.isPrimary) return;
     const label = e.target.closest ? e.target.closest('.node-label') : null;
     if (!label) return;
-    if (e.target.closest && e.target.closest('.node-avatar')) return;   // 觸屏點頭像=燈箱，不長按彈選單
+    if (e.target.closest && e.target.closest('.node-avatar')) return;   // 頭像：點按=燈箱，不長按拖動
     const wrap = label.closest('.node');
     const n = wrap ? findNode(wrap.getAttribute('data-id')) : null;
     if (!n || n.id === 'root') return;
+    if (document.activeElement && document.activeElement.contentEditable === 'true') return;
     lpX = e.clientX; lpY = e.clientY;
+    panFromCard = false;
     clearLP();
     lpTimer = setTimeout(() => {
       lpTimer = null;
-      selectNode(n.id);
-      openMenu(wrap, n);
-    }, 480);
+      if (window.__pinchActive) return;
+      if (window.__zpBeginTouchDrag && window.__zpBeginTouchDrag(n, lpX, lpY)){
+        selectNode(n.id);
+        toast('已拾起「' + displayName(n) + '」：拖到新位置鬆手；停在其他卡片上片刻可過繼');
+      }
+    }, 300);
   }, true);
   document.addEventListener('pointermove', e => {
-    if (lpTimer && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)) clearLP();
+    if (lpTimer && (Math.abs(e.clientX - lpX) > 10 || Math.abs(e.clientY - lpY) > 10)){
+      clearLP();
+      /* 按在卡片上直接滑動 = 平移畫布（v15.58）：從按下點起算，畫布不跳 */
+      if (!panFromCard && !window.__pinchActive && window.__zpStartPan){
+        window.__zpStartPan(lpX, lpY);
+        panFromCard = true;
+      }
+    }
   }, true);
   document.addEventListener('pointerup', e => {
     clearLP();
+    panFromCard = false;
     if (e.pointerType !== 'touch') return;
     _lastTouchAt = Date.now();
+    if (Date.now() - (window.__zpLastDropAt || 0) < 450){ lastTapT = 0; lastTapId = ''; return; }   // 剛結束拖動，不算雙擊
     if (e.target.closest && e.target.closest('.node-avatar')){ lastTapT = 0; lastTapId = ''; return; }   // 觸屏雙擊頭像不進改名
     const label = e.target.closest ? e.target.closest('.node-label') : null;
     const id = label ? (label.closest('.node') ? label.closest('.node').getAttribute('data-id') : '') : '';
@@ -3674,6 +3843,7 @@ function setTargetScale(ns){
   vp.addEventListener('touchstart', e => {
     if (e.touches.length === 2){
       clearLP();
+      if (window.__zpStopPan) window.__zpStopPan();   // 雙指=縮放：停掉單指平移
       window.__pinchActive = true;
       pinch = { d0: tdist(e.touches), s0: scale };
     }

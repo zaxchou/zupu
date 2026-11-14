@@ -101,6 +101,123 @@ def t_drag_noop_no_history(b):
     ctx.close()
 
 
+def _touch_path(cdp, start, end, steps=14):
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart",
+        "touchPoints": [{"x": round(start[0]), "y": round(start[1])}]})
+    for i in range(1, steps + 1):
+        x = start[0] + (end[0] - start[0]) * i / steps
+        y = start[1] + (end[1] - start[1]) * i / steps
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove",
+            "touchPoints": [{"x": round(x), "y": round(y)}]})
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+@testcase
+def t_touch_pickup_pan_and_edgescroll(b):
+    """v15.58 手机拖拽重排：按住卡片滑动=平移（不误拖）、长按拾起拖动换位、
+       拖到视口边缘画布自动滚动；长按不再弹菜单（菜单走选中操作条）。"""
+    ctx, page, errs, cons = fresh_page(b, 390, 844, touch=True, mobile=True)
+    goto(page)
+    page.evaluate("setTargetScale(1.5)")
+    page.wait_for_timeout(400)
+    cdp = ctx.new_cdp_session(page)
+    # ① 按在卡片上滑动 = 平移画布，卡片不换位
+    card = page.locator('.node[data-id="b2"]').first
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    cb = card.bounding_box()
+    sl0 = page.evaluate("() => [document.getElementById('viewport').scrollLeft, document.getElementById('viewport').scrollTop]")
+    _touch_path(cdp, (cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2),
+                     (cb["x"] + cb["width"] / 2 - 160, cb["y"] + cb["height"] / 2 - 60))
+    page.wait_for_timeout(250)
+    sl1 = page.evaluate("() => [document.getElementById('viewport').scrollLeft, document.getElementById('viewport').scrollTop]")
+    check(sl0 != sl1, "按在卡片上滑动 = 平移画布", str((sl0, sl1)))
+    check(page.evaluate("() => window.__ZP.findNode('b2')") is not None and
+          page.evaluate("() => findParent('b2').children.map(c=>c.id)").count("b2") == 1,
+          "滑动不改折叠/次序")
+    # ② 长按拾起：卡浮起、菜单不弹；拖到右侧同辈松手 = 换位
+    page.evaluate("setTargetScale(1.0)")
+    page.wait_for_function("zoomRaf === null")   # 缩放动画结束再取坐标（动画中途卡片会移位）
+    card = page.locator('.node[data-id="b1a1"]').first
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    cb = card.bounding_box()
+    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": round(cx), "y": round(cy)}]})
+    page.wait_for_timeout(450)
+    check(page.evaluate("() => document.querySelectorAll('.node.dragging').length") > 0,
+          "长按 300ms 拾起（卡片进入拖动态）")
+    check(page.evaluate("() => document.getElementById('__ctxMenu').style.display") != "block",
+          "长按不再弹菜单（入口迁移到操作条「⋯」）")
+    target = page.locator('.node[data-id="b1a2"]').first.bounding_box()
+    _touch_path(cdp, (cx, cy), (target["x"] + target["width"] + 30, target["y"] + target["height"] / 2), steps=16)
+    page.wait_for_timeout(300)
+    order = page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)")
+    check(order == ["b1a2", "b1a1"], "拾起拖动完成换位", str(order))
+    page.evaluate("undo()")
+    page.wait_for_timeout(150)
+    # ③ 拖到视口右缘：画布自动滚动
+    page.evaluate("setTargetScale(1.2)")
+    page.wait_for_timeout(300)
+    card = page.locator('.node[data-id="b2"]').first
+    card.scroll_into_view_if_needed()
+    page.wait_for_timeout(150)
+    cb = card.bounding_box()
+    cx, cy = cb["x"] + cb["width"] / 2, cb["y"] + cb["height"] / 2
+    sl2 = page.evaluate("() => document.getElementById('viewport').scrollLeft")
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": round(cx), "y": round(cy)}]})
+    page.wait_for_timeout(400)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": [{"x": 385, "y": round(cy)}]})
+    page.wait_for_timeout(900)
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(300)
+    sl3 = page.evaluate("() => document.getElementById('viewport').scrollLeft")
+    check(sl3 > sl2 + 50, "拖到视口边缘自动滚动露出隐藏区域", f"{sl2} -> {sl3}")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
+def t_selbar_reorder_and_menu(b):
+    """v15.58 选中操作条：前移/后移/最前/最后精确排序（手机不依赖拖动），⋯ 打开成员菜单；
+       菜单内也有四个排序项；越界移动有提示且不写历史。"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto(page)
+    page.locator('.node[data-id="b1a1"] .node-label').click()
+    page.wait_for_timeout(200)
+    check(page.locator('#__selBar').count() == 1 and page.locator('#__selBar .sa-btn').count() == 5,
+          "选中出现操作条（⋯ + 四个排序钮）")
+    before = page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)")
+    page.locator('#__selBar .sa-btn[title*="后移"]').click()   # b1a1 是第一位：后移 → 交换
+    page.wait_for_timeout(250)
+    mid = page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)")
+    check(mid == ["b1a2", "b1a1"], "后移一位生效", str(mid))
+    page.locator('#__selBar .sa-btn[title*="后移"]').click()   # 已是最后：提示且不动
+    page.wait_for_timeout(200)
+    check("无需再移" in page.locator("#__toast").text_content(), "越界移动有提示")
+    lens = page.evaluate("() => window.__ZP.historyLens()")
+    page.locator('#__selBar .sa-btn[title*="最前"]').click()
+    page.wait_for_timeout(250)
+    check(page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)") == ["b1a1", "b1a2"],
+          "移到最前生效")
+    check(page.evaluate("() => window.__ZP.historyLens()") != lens, "排序写入撤销历史")
+    page.evaluate("undo()")
+    page.wait_for_timeout(150)
+    page.locator('.node[data-id="b1a1"] .node-label').click()
+    page.wait_for_timeout(150)
+    page.locator('#__selBar .sa-btn[title*="更多"]').click()
+    page.wait_for_timeout(200)
+    items = page.locator('#__ctxMenu .mi').all_text_contents()
+    check(all(t in items for t in ["移到最前", "前移一位", "后移一位", "移到最后"]),
+          "成员菜单含四个排序项", str(items))
+    page.locator('#__ctxMenu .mi', has_text="移到最前").click()   # undo 后 b1a1 在第 2 位
+    page.wait_for_timeout(250)
+    check(page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)") == ["b1a1", "b1a2"],
+          "菜单排序项生效")
+    check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
 if __name__ == "__main__":
     import sys as _sys
     ok = run_module(_sys.modules[__name__], "t_fold_drag 折叠/拖拽/历史边界")

@@ -355,5 +355,7 @@ with sync_playwright() as p:
 | v15.57 | **触屏轻点配偶即编辑（2026-11-08，网友实测 v15.55 后仍「双击配偶没反应」）**：①click 委托里 `.sp` + `Date.now()-_lastTouchAt<600` → 直接 editSpouseAt（轻点即编辑，不再依赖双击；`_lastTouchAt` 由 pointerup(touch) 与 viewport touchend 维护，覆盖无 PointerEvent 的内核）。②双击判定窗口 320→450ms（慢双击生效）。③uiPrompt/uiConfirm 的遮罩关闭加 `Date.now()-openedAt>350` 防护：双击第二下落在遮罩不会瞬间关掉刚弹出的编辑框。④dblclick 去重 `_synthDblEl.contains` 改按成员 id（render 后元素重建 contains 会失效）。⑤`.sp` title 触屏改「轻点或双击：…」（i18n 表两条新键）。t_edit 触屏用例改：轻点编辑、双击第二下不关框、400ms 慢双击改名；21 模块 119 用例。 |
 
 
+| v15.58 | **拖动体验重做（2026-11-14，网友三条反馈：无法互换/拖到屏外无反馈/滑动误拖）**：①拖拽 IIFE 重构：`makeDrag`(picked)/`cacheEls`/`applyFollow`/`pointerWorld`/`updateHover`/`updateInsertMarker` 抽函数；新增边缘自动滚动（视口 64px 内渐速 rAF，滚动量计入 drag.startX/Y 使卡片钉在指尖，hover/插行线随滚动刷新）。②触屏手势重排：**按下即拖改为长按 300ms 拾起**（`__zpBeginTouchDrag`，picked 拖动、未移动松手不写历史）；按住卡片滑动 >10px = `__zpStartPan` 平移（从按下点起算）；双指 pinch 时 `__zpStopPan`；鼠标路径不变（pointerType==='touch' 直接 return）。③`reorderSibling(n,action)` + 选中操作条 `updateSelBar`（render 尾与 selectNode 调用；⋯=openMenu，⇤←→⇥ 四个排序钮，仅同辈>1 时显示）+ 菜单四个排序项（同辈>1 才加）。④长按菜单入口迁移（⋯/＋）；`__zpLastDropAt` 让拖动结束 450ms 内不误判双击。⑤i18n：菜单排序项、操作条 title、拾起/换位/越界 toast、帮助两行、手势浮层（EN/JA 各加 ~13 条键）。测试：t_fold_drag 新增 `t_touch_pickup_pan_and_edgescroll`（滑动平移/拾起换位/边缘滚动）、`t_selbar_reorder_and_menu`（操作条排序、越界提示、菜单排序项）；t_edit 触屏删除改走选中→⋯→菜单；**教训：取坐标前必须 `wait_for_function("zoomRaf === null")`（缩放动画中途 bounding_box 会漂移）**；21 模块 121 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
 
