@@ -288,6 +288,8 @@ body{
   padding:6px 9px;border-radius:12px;cursor:pointer;user-select:none;font-family:inherit;
 }
 #__selBar .sa-btn:active{background:rgba(255,255,255,.22)}
+/* 拖動進行中隱藏操作條：卡片已被拿走，操作條留在原地會很怪（舊核心無 :has 只是照舊顯示） */
+#nodes:has(.node.dragging) #__selBar{display:none}
 /* 譜書豎排·紙面化（v15.24）：框退後、墨字當主角——hover/選中才現淡框 */
 #stage.v .node-label,.ps.v .node-label{
   background:rgba(255,253,248,.55);border-color:rgba(60,50,35,.15);box-shadow:none;
