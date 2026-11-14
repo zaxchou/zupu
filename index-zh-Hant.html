@@ -279,15 +279,24 @@ body{
 .vrow.row-zibei{font-size:10.5px;font-weight:500;letter-spacing:1px;text-indent:1px;color:#a9b6c6}
 /* ---------- 選中卡片操作條（v15.58）：⋯ 更多 + 前移/後移/最前/最後 ---------- */
 #__selBar{
-  position:absolute;transform:translateX(-50%);display:flex;gap:2px;
-  background:rgba(12,20,34,.92);border-radius:16px;padding:4px;z-index:35;
+  position:absolute;transform:translate(-50%,-100%);display:flex;align-items:center;gap:1px;
+  background:rgba(12,20,34,.92);border-radius:17px;padding:5px 7px;z-index:35;
   box-shadow:0 4px 14px rgba(10,20,40,.35);
 }
 #__selBar .sa-btn{
-  border:0;background:transparent;color:#fff;font-size:13px;line-height:1;
-  padding:6px 9px;border-radius:12px;cursor:pointer;user-select:none;font-family:inherit;
+  border:0;background:transparent;color:#fff;width:30px;height:30px;
+  display:flex;align-items:center;justify-content:center;padding:0;
+  border-radius:15px;cursor:pointer;user-select:none;font-family:inherit;
 }
-#__selBar .sa-btn:active{background:rgba(255,255,255,.22)}
+#__selBar .sa-btn:hover{background:rgba(255,255,255,.16)}
+#__selBar .sa-btn:active{background:rgba(255,255,255,.26)}
+#__selBar .sa-btn svg{display:block}
+#__selBar .sa-sep{width:1px;height:16px;background:rgba(255,255,255,.24);margin:0 4px;flex:none}
+@media (max-width: 860px){
+  #__selBar .sa-btn{width:26px;height:26px}
+  #__selBar .sa-btn svg{width:13px;height:13px}
+  #__selBar{padding:4px 5px}
+}
 /* 拖動進行中隱藏操作條：卡片已被拿走，操作條留在原地會很怪（舊核心無 :has 只是照舊顯示） */
 #nodes:has(.node.dragging) #__selBar{display:none}
 /* 譜書豎排·紙面化（v15.24）：框退後、墨字當主角——hover/選中才現淡框 */
@@ -2373,6 +2382,23 @@ function selectNode(id){
   });
   updateSelBar();   /* 選中即出操作條（排序 / ⋯ 更多）；render 後也會重建定位 */
 }
+function deselectNode(){
+  selectedId = null;
+  document.querySelectorAll('.node.selected').forEach(w => w.classList.remove('selected'));
+  updateSelBar();
+}
+/* 頂欄同款描邊圖示（v15.59）：操作條不再用字元箭頭 */
+function selIcon(name){
+  const P = {
+    more:  '<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+    first: '<path d="m11 6-6 6 6 6"/><path d="m18 6-6 6 6 6"/>',
+    prev:  '<path d="m14 6-6 6 6 6"/>',
+    next:  '<path d="m10 6 6 6-6 6"/>',
+    last:  '<path d="m6 6 6 6-6 6"/><path d="m13 6 6 6-6 6"/>',
+    close: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>'
+  }[name] || '';
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P + '</svg>';
+}
 /* ---------- 選中卡片的操作條（v15.58）：排序按鈕 + 「⋯」更多 ----------
    網友反饋手機上拖動排序費勁、容易誤拖；點選後直接給 前移/後移/最前/最後。 */
 function reorderSibling(n, action){
@@ -2408,27 +2434,51 @@ function updateSelBar(){
   if (!r) return;
   const bar = document.createElement('div');
   bar.id = '__selBar';
-  function btn(txt, title, fn){
+  function btn(icon, title, fn, extraCls){
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'sa-btn'; b.textContent = txt; b.title = title;
+    b.type = 'button'; b.className = 'sa-btn' + (extraCls ? ' ' + extraCls : '');
+    b.innerHTML = selIcon(icon); b.title = title; b.setAttribute('aria-label', title);
     b.addEventListener('pointerdown', ev => ev.stopPropagation());
     b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
     return b;
   }
-  bar.appendChild(btn('⋯', '更多操作（改名 / 檔案 / 刪除…）', () => {
+  function sep(){
+    const s = document.createElement('span');
+    s.className = 'sa-sep';
+    return s;
+  }
+  bar.appendChild(btn('more', '更多操作（改名 / 檔案 / 刪除…）', () => {
     const w = document.querySelector('.node[data-id="' + selectedId + '"]');
     if (w) openMenu(w, n);
   }));
   const p = findParent(n.id);
+  const compact = window.innerWidth <= 860;   /* 小屏：去掉「到頭」兩鍵（選單裡有），保證任何縮放下都放得下 */
   if (p && p.children.length > 1){
-    bar.appendChild(btn('⇤', '移到最前（最長）', () => reorderSibling(n, 'first')));
-    bar.appendChild(btn('←', '前移一位', () => reorderSibling(n, 'prev')));
-    bar.appendChild(btn('→', '後移一位', () => reorderSibling(n, 'next')));
-    bar.appendChild(btn('⇥', '移到最後（最幼）', () => reorderSibling(n, 'last')));
+    bar.appendChild(sep());
+    if (!compact) bar.appendChild(btn('first', '移到最前（最長）', () => reorderSibling(n, 'first')));
+    bar.appendChild(btn('prev', '前移一位', () => reorderSibling(n, 'prev')));
+    bar.appendChild(btn('next', '後移一位', () => reorderSibling(n, 'next')));
+    if (!compact) bar.appendChild(btn('last', '移到最後（最幼）', () => reorderSibling(n, 'last')));
   }
-  bar.style.left = (r.x + r.w / 2) + 'px';
-  bar.style.top = (r.y + r.h + 6) + 'px';
+  bar.appendChild(sep());
+  bar.appendChild(btn('close', '取消選中（Esc / 點空白處）', deselectNode));
+  const wrap = document.querySelector('.node[data-id="' + selectedId + '"]');
+  /* 位置：直接沿用卡片自身的 style.left/top（與卡片同一座標系，CSS zoom 下也必然對齊）；
+     再用真實 rect 在螢幕空間鉗制，深縮放/貼邊時把操作條推回可視範圍 */
+  if (!wrap) return;
+  /* 掛在卡片「上方」（底邊貼卡頂，留 6px）：下方是常駐「＋」按鈕，不能擋住選單入口 */
+  bar.style.left = wrap.style.left;
+  bar.style.top = (parseFloat(wrap.style.top) - 6) + 'px';
   nodesEl.appendChild(bar);
+  const br = wrap.getBoundingClientRect();
+  const me = bar.getBoundingClientRect();
+  let dx = 0, dy = 0;
+  if (me.left < 8) dx = 8 - me.left;
+  else if (me.right > innerWidth - 8) dx = innerWidth - 8 - me.right;
+  if (me.bottom > innerHeight - 8) dy = innerHeight - 8 - me.bottom;
+  else if (me.top < 8) dy = 8 - me.top;
+  if (dx) bar.style.marginLeft = (dx / scale) + 'px'; else bar.style.marginLeft = '';
+  if (dy) bar.style.marginTop = (dy / scale) + 'px'; else bar.style.marginTop = '';
 }
 
 /* ---------- ⑤ 行內編輯 ---------- */
@@ -3756,6 +3806,7 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox') || e.target.closest('#__selBar')) return;
+    if (selectedId) deselectNode();   /* 點空白處取消選中（操作條的 ✕ / Esc 亦可） */
     begin(e.clientX, e.clientY);
     if (e.pointerType === 'mouse'){
       e.preventDefault();
@@ -7509,9 +7560,11 @@ document.addEventListener('keydown', e => {
     if (pimpIsOpen()){ e.preventDefault(); e.stopPropagation(); closePhotoImpModal(); return; }
     if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (pdfIsOpen()){ e.preventDefault(); e.stopPropagation(); closePdfExport(); return; }
+    if (ucfIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__ucfCancel').click(); return; }
     if (dmIsOpen()){ return; }            // 彈窗自己的 handler 負責
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
+    if (selectedId){ e.preventDefault(); e.stopPropagation(); deselectNode(); return; }
     return;
   }
   /* 其餘按鍵：輸入中 / 彈窗開著 / 匯出遮罩在 一律不觸發全域性快捷鍵（v12 洩漏 bug 根因） */

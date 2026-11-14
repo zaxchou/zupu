@@ -185,8 +185,8 @@ def t_selbar_reorder_and_menu(b):
     goto(page)
     page.locator('.node[data-id="b1a1"] .node-label').click()
     page.wait_for_timeout(200)
-    check(page.locator('#__selBar').count() == 1 and page.locator('#__selBar .sa-btn').count() == 5,
-          "选中出现操作条（⋯ + 四个排序钮）")
+    check(page.locator('#__selBar').count() == 1 and page.locator('#__selBar .sa-btn').count() == 6,
+          "选中出现操作条（⋯ + 四个排序钮 + ✕ 关闭）")
     before = page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)")
     page.locator('#__selBar .sa-btn[title*="后移"]').click()   # b1a1 是第一位：后移 → 交换
     page.wait_for_timeout(250)
@@ -214,6 +214,23 @@ def t_selbar_reorder_and_menu(b):
     page.wait_for_timeout(250)
     check(page.evaluate("() => window.__ZP.findNode('b1a').children.map(c => c.id)") == ["b1a1", "b1a2"],
           "菜单排序项生效")
+    # 三条消失路径：✕ 按钮 / 点空白处 / Esc（网友反馈「不知道怎么让它消失」）
+    page.locator('#__selBar .sa-btn[title*="取消选中"]').click()
+    page.wait_for_timeout(150)
+    check(page.locator('#__selBar').count() == 0
+          and page.evaluate("() => document.querySelectorAll('.node.selected').length") == 0,
+          "✕ 取消选中并收起操作条")
+    page.locator('.node[data-id="b1a1"] .node-label').click()
+    page.wait_for_timeout(150)
+    check(page.locator('#__selBar').count() == 1, "重新选中再现操作条")
+    page.mouse.click(600, 700)   # 空白画布
+    page.wait_for_timeout(150)
+    check(page.locator('#__selBar').count() == 0, "点空白处取消选中")
+    page.locator('.node[data-id="b1a1"] .node-label').click()
+    page.wait_for_timeout(150)
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(150)
+    check(page.locator('#__selBar').count() == 0, "Esc 取消选中")
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()
 

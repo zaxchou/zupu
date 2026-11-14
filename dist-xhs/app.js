@@ -1128,6 +1128,23 @@ function selectNode(id){
   });
   updateSelBar();   /* 选中即出操作条（排序 / ⋯ 更多）；render 后也会重建定位 */
 }
+function deselectNode(){
+  selectedId = null;
+  document.querySelectorAll('.node.selected').forEach(w => w.classList.remove('selected'));
+  updateSelBar();
+}
+/* 顶栏同款描边图标（v15.59）：操作条不再用字符箭头 */
+function selIcon(name){
+  const P = {
+    more:  '<circle cx="5" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.7" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.7" fill="currentColor" stroke="none"/>',
+    first: '<path d="m11 6-6 6 6 6"/><path d="m18 6-6 6 6 6"/>',
+    prev:  '<path d="m14 6-6 6 6 6"/>',
+    next:  '<path d="m10 6 6 6-6 6"/>',
+    last:  '<path d="m6 6 6 6-6 6"/><path d="m13 6 6 6-6 6"/>',
+    close: '<path d="M6 6l12 12"/><path d="M18 6 6 18"/>'
+  }[name] || '';
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + P + '</svg>';
+}
 /* ---------- 选中卡片的操作条（v15.58）：排序按钮 + 「⋯」更多 ----------
    网友反馈手机上拖动排序费劲、容易误拖；点选后直接给 前移/后移/最前/最后。 */
 function reorderSibling(n, action){
@@ -1163,27 +1180,51 @@ function updateSelBar(){
   if (!r) return;
   const bar = document.createElement('div');
   bar.id = '__selBar';
-  function btn(txt, title, fn){
+  function btn(icon, title, fn, extraCls){
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'sa-btn'; b.textContent = txt; b.title = title;
+    b.type = 'button'; b.className = 'sa-btn' + (extraCls ? ' ' + extraCls : '');
+    b.innerHTML = selIcon(icon); b.title = title; b.setAttribute('aria-label', title);
     b.addEventListener('pointerdown', ev => ev.stopPropagation());
     b.addEventListener('click', ev => { ev.stopPropagation(); fn(); });
     return b;
   }
-  bar.appendChild(btn('⋯', '更多操作（改名 / 档案 / 删除…）', () => {
+  function sep(){
+    const s = document.createElement('span');
+    s.className = 'sa-sep';
+    return s;
+  }
+  bar.appendChild(btn('more', '更多操作（改名 / 档案 / 删除…）', () => {
     const w = document.querySelector('.node[data-id="' + selectedId + '"]');
     if (w) openMenu(w, n);
   }));
   const p = findParent(n.id);
+  const compact = window.innerWidth <= 860;   /* 小屏：去掉「到头」两键（菜单里有），保证任何缩放下都放得下 */
   if (p && p.children.length > 1){
-    bar.appendChild(btn('⇤', '移到最前（最长）', () => reorderSibling(n, 'first')));
-    bar.appendChild(btn('←', '前移一位', () => reorderSibling(n, 'prev')));
-    bar.appendChild(btn('→', '后移一位', () => reorderSibling(n, 'next')));
-    bar.appendChild(btn('⇥', '移到最后（最幼）', () => reorderSibling(n, 'last')));
+    bar.appendChild(sep());
+    if (!compact) bar.appendChild(btn('first', '移到最前（最长）', () => reorderSibling(n, 'first')));
+    bar.appendChild(btn('prev', '前移一位', () => reorderSibling(n, 'prev')));
+    bar.appendChild(btn('next', '后移一位', () => reorderSibling(n, 'next')));
+    if (!compact) bar.appendChild(btn('last', '移到最后（最幼）', () => reorderSibling(n, 'last')));
   }
-  bar.style.left = (r.x + r.w / 2) + 'px';
-  bar.style.top = (r.y + r.h + 6) + 'px';
+  bar.appendChild(sep());
+  bar.appendChild(btn('close', '取消选中（Esc / 点空白处）', deselectNode));
+  const wrap = document.querySelector('.node[data-id="' + selectedId + '"]');
+  /* 位置：直接沿用卡片自身的 style.left/top（与卡片同一坐标系，CSS zoom 下也必然对齐）；
+     再用真实 rect 在屏幕空间钳制，深缩放/贴边时把操作条推回可视范围 */
+  if (!wrap) return;
+  /* 挂在卡片「上方」（底边贴卡顶，留 6px）：下方是常驻「＋」按钮，不能挡住菜单入口 */
+  bar.style.left = wrap.style.left;
+  bar.style.top = (parseFloat(wrap.style.top) - 6) + 'px';
   nodesEl.appendChild(bar);
+  const br = wrap.getBoundingClientRect();
+  const me = bar.getBoundingClientRect();
+  let dx = 0, dy = 0;
+  if (me.left < 8) dx = 8 - me.left;
+  else if (me.right > innerWidth - 8) dx = innerWidth - 8 - me.right;
+  if (me.bottom > innerHeight - 8) dy = innerHeight - 8 - me.bottom;
+  else if (me.top < 8) dy = 8 - me.top;
+  if (dx) bar.style.marginLeft = (dx / scale) + 'px'; else bar.style.marginLeft = '';
+  if (dy) bar.style.marginTop = (dy / scale) + 'px'; else bar.style.marginTop = '';
 }
 
 /* ---------- ⑤ 行内编辑 ---------- */
@@ -2511,6 +2552,7 @@ function setTargetScale(ns){
   vp.addEventListener('pointerdown', e => {
     if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
     if (e.target.closest('.node-label') || e.target.closest('.quick-add') || e.target.closest('#searchBox') || e.target.closest('#__selBar')) return;
+    if (selectedId) deselectNode();   /* 点空白处取消选中（操作条的 ✕ / Esc 亦可） */
     begin(e.clientX, e.clientY);
     if (e.pointerType === 'mouse'){
       e.preventDefault();
@@ -4114,9 +4156,11 @@ document.addEventListener('keydown', e => {
     if (pimpIsOpen()){ e.preventDefault(); e.stopPropagation(); closePhotoImpModal(); return; }
     if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (pdfIsOpen()){ e.preventDefault(); e.stopPropagation(); closePdfExport(); return; }
+    if (ucfIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__ucfCancel').click(); return; }
     if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
+    if (selectedId){ e.preventDefault(); e.stopPropagation(); deselectNode(); return; }
     return;
   }
   /* 其余按键：输入中 / 弹窗开着 / 导出遮罩在 一律不触发全局快捷键（v12 泄漏 bug 根因） */

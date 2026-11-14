@@ -357,5 +357,7 @@ with sync_playwright() as p:
 
 | v15.58 | **拖动体验重做（2026-11-14，网友三条反馈：无法互换/拖到屏外无反馈/滑动误拖）**：①拖拽 IIFE 重构：`makeDrag`(picked)/`cacheEls`/`applyFollow`/`pointerWorld`/`updateHover`/`updateInsertMarker` 抽函数；新增边缘自动滚动（视口 64px 内渐速 rAF，滚动量计入 drag.startX/Y 使卡片钉在指尖，hover/插行线随滚动刷新）。②触屏手势重排：**按下即拖改为长按 300ms 拾起**（`__zpBeginTouchDrag`，picked 拖动、未移动松手不写历史）；按住卡片滑动 >10px = `__zpStartPan` 平移（从按下点起算）；双指 pinch 时 `__zpStopPan`；鼠标路径不变（pointerType==='touch' 直接 return）。③`reorderSibling(n,action)` + 选中操作条 `updateSelBar`（render 尾与 selectNode 调用；⋯=openMenu，⇤←→⇥ 四个排序钮，仅同辈>1 时显示）+ 菜单四个排序项（同辈>1 才加）。④长按菜单入口迁移（⋯/＋）；`__zpLastDropAt` 让拖动结束 450ms 内不误判双击。⑤i18n：菜单排序项、操作条 title、拾起/换位/越界 toast、帮助两行、手势浮层（EN/JA 各加 ~13 条键）。测试：t_fold_drag 新增 `t_touch_pickup_pan_and_edgescroll`（滑动平移/拾起换位/边缘滚动）、`t_selbar_reorder_and_menu`（操作条排序、越界提示、菜单排序项）；t_edit 触屏删除改走选中→⋯→菜单；**教训：取坐标前必须 `wait_for_function("zoomRaf === null")`（缩放动画中途 bounding_box 会漂移）**；21 模块 121 用例。 |
 
+| v15.59 | **选中操作条美化（2026-11-14，用户反馈：不知道怎么消失、图标不美观）**：①`selIcon()` 顶栏同款描边 SVG（more/first/prev/next/last/close），替换字符箭头；按钮 30px、hover/active 反馈、`sa-sep` 分组分隔。②三条消失路径：操作条 ✕ = `deselectNode()`；**点空白画布 pointerdown 取消选中**（pan IIFE）；Esc 取消选中（Escape 链尾，顺带补页内确认 `#__ucfModal` 的 Esc 关闭）。③操作条改挂卡片**上方**（底边贴卡顶-6px）：原来悬在下方正好挡住常驻「＋」（t_bookfmt/t_photo quick-add 点击超时暴露）。④小屏 ≤860px 紧凑四钮（去 first/last，菜单里有）+ 按真实 rect 屏幕空间钳制（**教训：nodeRects 世界坐标不能直接换算屏幕位置——CSS zoom 下卡片/操作条映射不一致，必须抄卡片自身 style.left/top 再按 rect 钳制**）。t_core t_select_deselect 原有的点空白断言保留并通过；t_fold_drag selbar 用例加三条消失路径、按钮数 6。21 模块 121 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
 

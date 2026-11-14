@@ -11,10 +11,10 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-VERSION = 'v15.58'
-OLD_VERSION = 'v15.57'
+VERSION = 'v15.59'
+OLD_VERSION = 'v15.58'
 SUFFIXES = {'': '-v4', '-en': '-en-v4', '-ja': '-ja-v4', '-zh-Hant': '-zh-Hant-v4'}
-OLD_TAGS = {'': '119 测试用例', '-en': '119 tests', '-ja': '119 テスト', '-zh-Hant': '119 測試用例'}
+OLD_TAGS = {'': '121 测试用例', '-en': '121 tests', '-ja': '121 テスト', '-zh-Hant': '121 測試用例'}
 NEW_TAGS = {'': '121 测试用例', '-en': '121 tests', '-ja': '121 テスト', '-zh-Hant': '121 測試用例'}
 
 
