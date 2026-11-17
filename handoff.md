@@ -359,5 +359,7 @@ with sync_playwright() as p:
 
 | v15.59 | **选中操作条美化（2026-11-14，用户反馈：不知道怎么消失、图标不美观）**：①`selIcon()` 顶栏同款描边 SVG（more/first/prev/next/last/close），替换字符箭头；按钮 30px、hover/active 反馈、`sa-sep` 分组分隔。②三条消失路径：操作条 ✕ = `deselectNode()`；**点空白画布 pointerdown 取消选中**（pan IIFE）；Esc 取消选中（Escape 链尾，顺带补页内确认 `#__ucfModal` 的 Esc 关闭）。③操作条改挂卡片**上方**（底边贴卡顶-6px）：原来悬在下方正好挡住常驻「＋」（t_bookfmt/t_photo quick-add 点击超时暴露）。④小屏 ≤860px 紧凑四钮（去 first/last，菜单里有）+ 按真实 rect 屏幕空间钳制（**教训：nodeRects 世界坐标不能直接换算屏幕位置——CSS zoom 下卡片/操作条映射不一致，必须抄卡片自身 style.left/top 再按 rect 钳制**）。t_core t_select_deselect 原有的点空白断言保留并通过；t_fold_drag selbar 用例加三条消失路径、按钮数 6。21 模块 121 用例。 |
 
+| v15.60 | **删除二选一（2026-11-17，网友反馈误加父辈删不掉）**：`deleteNode` 拆为 `doDeleteSubtree`（原语义）与 `deleteKeepSelf`（`p.children.splice(i,1,...kids)` 后代顶位上移、次序不变；配偶/生卒/备注随人删；世祖结构定代自动归位）。有后代 → `uiDeleteChoice`（`#__uddModal` 三按钮：仅删此人=primary 首位获焦点 / 删整支=danger / 取消；Esc 链与快捷键守护加 `uddIsOpen`）；无后代保持 uiConfirm 单步。helper 加 `delete_choice(page, which)`——**坑：which 分支选择器曾把 cancel 落到 __uddSub（三元只写了 all/非all），导致 cancel 实测成「仅删此人」**，t_edit 删除用例 persons 断言当场抓住。新回归 `t_delete_keep_self_detaches_descendants`：加父辈→仅删此人→gens 断言按 DOM 深度优先序（非按支分组）；21 模块 122 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
 

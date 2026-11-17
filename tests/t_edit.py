@@ -155,19 +155,19 @@ def t_delete_count_and_undo_redo(b):
     dlg = DialogRecorder(page)
     page.locator('.node[data-id="b1"] .node-label').click()
     page.keyboard.press("Delete")
-    title = confirm_page(page, False)      # 页内确认出现，先取消
+    title = delete_choice(page, "cancel")   # v15.60 删除二选一弹窗，先取消
     page.wait_for_timeout(100)
-    check("5 位后代" in title, "删除确认统计全部后代(v12 只报直系，文案在页内弹窗)",
+    check("5 位后代" in title, "删除弹窗统计全部后代(v12 只报直系)",
           title)
-    check(dlg.count() == 0, "确认走页内弹窗，不再弹系统 confirm", str(dlg.records))
-    # 再次按 Delete，仍出确认；取消则不删
+    check(dlg.count() == 0, "删除走页内弹窗，不再弹系统 confirm", str(dlg.records))
+    # 再次按 Delete；取消则不删
     page.keyboard.press("Delete")
-    confirm_page(page, False)
+    delete_choice(page, "cancel")
     page.wait_for_timeout(100)
     alive = page.evaluate('!!window.__ZP.findNode("b1")')
     check(alive, "取消则不删")
     page.keyboard.press("Delete")
-    confirm_page(page, True)
+    delete_choice(page, "all")
     page.wait_for_timeout(200)
     gone = page.evaluate('!!window.__ZP.findNode("b1")')
     check(not gone, "确认后整支删除")
@@ -191,6 +191,62 @@ def t_delete_count_and_undo_redo(b):
     page.wait_for_timeout(200)
     check(page.evaluate('!!window.__ZP.findNode("b1")'), "再次撤销恢复（Ctrl+Shift+Z=重做的约定语义）")
     check(not errs, "无 JS 错误", str(errs))
+    ctx.close()
+
+
+@testcase
+def t_delete_keep_self_detaches_descendants(b):
+    """v15.60 网友场景：误「＋父辈」后想只删错误的人。仅删除此人 → 后代按原次序
+       整体上移一层；世祖按结构自动重算；撤销完整恢复。"""
+    ctx, page, errs, cons = fresh_page(b)
+    goto(page)
+    # 复刻网友操作：给 b1a1 之上加一个错误的「父辈」（b1a1 变成新人的孩子）
+    page.locator('.node[data-id="b1a1"] .node-label').click()
+    page.locator('.node[data-id="b1a1"] .quick-add').click()
+    page.locator('#__ctxMenu .mi', has_text='父辈').click()
+    page.fill('#__parentInput', '错误的人')
+    page.locator('#__parentOk').click()
+    page.wait_for_timeout(250)
+    wrong = page.evaluate("() => { const p = findParent('b1a1'); return {id: p.id, kids: p.children.map(c => c.id)}; }")
+    check(wrong['id'] != 'b1a' and 'b1a1' in wrong['kids'], '前置：错误父辈已插入且带走了 b1a1', str(wrong))
+    # 删除这个错误的人 → 选「仅删除此人」
+    wrong_id = wrong['id']
+    page.locator(f'.node[data-id="{wrong_id}"] .node-label').click()
+    page.keyboard.press('Delete')
+    title = delete_choice(page, 'sub')
+    page.wait_for_timeout(250)
+    check('1 位后代' in title, '弹窗列出该人名下后代数', title)
+    check(not page.evaluate(f'() => !!findNode("{wrong_id}")'), '错误的人已删除')
+    back = page.evaluate("() => { const p = findParent('b1a1'); return {id: p.id, kids: p.children.map(c => c.id)}; }")
+    check(back['id'] == 'b1a' and back['kids'] == ['b1a1', 'b1a2'],
+          'b1a1 回到原父名下且次序不变', str(back))
+    gens = page.evaluate("() => Array.from(computeGenerations().values(), g => g.gen).join(',')")
+    check(gens == '1,2,3,3,2,3,1,2,3,1,2,1', '世祖按结构自动重算（b1a1 回到 3 世，无偏移）', gens)
+    # 配偶/档案随人删除：错误的人不残留
+    check(page.evaluate(f'() => JSON.stringify(sanitize(treeData)).indexOf("{wrong_id}") === -1'),
+          '数据中不残留被删节点')
+    # 撤销完整恢复
+    page.evaluate('undo()')
+    page.wait_for_timeout(200)
+    check(page.evaluate(f'() => !!findNode("{wrong_id}")')
+          and page.evaluate("() => findParent('b1a1').id") == wrong_id,
+          '撤销恢复错误父辈（回到删除前结构）')
+    page.evaluate('undo()')   # 再撤销一步回到加父辈之前
+    page.wait_for_timeout(200)
+    check(page.evaluate("() => findParent('b1a1').id") == 'b1a', '连撤两步回到加父辈之前')
+    # 无后代的人：保持一句话确认（不出现二选一）
+    leaf = page.evaluate("() => { const n = findNode('b1a2'); return n && (!n.children || !n.children.length); }")
+    check(leaf, '前置：b1a2 是叶节点')
+    page.locator('.node[data-id="b1a2"] .node-label').click()
+    page.keyboard.press('Delete')
+    page.wait_for_timeout(250)
+    check(page.locator('#__ucfModal').get_attribute('class') == 'open'
+          and page.locator('#__uddModal').get_attribute('class') == '',
+          '叶节点删除保持单步确认，不出现二选一')
+    confirm_page(page, True)
+    page.wait_for_timeout(150)
+    check(not page.evaluate("() => !!findNode('b1a2')"), '叶节点确认后删除')
+    check(not errs, '无 JS 错误', str(errs))
     ctx.close()
 
 
@@ -266,9 +322,9 @@ def t_touch_double_tap_spouse_and_name(b):
     check(page.evaluate("() => document.getElementById('__ctxMenu').style.display === 'block'"),
           "操作条「⋯」打开成员菜单")
     page.locator("#__ctxMenu .mi", has_text="删除").click()
-    confirm_page(page, True)
+    delete_choice(page, "all")
     page.wait_for_timeout(200)
-    check(not page.evaluate("!!window.__ZP.findNode('b1')"), "页内确认后整支删除")
+    check(not page.evaluate("!!window.__ZP.findNode('b1')"), "udd 确认后整支删除")
     check(dlg.count() == 0, "手机路径同样不弹系统 confirm", str(dlg.records))
     check(not errs, "无 JS 错误", str(errs))
     ctx.close()

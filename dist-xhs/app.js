@@ -1324,6 +1324,36 @@ function uiConfirm(msg){
     m.addEventListener('mousedown', out);
   });
 }
+/* 删除二选一（v15.60）：返回 'all'（删整支）/ 'sub'（仅删此人，后代上移）/ null（取消） */
+function uddIsOpen(){ return document.getElementById('__uddModal').classList.contains('open'); }
+function uiDeleteChoice(name, desc){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__uddModal');
+    document.getElementById('__uddTitle').textContent =
+      '删除「' + name + '」？TA 名下还有 ' + desc + ' 位后代：';
+    document.getElementById('__uddSub').textContent = '仅删除此人（' + desc + ' 位后代上移一层）';
+    document.getElementById('__uddAll').textContent = '删除此人和全部后代';
+    m.classList.add('open');
+    const openedAt = Date.now();
+    setTimeout(function(){ try { document.getElementById('__uddSub').focus(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__uddSub').removeEventListener('click', sub);
+      document.getElementById('__uddAll').removeEventListener('click', all);
+      document.getElementById('__uddCancel').removeEventListener('click', cancel);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function sub(){ done('sub'); }
+    function all(){ done('all'); }
+    function cancel(){ done(null); }
+    function out(e){ if (e.target.id === '__uddModal' && Date.now() - openedAt > 350) done(null); }
+    document.getElementById('__uddSub').addEventListener('click', sub);
+    document.getElementById('__uddAll').addEventListener('click', all);
+    document.getElementById('__uddCancel').addEventListener('click', cancel);
+    m.addEventListener('mousedown', out);
+  });
+}
 function showTextModal(title, text){
   var m = document.getElementById('__textModal');
   document.getElementById('__textTitle').textContent = title;
@@ -1974,18 +2004,42 @@ function addChild(n){
 function deleteNode(n){
   if (n.id === 'root'){ toast('根节点不能删'); return; }
   const desc = countDescendants(n);
-  const msg = desc
-    ? '删除「' + displayName(n) + '」及其全部 ' + desc + ' 位后代？'
-    : '删除「' + displayName(n) + '」？';
-  uiConfirm(msg).then(function(yes){
-    if (!yes) return;
-    pushHistory('delete:' + n.id);
-    const p = findParent(n.id);
-    if (p) p.children = p.children.filter(c => c.id !== n.id);
-    if (selectedId === n.id) selectedId = null;
-    render();
-    toast('已删除（可用 Ctrl+Z 撤销）');
+  if (!desc){
+    /* 无后代：维持一句话确认（不必多一步） */
+    uiConfirm('删除「' + displayName(n) + '」？').then(function(yes){
+      if (!yes) return;
+      doDeleteSubtree(n);
+    });
+    return;
+  }
+  /* 有后代：二选一（网友反馈：误加父辈后想只删这个人，系统却要连子孙一起删） */
+  uiDeleteChoice(displayName(n), desc).then(function(choice){
+    if (choice === 'all') doDeleteSubtree(n);
+    else if (choice === 'sub') deleteKeepSelf(n, desc);
   });
+}
+/* 连同全部后代删除（原有语义：谱书惯例，后代属此人世系） */
+function doDeleteSubtree(n){
+  pushHistory('delete:' + n.id);
+  const p = findParent(n.id);
+  if (p) p.children = p.children.filter(c => c.id !== n.id);
+  if (selectedId === n.id) selectedId = null;
+  render();
+  toast('已删除（可用 Ctrl+Z 撤销）');
+}
+/* 仅删除此人：后代按原次序整体上移一层（撤销「误加父辈」的补救）。
+   配偶/生卒/备注随此人移除；世祖按父子结构自动重算，无需迁移 */
+function deleteKeepSelf(n, desc){
+  pushHistory('deleteKeep:' + n.id);
+  const p = findParent(n.id);
+  if (p){
+    const i = p.children.findIndex(c => c.id === n.id);
+    const kids = Array.isArray(n.children) ? n.children : [];
+    p.children.splice(i, 1, ...kids);   // 后代顶替此人原来的位置，兄弟次序不变
+  }
+  if (selectedId === n.id) selectedId = null;
+  render();
+  toast('已删除「' + displayName(n) + '」，' + desc + ' 位后代上移一层（可 Ctrl+Z 撤销）');
 }
 
 function addSibling(n){
@@ -4157,6 +4211,7 @@ document.addEventListener('keydown', e => {
     if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (pdfIsOpen()){ e.preventDefault(); e.stopPropagation(); closePdfExport(); return; }
     if (ucfIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__ucfCancel').click(); return; }
+    if (uddIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__uddCancel').click(); return; }
     if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
@@ -4164,7 +4219,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   /* 其余按键：输入中 / 弹窗开着 / 导出遮罩在 一律不触发全局快捷键（v12 泄漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen()
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen() || uddIsOpen()
       || document.getElementById('__exportBusy') || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;

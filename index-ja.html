@@ -590,6 +590,21 @@ body{
 #__ucfModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
 #__ucfModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
 #__ucfModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+/* 删除二选一弹窗（v15.60）：删整支 / 仅删此人（后代上移一层）。内嵌浏览器无原生 confirm */
+#__uddModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:97}
+#__uddModal.open{display:flex}
+#__uddModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uddModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uddModal .udd-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#__uddModal .udd-btns button{
+  display:block;width:100%;padding:10px 12px;border-radius:9px;cursor:pointer;
+  font-size:13.5px;font-family:inherit;line-height:1.45;text-align:left;
+  background:#fff;border:1.5px solid #c3ccd8;color:var(--text);
+}
+#__uddModal .udd-btns button:hover{border-color:var(--accent);background:#f4f9fe}
+#__uddModal .udd-btns button.danger{color:var(--danger);border-color:#e3c4c0}
+#__uddModal .udd-btns button.danger:hover{background:#fdf3f2;border-color:var(--danger)}
+#__uddModal .udd-btns .udd-cancel{border:0;background:transparent;color:var(--text-light);text-align:center}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
 #__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
@@ -1023,6 +1038,16 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="uip-box">
     <h3 id="__ucfTitle">確認</h3>
     <div class="modal-btns"><button id="__ucfCancel">キャンセル</button><button class="primary" id="__ucfOk">确定</button></div>
+  </div>
+</div>
+<div id="__uddModal">
+  <div class="uip-box">
+    <h3 id="__uddTitle">删除成员</h3>
+    <div class="udd-btns">
+      <button id="__uddSub" class="primary"></button>
+      <button id="__uddAll" class="danger"></button>
+      <button id="__uddCancel" class="udd-cancel">キャンセル</button>
+    </div>
   </div>
 </div>
 <div id="__textModal">
@@ -2579,6 +2604,36 @@ function uiConfirm(msg){
     m.addEventListener('mousedown', out);
   });
 }
+/* 删除二选一（v15.60）：返回 'all'（删整支）/ 'sub'（仅删此人，后代上移）/ null（取消） */
+function uddIsOpen(){ return document.getElementById('__uddModal').classList.contains('open'); }
+function uiDeleteChoice(name, desc){
+  return new Promise(function(resolve){
+    var m = document.getElementById('__uddModal');
+    document.getElementById('__uddTitle').textContent =
+      '「' + name + '」を削除しますか？配下に ' + desc + ' 人の子孫がいます：';
+    document.getElementById('__uddSub').textContent = 'この人だけ削除（子孫 ' + desc + ' 人が一階層上へ）';
+    document.getElementById('__uddAll').textContent = 'この人と子孫全員を削除';
+    m.classList.add('open');
+    const openedAt = Date.now();
+    setTimeout(function(){ try { document.getElementById('__uddSub').focus(); } catch(e){} }, 80);
+    function done(v){
+      m.classList.remove('open');
+      document.getElementById('__uddSub').removeEventListener('click', sub);
+      document.getElementById('__uddAll').removeEventListener('click', all);
+      document.getElementById('__uddCancel').removeEventListener('click', cancel);
+      m.removeEventListener('mousedown', out);
+      resolve(v);
+    }
+    function sub(){ done('sub'); }
+    function all(){ done('all'); }
+    function cancel(){ done(null); }
+    function out(e){ if (e.target.id === '__uddModal' && Date.now() - openedAt > 350) done(null); }
+    document.getElementById('__uddSub').addEventListener('click', sub);
+    document.getElementById('__uddAll').addEventListener('click', all);
+    document.getElementById('__uddCancel').addEventListener('click', cancel);
+    m.addEventListener('mousedown', out);
+  });
+}
 function showTextModal(title, text){
   var m = document.getElementById('__textModal');
   document.getElementById('__textTitle').textContent = title;
@@ -3229,18 +3284,42 @@ function addChild(n){
 function deleteNode(n){
   if (n.id === 'root'){ toast('ルートノードは削除できません'); return; }
   const desc = countDescendants(n);
-  const msg = desc
-    ? '「' + displayName(n) + '」と子孫全員（' + desc + '人）を削除しますか？'
-    : '「' + displayName(n) + '」を削除しますか？';
-  uiConfirm(msg).then(function(yes){
-    if (!yes) return;
-    pushHistory('delete:' + n.id);
-    const p = findParent(n.id);
-    if (p) p.children = p.children.filter(c => c.id !== n.id);
-    if (selectedId === n.id) selectedId = null;
-    render();
-    toast('削除しました（Ctrl+Z で元に戻せます）');
+  if (!desc){
+    /* 无后代：维持一句话确认（不必多一步） */
+    uiConfirm('「' + displayName(n) + '」を削除しますか？').then(function(yes){
+      if (!yes) return;
+      doDeleteSubtree(n);
+    });
+    return;
+  }
+  /* 有后代：二选一（网友反馈：误加父辈后想只删这个人，系统却要连子孙一起删） */
+  uiDeleteChoice(displayName(n), desc).then(function(choice){
+    if (choice === 'all') doDeleteSubtree(n);
+    else if (choice === 'sub') deleteKeepSelf(n, desc);
   });
+}
+/* 连同全部后代删除（原有语义：谱书惯例，后代属此人世系） */
+function doDeleteSubtree(n){
+  pushHistory('delete:' + n.id);
+  const p = findParent(n.id);
+  if (p) p.children = p.children.filter(c => c.id !== n.id);
+  if (selectedId === n.id) selectedId = null;
+  render();
+  toast('削除しました（Ctrl+Z で元に戻せます）');
+}
+/* 仅删除此人：后代按原次序整体上移一层（撤销「误加父辈」的补救）。
+   配偶/生卒/备注随此人移除；世祖按父子结构自动重算，无需迁移 */
+function deleteKeepSelf(n, desc){
+  pushHistory('deleteKeep:' + n.id);
+  const p = findParent(n.id);
+  if (p){
+    const i = p.children.findIndex(c => c.id === n.id);
+    const kids = Array.isArray(n.children) ? n.children : [];
+    p.children.splice(i, 1, ...kids);   // 后代顶替此人原来的位置，兄弟次序不变
+  }
+  if (selectedId === n.id) selectedId = null;
+  render();
+  toast(displayName(n) + ' を削除しました。子孫 ' + desc + ' 人が一階層上へ（Ctrl+Z で元に戻せます）');
 }
 
 function addSibling(n){
@@ -7562,6 +7641,7 @@ document.addEventListener('keydown', e => {
     if (stmIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSubtreeExport(); return; }
     if (pdfIsOpen()){ e.preventDefault(); e.stopPropagation(); closePdfExport(); return; }
     if (ucfIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__ucfCancel').click(); return; }
+    if (uddIsOpen()){ e.preventDefault(); e.stopPropagation(); document.getElementById('__uddCancel').click(); return; }
     if (dmIsOpen()){ return; }            // 弹窗自己的 handler 负责
     if (smIsOpen()){ e.preventDefault(); e.stopPropagation(); closeSettings(); return; }
     closeMenu();
@@ -7569,7 +7649,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   /* 其余按键：输入中 / 弹窗开着 / 导出遮罩在 一律不触发全局快捷键（v12 泄漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen()
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen() || uddIsOpen()
       || document.getElementById('__exportBusy') || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;

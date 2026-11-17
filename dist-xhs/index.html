@@ -590,6 +590,21 @@ body{
 #__ucfModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
 #__ucfModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
 #__ucfModal .modal-btns{display:flex;justify-content:flex-end;margin-top:14px}
+/* 删除二选一弹窗（v15.60）：删整支 / 仅删此人（后代上移一层）。内嵌浏览器无原生 confirm */
+#__uddModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:97}
+#__uddModal.open{display:flex}
+#__uddModal .uip-box{width:92vw;max-width:430px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
+#__uddModal h3{font-size:14.5px;color:var(--text);margin:0 0 12px;line-height:1.55;white-space:pre-line}
+#__uddModal .udd-btns{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+#__uddModal .udd-btns button{
+  display:block;width:100%;padding:10px 12px;border-radius:9px;cursor:pointer;
+  font-size:13.5px;font-family:inherit;line-height:1.45;text-align:left;
+  background:#fff;border:1.5px solid #c3ccd8;color:var(--text);
+}
+#__uddModal .udd-btns button:hover{border-color:var(--accent);background:#f4f9fe}
+#__uddModal .udd-btns button.danger{color:var(--danger);border-color:#e3c4c0}
+#__uddModal .udd-btns button.danger:hover{background:#fdf3f2;border-color:var(--danger)}
+#__uddModal .udd-btns .udd-cancel{border:0;background:transparent;color:var(--text-light);text-align:center}
 #__textModal{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,14,25,.6);display:none;align-items:center;justify-content:center;z-index:96}
 #__textModal.open{display:flex}
 #__textModal .uip-box{width:92vw;max-width:520px;background:var(--node-bg);border-radius:14px;padding:18px 18px 12px;box-shadow:0 18px 44px rgba(20,30,50,.28)}
@@ -842,6 +857,16 @@ body[data-theme="dark"] #stage.v .node-label:hover,body[data-theme="dark"] .ps.v
   <div class="uip-box">
     <h3 id="__ucfTitle">请确认</h3>
     <div class="modal-btns"><button id="__ucfCancel">取消</button><button class="primary" id="__ucfOk">确定</button></div>
+  </div>
+</div>
+<div id="__uddModal">
+  <div class="uip-box">
+    <h3 id="__uddTitle">删除成员</h3>
+    <div class="udd-btns">
+      <button id="__uddSub" class="primary"></button>
+      <button id="__uddAll" class="danger"></button>
+      <button id="__uddCancel" class="udd-cancel">取消</button>
+    </div>
   </div>
 </div>
 <div id="__textModal">

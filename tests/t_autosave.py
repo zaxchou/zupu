@@ -140,7 +140,7 @@ def t_reset_reseed(b):
     dlg = DialogRecorder(page)
     page.locator('.node[data-id="b3"] .node-label').click()
     page.keyboard.press("Delete")
-    confirm_page(page, True)
+    delete_choice(page, "all")
     page.wait_for_timeout(200)
     check(page.locator(".node").count() == 11, "先删掉一支（雷旭父子 2 节点）", str(page.locator(".node").count()))
     page.locator("#btnFile").click()

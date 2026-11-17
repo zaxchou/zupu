@@ -138,6 +138,16 @@ def confirm_page(page, yes=True, timeout=5000):
     page.wait_for_timeout(150)
     return page.locator("#__ucfTitle").text_content() or ""
 
+def delete_choice(page, which="all", timeout=5000):
+    """v15.60 删除二选一弹窗（#__uddModal）：which='all' 删整支 / 'sub' 仅删此人后代上移。
+       返回标题文本（含「N 位后代」供断言）。"""
+    page.wait_for_selector("#__uddModal.open", timeout=timeout)
+    title = page.locator("#__uddTitle").text_content() or ""
+    btn = {"all": "#__uddAll", "sub": "#__uddSub", "cancel": "#__uddCancel"}[which]
+    page.locator(btn).click()
+    page.wait_for_timeout(200)
+    return title
+
 
 def run_module(module_or_globals, title):
     """执行本文件中 @testcase 注册的全部用例；返回是否全绿。"""
