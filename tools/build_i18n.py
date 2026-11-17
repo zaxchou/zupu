@@ -375,6 +375,7 @@ EN = [
   ("if (n.id === 'root'){ toast('根节点不能删'); return; }", "if (n.id === 'root'){ toast('The root node cannot be deleted'); return; }"),
   ("'删除「' + name + '」？TA 名下还有 ' + desc + ' 位后代：'", "'Delete “' + name + '”? There are ' + desc + ' descendants under them:'"),
   ("'仅删除此人（' + desc + ' 位后代上移一层）'", "'Delete only this person (their ' + desc + ' descendants move up one level)'"),
+  ('<h3 id="__uddTitle">删除成员</h3>', '<h3 id="__uddTitle">Delete member</h3>'),
   ("'删除此人和全部后代'", "'Delete this person and all descendants'"),
   ("toast('已删除「' + displayName(n) + '」，' + desc + ' 位后代上移一层（可 Ctrl+Z 撤销）');",
    "toast('Deleted ' + displayName(n) + '; their ' + desc + ' descendants moved up one level (Ctrl+Z to undo)');"),
@@ -985,6 +986,7 @@ JA += [
   ("if (n.id === 'root'){ toast('根节点不能删'); return; }", "if (n.id === 'root'){ toast('ルートノードは削除できません'); return; }"),
   ("'删除「' + name + '」？TA 名下还有 ' + desc + ' 位后代：'", "'「' + name + '」を削除しますか？配下に ' + desc + ' 人の子孫がいます：'"),
   ("'仅删除此人（' + desc + ' 位后代上移一层）'", "'この人だけ削除（子孫 ' + desc + ' 人が一階層上へ）'"),
+  ('<h3 id="__uddTitle">删除成员</h3>', '<h3 id="__uddTitle">メンバーを削除</h3>'),
   ("'删除此人和全部后代'", "'この人と子孫全員を削除'"),
   ("toast('已删除「' + displayName(n) + '」，' + desc + ' 位后代上移一层（可 Ctrl+Z 撤销）');",
    "toast(displayName(n) + ' を削除しました。子孫 ' + desc + ' 人が一階層上へ（Ctrl+Z で元に戻せます）');"),
@@ -1340,6 +1342,10 @@ def build(lang, table, seed, out_name, extra):
         for e in errs: print('  ' + e)
         return False
     # 校验：EN 不应再有用户可见的 CJK（注释一律豁免——代码注释保持中文）
+    # 块注释规则（v15.61 修复 image/* 幻影块）：
+    #   行首（缩进后）开的 /* 才允许跨行；行中开的 /* 必须同行闭合，
+    #   否则当普通字符（accept="image/*" 曾把扫描器打进永不恢复的幻影块，
+    #   使之后整段 HTML 的 CJK 残留检查失效）。
     if lang == 'en':
         left = []
         in_block = False
@@ -1359,7 +1365,13 @@ def build(lang, table, seed, out_name, extra):
                     if k == -1: j = len(l)
                     else: in_html_comment = False; j = k + 3
                 elif l.startswith('/*', j):
-                    in_block = True; j += 2
+                    k = l.find('*/', j + 2)
+                    if k != -1:
+                        j = k + 2                     # 行内闭合：剥掉这段
+                    elif l[:j].strip() == '':
+                        in_block = True; j = len(l)   # 行首开：真跨行块注释
+                    else:
+                        work += l[j]; j += 2          # 行中不闭合：普通字符
                 elif l.startswith('//', j):
                     break
                 else:

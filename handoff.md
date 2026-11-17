@@ -361,5 +361,8 @@ with sync_playwright() as p:
 
 | v15.60 | **删除二选一（2026-11-17，网友反馈误加父辈删不掉）**：`deleteNode` 拆为 `doDeleteSubtree`（原语义）与 `deleteKeepSelf`（`p.children.splice(i,1,...kids)` 后代顶位上移、次序不变；配偶/生卒/备注随人删；世祖结构定代自动归位）。有后代 → `uiDeleteChoice`（`#__uddModal` 三按钮：仅删此人=primary 首位获焦点 / 删整支=danger / 取消；Esc 链与快捷键守护加 `uddIsOpen`）；无后代保持 uiConfirm 单步。helper 加 `delete_choice(page, which)`——**坑：which 分支选择器曾把 cancel 落到 __uddSub（三元只写了 all/非all），导致 cancel 实测成「仅删此人」**，t_edit 删除用例 persons 断言当场抓住。新回归 `t_delete_keep_self_detaches_descendants`：加父辈→仅删此人→gens 断言按 DOM 深度优先序（非按支分组）；21 模块 122 用例。 |
 
+| v15.61 | **代码审查四项修复（2026-11-17，oil-code-review 独立深审结论 PASS）**：①`build_i18n.py` EN 残留扫描器把 HTML 属性 `accept="image/*"` 当块注释开启 → 此后整段 HTML 检查静默失效；改为「行首开的 `/*` 才允许跨行，行中开的必须同行闭合」，修后守卫立即抓到漏网 `__uddTitle`「删除成员」→ 补 EN/JA 键（**教训：改 heredoc 里的 `
+` 被吞成真实换行导致 SyntaxError，再用 Read+Edit 修**）。②全局快捷键守护补 `ucfIsOpen`（此前确认框开着按 Tab 会给叶节点长出子女、重复 Delete 重入）；t_edit 加回归。③updateSelBar 死代码 `r`/`br` 清理。④canvas-wrap 点空白 handler 改走 `deselectNode()` 以收起操作条。21 模块 122 用例。 |
+
 *交接完毕。有问题先看 §8 踩坑记录，再改代码；每改一处跑一遍 §9 回归。*
 

@@ -246,6 +246,23 @@ def t_delete_keep_self_detaches_descendants(b):
     confirm_page(page, True)
     page.wait_for_timeout(150)
     check(not page.evaluate("() => !!findNode('b1a2')"), '叶节点确认后删除')
+    # v15.61：页内确认框开启期间，全局快捷键不应穿透到底层树
+    page.evaluate("undo()")
+    page.wait_for_timeout(150)
+    page.locator('.node[data-id="b1a2"] .node-label').click()
+    page.keyboard.press('Delete')
+    page.wait_for_selector('#__ucfModal.open')
+    kids0 = page.evaluate("() => findNode('b1a2').children.length")
+    page.keyboard.press('Tab')
+    page.keyboard.press('Delete')
+    page.wait_for_timeout(200)
+    check(page.evaluate("() => findNode('b1a2').children.length") == kids0,
+          '确认框开着时 Tab 不穿透（不会给叶节点长出子女）')
+    check(page.locator('#__ucfModal').get_attribute('class') == 'open'
+          and not page.locator('#__uipModal').get_attribute('class'),
+          '重复 Delete 不重入、不改弹窗状态')
+    page.locator('#__ucfCancel').click()
+    page.wait_for_timeout(100)
     check(not errs, '无 JS 错误', str(errs))
     ctx.close()
 

@@ -1176,8 +1176,7 @@ function updateSelBar(){
   if (!selectedId || _renderSilent || _exportLock) return;
   const n = findNode(selectedId);
   if (!n || n.id === 'root') return;
-  const r = nodeRects.get(selectedId);
-  if (!r) return;
+  if (!nodeRects.has(selectedId)) return;
   const bar = document.createElement('div');
   bar.id = '__selBar';
   function btn(icon, title, fn, extraCls){
@@ -1216,7 +1215,6 @@ function updateSelBar(){
   bar.style.left = wrap.style.left;
   bar.style.top = (parseFloat(wrap.style.top) - 6) + 'px';
   nodesEl.appendChild(bar);
-  const br = wrap.getBoundingClientRect();
   const me = bar.getBoundingClientRect();
   let dx = 0, dy = 0;
   if (me.left < 8) dx = 8 - me.left;
@@ -4219,7 +4217,7 @@ document.addEventListener('keydown', e => {
     return;
   }
   /* 其余按键：输入中 / 弹窗开着 / 导出遮罩在 一律不触发全局快捷键（v12 泄漏 bug 根因） */
-  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen() || uddIsOpen()
+  if (typing || dmIsOpen() || hmIsOpen() || smIsOpen() || cmIsOpen() || wmIsOpen() || pimpIsOpen() || stmIsOpen() || pdfIsOpen() || ucfIsOpen() || uddIsOpen()
       || document.getElementById('__exportBusy') || e.defaultPrevented) return;
 
   const mod = e.ctrlKey || e.metaKey;
@@ -4257,12 +4255,12 @@ document.getElementById('viewport').addEventListener('contextmenu', e => {
   openMenu(w, n);
 });
 
-/* 点空白取消选中（绑在外层容器：悬浮提示条 pointer-events:none，点击落到容器） */
+/* 点空白取消选中（绑在外层容器：悬浮提示条 pointer-events:none，点击落到容器）。
+   走 deselectNode()：顺带收起选中操作条（v15.61） */
 document.querySelector('.canvas-wrap').addEventListener('click', e => {
   if (e.target.id === 'viewport' || e.target.id === 'stage' || e.target.id === 'nodes'
       || e.target.classList.contains('canvas-wrap')){
-    selectedId = null;
-    document.querySelectorAll('.node').forEach(w => w.classList.remove('selected'));
+    if (selectedId) deselectNode();
   }
 });
 
